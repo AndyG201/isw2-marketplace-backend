@@ -1,4 +1,3 @@
-# isw2-marketplace-backend
 # Marketplace de Alojamientos - Backend
 
 ## Descripción del proyecto
