@@ -1,9 +1,8 @@
-
-package co.edu.unbosque.marketplace.dto;
+package co.edu.unbosque.marketplace.request;
 
 import java.util.UUID;
 
-public class RegistrarUsuarioDTO {
+public class RegistrarUsuarioRequest {
 
     private String nombre;
     private String apellido;
@@ -17,7 +16,7 @@ public class RegistrarUsuarioDTO {
 
     private UUID idRol;
 
-    public RegistrarUsuarioDTO() {
+    public RegistrarUsuarioRequest() {
     }
 
     public String getNombre() {

@@ -1,11 +1,11 @@
-package co.edu.unbosque.marketplace.dto;
+package co.edu.unbosque.marketplace.request;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import co.edu.unbosque.marketplace.model.emun.EstadoUsuario;
 
-public class UsuarioDTO {
+public class UsuarioRequest{
 
     private UUID idUsuario;
     private UUID idRol;
@@ -32,7 +32,7 @@ public class UsuarioDTO {
     private OffsetDateTime fechaRegistro;
     private OffsetDateTime fechaActualizacion;
 
-    public UsuarioDTO() {
+    public UsuarioRequest() {
     }
 
     public UUID getIdUsuario() {

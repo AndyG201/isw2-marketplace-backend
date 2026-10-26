@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import co.edu.unbosque.marketplace.service.VerificacionCorreoService;
 
 @RestController
-@RequestMapping("/verificación")
+@RequestMapping("/verificacion-correo")
 @CrossOrigin(origins = "*")
 public class VerficacionCorreoController {
 

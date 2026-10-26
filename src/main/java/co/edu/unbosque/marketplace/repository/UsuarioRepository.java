@@ -10,10 +10,12 @@ import co.edu.unbosque.marketplace.model.Usuario;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
-	
+
 	Optional<Usuario> findByCorreo(String correo);
 
 	boolean existsByDocumentoHash(byte[] documentoHash);
 
 	boolean existsByTelefono(String telefono);
+
+	Optional<Usuario> findByCorreoIgnoreCase(String correo);
 }

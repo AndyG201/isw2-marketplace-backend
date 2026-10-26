@@ -8,10 +8,10 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import co.edu.unbosque.marketplace.dto.RegistrarUsuarioDTO;
 import co.edu.unbosque.marketplace.model.Usuario;
 import co.edu.unbosque.marketplace.model.emun.EstadoUsuario;
 import co.edu.unbosque.marketplace.repository.UsuarioRepository;
+import co.edu.unbosque.marketplace.request.RegistrarUsuarioRequest;
 import co.edu.unbosque.marketplace.security.ProteccionDocumento;
 import co.edu.unbosque.marketplace.security.ProteccionContrasena;
 
@@ -33,7 +33,7 @@ public class UsuarioService {
     
 
 
-    public int registrar(RegistrarUsuarioDTO nuevoUsuario) {
+    public int registrar(RegistrarUsuarioRequest nuevoUsuario) {
 
         if (datosInvalidos(nuevoUsuario)) {
             return 0;
@@ -62,7 +62,7 @@ public class UsuarioService {
         return 1;
     }
 
-    private boolean datosInvalidos(RegistrarUsuarioDTO datos) {
+    private boolean datosInvalidos(RegistrarUsuarioRequest datos) {
 
         return datos == null
                 || textoVacio(datos.getNombre())
@@ -99,7 +99,7 @@ public class UsuarioService {
 
 
     private Usuario crearUsuario(
-        RegistrarUsuarioDTO datos, ProteccionDocumento.DatosDocumento datosDocumento) {
+        RegistrarUsuarioRequest datos, ProteccionDocumento.DatosDocumento datosDocumento) {
 
         Usuario usuario = new Usuario();
 
