@@ -35,43 +35,49 @@ public class SecurityConfig {
         this.userDetailsService = userDetailsService;
     }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            AuthenticationProvider authenticationProvider) throws Exception {
 
-        http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> {})
-            .authorizeHttpRequests(auth -> auth
+@Bean
+public SecurityFilterChain securityFilterChain(
+        HttpSecurity http,
+        AuthenticationProvider authenticationProvider) throws Exception {
 
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+    http
+        .csrf(csrf -> csrf.disable())
+        .cors(cors -> {})
+        .authorizeHttpRequests(auth -> auth
 
-                // Registro y verificación del correo
-                .requestMatchers("/autenticacion/**").permitAll()
-                .requestMatchers("/verificacion-correo/**").permitAll()
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Swagger
-                .requestMatchers(
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/v3/api-docs/**"
-                ).permitAll()
+            // Registro y verificación del correo
+            .requestMatchers("/autenticacion/**").permitAll()
+            .requestMatchers("/verificacion-correo/**").permitAll()
 
-                // Las demás rutas requieren autenticación
-                .anyRequest().authenticated()
-            )
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .authenticationProvider(authenticationProvider)
-            .addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class
-            );
+            // Swagger
+            .requestMatchers(
+                "/swagger-ui/**",
+                "/swagger-ui.html",
+                "/v3/api-docs/**"
+            ).permitAll()
 
-        return http.build();
-    }
+            // Prueba temporal de Redis
+            .requestMatchers("/redis-prueba").permitAll()
+            .requestMatchers("/recuperacion-contrasena/**").permitAll()
+
+            // Las demás rutas requieren autenticación
+            .anyRequest().authenticated()
+        )
+        .sessionManagement(session ->
+            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        )
+        .authenticationProvider(authenticationProvider)
+        .addFilterBefore(
+            jwtAuthenticationFilter,
+            UsernamePasswordAuthenticationFilter.class
+        );
+
+    return http.build();
+}
+
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
