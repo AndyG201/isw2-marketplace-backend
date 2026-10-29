@@ -1,0 +1,21 @@
+package co.edu.unbosque.marketplace.usuario.infrastructure.persistence;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import co.edu.unbosque.marketplace.usuario.domein.Usuario;
+
+@Repository
+public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
+
+	Optional<Usuario> findByCorreo(String correo);
+
+	boolean existsByDocumentoHash(byte[] documentoHash);
+
+	boolean existsByTelefono(String telefono);
+
+	Optional<Usuario> findByCorreoIgnoreCase(String correo);
+}
