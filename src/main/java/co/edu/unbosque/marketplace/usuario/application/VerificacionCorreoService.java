@@ -8,8 +8,8 @@ import java.util.HexFormat;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.unbosque.marketplace.usuario.domein.Usuario;
-import co.edu.unbosque.marketplace.usuario.domein.VerificacionCorreo;
+import co.edu.unbosque.marketplace.usuario.domain.Usuario;
+import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
 import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.VerificacionCorreoRepository;

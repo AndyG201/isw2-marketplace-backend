@@ -15,8 +15,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.marketplace.usuario.api.request.RegistrarUsuarioRequest;
-import co.edu.unbosque.marketplace.usuario.domein.EstadoUsuario;
-import co.edu.unbosque.marketplace.usuario.domein.Usuario;
+import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
+import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionContrasena;

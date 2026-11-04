@@ -7,8 +7,8 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import co.edu.unbosque.marketplace.usuario.domein.Usuario;
-import co.edu.unbosque.marketplace.usuario.domein.VerificacionCorreo;
+import co.edu.unbosque.marketplace.usuario.domain.Usuario;
+import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
 
 @Repository
 public interface VerificacionCorreoRepository extends JpaRepository<VerificacionCorreo, UUID> {

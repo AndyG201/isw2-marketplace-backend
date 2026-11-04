@@ -1,5 +1,5 @@
 
-package co.edu.unbosque.marketplace.usuario.domein;
+package co.edu.unbosque.marketplace.usuario.domain;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;

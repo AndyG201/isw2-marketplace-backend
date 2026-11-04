@@ -1,4 +1,4 @@
-package co.edu.unbosque.marketplace.usuario.domein;
+package co.edu.unbosque.marketplace.usuario.domain;
 
 
 public enum EstadoUsuario {

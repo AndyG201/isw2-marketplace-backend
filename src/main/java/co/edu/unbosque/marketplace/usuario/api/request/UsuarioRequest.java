@@ -3,7 +3,7 @@ package co.edu.unbosque.marketplace.usuario.api.request;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import co.edu.unbosque.marketplace.usuario.domein.EstadoUsuario;
+import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 
 public class UsuarioRequest{
 

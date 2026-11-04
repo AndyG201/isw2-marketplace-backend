@@ -4,7 +4,7 @@ package co.edu.unbosque.marketplace.usuario.application;
 import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.marketplace.usuario.api.request.AutenticacionRequest;
-import co.edu.unbosque.marketplace.usuario.domein.Usuario;
+import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.security.JwtUtil;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionContrasena;
