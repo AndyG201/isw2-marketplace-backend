@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
 import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
@@ -48,7 +49,6 @@ public class VerificacionCorreoService {
 
     // =====================================================
     // ENVÍO INICIAL DEL CÓDIGO
-    // HU-001: Registro de usuario
     // =====================================================
 
     @Transactional
@@ -60,8 +60,8 @@ public class VerificacionCorreoService {
 
         String claveUltimoEnvio = claveUltimoEnvio(correo);
 
-        // El envío inicial establece el tiempo de espera,
-        // pero no consume un reenvío.
+        // El primer envío establece la espera de 60 segundos.
+        // No consume uno de los tres reenvíos permitidos.
         redisTemplate.opsForValue().set(
                 claveUltimoEnvio,
                 "1",
@@ -70,6 +70,7 @@ public class VerificacionCorreoService {
         );
 
         try {
+
             generarYEnviarCodigo(usuario);
 
         } catch (RuntimeException e) {
@@ -82,7 +83,6 @@ public class VerificacionCorreoService {
 
     // =====================================================
     // REENVÍO DE CÓDIGO
-    // Máximo 3 reenvíos por hora
     // =====================================================
 
     @Transactional
@@ -95,7 +95,7 @@ public class VerificacionCorreoService {
         String claveUltimoEnvio = claveUltimoEnvio(correo);
         String claveContador = claveContadorReenvios(correo);
 
-        // Reservar el intervalo de 60 segundos de forma atómica.
+        // Controlar espera de 60 segundos.
         Boolean puedeReenviar =
                 redisTemplate.opsForValue().setIfAbsent(
                         claveUltimoEnvio,
@@ -144,14 +144,13 @@ public class VerificacionCorreoService {
             );
         }
 
-        // No permitir más de tres reenvíos.
+        // Máximo tres reenvíos por hora.
         if (reenvios > MAX_REENVIOS) {
 
             redisTemplate.opsForValue().decrement(claveContador);
 
             throw new IllegalStateException(
-                    "Has alcanzado el máximo de 3 reenvíos por hora. "
-                    + "Intenta nuevamente cuando se restablezca el límite."
+                    "Has alcanzado el máximo de 3 reenvíos por hora."
             );
         }
 
@@ -161,7 +160,8 @@ public class VerificacionCorreoService {
 
         } catch (RuntimeException e) {
 
-            // Si falla el envío, devolver el cupo utilizado.
+            // Liberar el intervalo y devolver el cupo
+            // si el envío del correo falla.
             redisTemplate.delete(claveUltimoEnvio);
 
             Long contadorActual =
@@ -176,7 +176,7 @@ public class VerificacionCorreoService {
     }
 
     // =====================================================
-    // GENERAR, INVALIDAR Y ENVIAR CÓDIGO
+    // GENERAR E INVALIDAR CÓDIGOS ANTERIORES
     // =====================================================
 
     private void generarYEnviarCodigo(Usuario usuario) {
@@ -188,7 +188,7 @@ public class VerificacionCorreoService {
 
         OffsetDateTime ahora = OffsetDateTime.now();
 
-        // Invalidar los códigos pendientes anteriores.
+        // Invalidar códigos pendientes anteriores.
         verificacionRepository.invalidarCodigosPendientes(
                 usuario,
                 ahora
@@ -203,7 +203,6 @@ public class VerificacionCorreoService {
                 calcularHash(codigo)
         );
 
-        // Se conserva el vencimiento actual de 10 minutos.
         verificacion.setFechaExpiracion(
                 ahora.plusMinutes(10)
         );
@@ -214,7 +213,7 @@ public class VerificacionCorreoService {
 
         verificacionRepository.save(verificacion);
 
-        // Enviar el nuevo código.
+        // Enviar el código al correo del usuario.
         correoExterno.enviarCodigoVerificacion(
                 usuario.getCorreo(),
                 codigo
@@ -258,7 +257,7 @@ public class VerificacionCorreoService {
     }
 
     // =====================================================
-    // CLAVES REDIS
+    // CLAVES DE REDIS
     // =====================================================
 
     private String normalizarCorreo(String correo) {
@@ -279,7 +278,7 @@ public class VerificacionCorreoService {
     }
 
     // =====================================================
-    // HASH SHA-256
+    // GENERAR HASH SHA-256
     // =====================================================
 
     private String calcularHash(String codigo) {
@@ -305,7 +304,7 @@ public class VerificacionCorreoService {
     }
 
     // =====================================================
-    // CONFIRMAR CÓDIGO
+    // CONFIRMAR CÓDIGO DE VERIFICACIÓN
     // =====================================================
 
     @Transactional(
@@ -322,6 +321,13 @@ public class VerificacionCorreoService {
             );
         }
 
+        if (codigo == null || !codigo.matches("\\d{6}")) {
+
+            throw new IllegalArgumentException(
+                    "El código debe contener exactamente 6 dígitos."
+            );
+        }
+
         VerificacionCorreo verificacion =
                 verificacionRepository
                         .findTopByUsuarioAndVerificadoFalseOrderByFechaExpiracionDesc(
@@ -335,6 +341,7 @@ public class VerificacionCorreoService {
 
         OffsetDateTime ahora = OffsetDateTime.now();
 
+        // Comprobar vencimiento.
         if (!ahora.isBefore(verificacion.getFechaExpiracion())) {
 
             throw new IllegalStateException(
@@ -342,6 +349,7 @@ public class VerificacionCorreoService {
             );
         }
 
+        // Comprobar límite de intentos.
         if (verificacion.getIntentos() >= 5) {
 
             throw new IllegalStateException(
@@ -349,31 +357,60 @@ public class VerificacionCorreoService {
             );
         }
 
+        // Registrar intento.
         verificacion.setIntentos(
                 verificacion.getIntentos() + 1
         );
 
         String codigoHash = calcularHash(codigo);
 
+        // Comprobar código.
         if (!verificacion.getCodigoHash().equals(codigoHash)) {
 
             verificacionRepository.save(verificacion);
 
-            // Esta excepción no revierte el incremento.
             throw new CodigoVerificacionIncorrectoException(
                     "El código es incorrecto."
             );
         }
 
-        // Activar el código y la cuenta.
+        // Marcar código como verificado.
         verificacion.setVerificado(true);
 
+        // ACTIVAR CUENTA DEL USUARIO.
         usuario.setCorreoVerificado(true);
+
+        usuario.setEstado(EstadoUsuario.ACTIVA);
 
         usuario.setFechaActualizacion(ahora);
 
         verificacionRepository.save(verificacion);
 
         usuarioRepository.save(usuario);
+
+        // Limpiar controles de reenvío.
+        String correoNormalizado = normalizarCorreo(correo);
+
+        redisTemplate.delete(
+                claveUltimoEnvio(correoNormalizado)
+        );
+
+        redisTemplate.delete(
+                claveContadorReenvios(correoNormalizado)
+        );
+    }
+
+    // =====================================================
+    // EXCEPCIÓN PARA CONSERVAR INTENTOS FALLIDOS
+    // =====================================================
+
+    private static class CodigoVerificacionIncorrectoException
+            extends IllegalArgumentException {
+
+        private static final long serialVersionUID = 1L;
+
+        public CodigoVerificacionIncorrectoException(String mensaje) {
+            super(mensaje);
+        }
     }
 }

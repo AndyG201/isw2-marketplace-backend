@@ -229,13 +229,21 @@ public class Usuario implements UserDetails {
         this.fechaActualizacion = fechaActualizacion;
     }
 
-    // Métodos de Spring Security
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
-    }
 
+        if (rol == null || rol.getNombre() == null) {
+            return List.of();
+        }
+
+        String autoridad = "ROLE_" +
+                rol.getNombre().trim().toUpperCase(java.util.Locale.ROOT);
+
+        return List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                autoridad
+        ));
+    }
     @Override
     public String getUsername() {
         return correo;
