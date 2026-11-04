@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.usuario.domain;
 
 import java.time.OffsetDateTime;
@@ -13,24 +12,25 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "usuario")
 public class Usuario implements UserDetails {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Id
+    @Id
     @Column(name = "id_usuario", nullable = false)
     private UUID idUsuario;
 
-    @Column(name = "id_rol", nullable = false)
-    private UUID idRol;
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "id_rol", nullable = false)
+    private Rol rol;
 
     @Column(name = "nombre", nullable = false, length = 50)
     private String nombre;
@@ -93,12 +93,12 @@ public class Usuario implements UserDetails {
         this.idUsuario = idUsuario;
     }
 
-    public UUID getIdRol() {
-        return idRol;
+    public Rol getRol() {
+        return rol;
     }
 
-    public void setIdRol(UUID idRol) {
-        this.idRol = idRol;
+    public void setRol(Rol rol) {
+        this.rol = rol;
     }
 
     public String getNombre() {
@@ -229,7 +229,7 @@ public class Usuario implements UserDetails {
         this.fechaActualizacion = fechaActualizacion;
     }
 
-    // Métodos agregados para Spring Security
+    // Métodos de Spring Security
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

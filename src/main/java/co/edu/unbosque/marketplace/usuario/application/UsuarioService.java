@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.usuario.application;
 
 import java.nio.charset.StandardCharsets;
@@ -6,6 +5,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.HexFormat;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -16,8 +16,10 @@ import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.marketplace.usuario.api.request.RegistrarUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
+import co.edu.unbosque.marketplace.usuario.domain.Rol;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
+import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.RolRepository;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionContrasena;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionDocumento;
@@ -25,238 +27,319 @@ import co.edu.unbosque.marketplace.usuario.security.ProteccionDocumento;
 @Service
 public class UsuarioService {
 
-	@Autowired
-	private UsuarioRepository usuarioRepository;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
-	@Autowired
-	private ProteccionDocumento proteccionDocumento;
+    @Autowired
+    private RolRepository rolRepository;
 
-	@Autowired
-	private ProteccionContrasena proteccionContrasena;
+    @Autowired
+    private ProteccionDocumento proteccionDocumento;
 
-	@Autowired
-	private VerificacionCorreoService verificacionCorreoService;
+    @Autowired
+    private ProteccionContrasena proteccionContrasena;
 
-	@Autowired
-	private StringRedisTemplate redisTemplate;
+    @Autowired
+    private VerificacionCorreoService verificacionCorreoService;
 
-	@Autowired
-	private ExternalHTTPRequestMapping correoExterno;
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
-	private final SecureRandom random = new SecureRandom();
+    @Autowired
+    private ExternalHTTPRequestMapping correoExterno;
 
-	public int registrar(RegistrarUsuarioRequest nuevoUsuario) {
+    private final SecureRandom random = new SecureRandom();
 
-		if (datosInvalidos(nuevoUsuario)) {
-			return 0;
-		}
+    public int registrar(RegistrarUsuarioRequest nuevoUsuario) {
 
-		if (correoExiste(nuevoUsuario.getCorreo())) {
-			return 0;
-		}
+        if (datosInvalidos(nuevoUsuario)) {
+            return 0;
+        }
 
-		if (telefonoExiste(nuevoUsuario.getTelefono())) {
-			return 0;
-		}
+        Optional<Rol> rolEncontrado =
+                buscarRolPermitido(nuevoUsuario.getRol());
 
-		ProteccionDocumento.DatosDocumento datosDocumento = proteccionDocumento
-				.protegerDocumento(nuevoUsuario.getTipoDocumento(), nuevoUsuario.getDocumentoIdentidad());
+        if (rolEncontrado.isEmpty()) {
+            return 0;
+        }
 
-		if (documentoExiste(datosDocumento.documentoHash())) {
-			return 0;
-		}
-		Usuario usuario = crearUsuario(nuevoUsuario, datosDocumento);
-		completarCampos(usuario);
+        if (correoExiste(nuevoUsuario.getCorreo())) {
+            return 0;
+        }
 
-		usuarioRepository.save(usuario);
+        if (telefonoExiste(nuevoUsuario.getTelefono())) {
+            return 0;
+        }
 
-		verificacionCorreoService.enviarCodigo(usuario.getCorreo());
+        ProteccionDocumento.DatosDocumento datosDocumento =
+                proteccionDocumento.protegerDocumento(
+                        nuevoUsuario.getTipoDocumento(),
+                        nuevoUsuario.getDocumentoIdentidad()
+                );
 
-		return 1;
-	}
+        if (documentoExiste(datosDocumento.documentoHash())) {
+            return 0;
+        }
 
-	private boolean datosInvalidos(RegistrarUsuarioRequest datos) {
+        Usuario usuario = crearUsuario(
+                nuevoUsuario,
+                datosDocumento,
+                rolEncontrado.get()
+        );
 
-		return datos == null || textoVacio(datos.getNombre()) || textoVacio(datos.getApellido())
-				|| textoVacio(datos.getCorreo()) || textoVacio(datos.getTipoDocumento())
-				|| textoVacio(datos.getDocumentoIdentidad()) || textoVacio(datos.getTelefono())
-				|| textoVacio(datos.getContrasena()) || datos.getIdRol() == null;
-	}
+        completarCampos(usuario);
 
-	private boolean textoVacio(String texto) {
-		return texto == null || texto.isBlank();
-	}
+        usuarioRepository.save(usuario);
 
-	private boolean correoExiste(String correo) {
+        verificacionCorreoService.enviarCodigo(usuario.getCorreo());
 
-		Optional<Usuario> usuario = usuarioRepository.findByCorreo(correo);
-		return usuario.isPresent();
-	}
+        return 1;
+    }
 
-	private boolean documentoExiste(byte[] documentoHash) {
+    private Optional<Rol> buscarRolPermitido(String nombreRol) {
 
-		return usuarioRepository.existsByDocumentoHash(documentoHash);
-	}
+        if (textoVacio(nombreRol)) {
+            return Optional.empty();
+        }
 
-	private boolean telefonoExiste(String telefono) {
+        String rolNormalizado =
+                nombreRol.trim().toUpperCase(Locale.ROOT);
 
-		return usuarioRepository.existsByTelefono(telefono);
-	}
+        if (!rolNormalizado.equals("HUESPED")
+                && !rolNormalizado.equals("ANFITRION")) {
+            return Optional.empty();
+        }
 
-	private Usuario crearUsuario(RegistrarUsuarioRequest datos, ProteccionDocumento.DatosDocumento datosDocumento) {
+        return rolRepository.findByNombreIgnoreCase(rolNormalizado);
+    }
 
-		Usuario usuario = new Usuario();
+    private boolean datosInvalidos(RegistrarUsuarioRequest datos) {
 
-		usuario.setNombre(datos.getNombre());
-		usuario.setApellido(datos.getApellido());
-		usuario.setCorreo(datos.getCorreo());
-		usuario.setTipoDocumento(datos.getTipoDocumento());
-		usuario.setTelefono(datos.getTelefono());
-		usuario.setIdRol(datos.getIdRol());
+        return datos == null
+                || textoVacio(datos.getNombre())
+                || textoVacio(datos.getApellido())
+                || textoVacio(datos.getCorreo())
+                || textoVacio(datos.getTipoDocumento())
+                || textoVacio(datos.getDocumentoIdentidad())
+                || textoVacio(datos.getTelefono())
+                || textoVacio(datos.getContrasena())
+                || textoVacio(datos.getRol());
+    }
 
-		usuario.setDocumentoCifrado(datosDocumento.documentoCifrado());
+    private boolean textoVacio(String texto) {
+        return texto == null || texto.isBlank();
+    }
 
-		usuario.setDocumentoNonce(datosDocumento.documentoNonce());
+    private boolean correoExiste(String correo) {
 
-		usuario.setDocumentoHash(datosDocumento.documentoHash());
+        return usuarioRepository
+                .findByCorreoIgnoreCase(correo.trim())
+                .isPresent();
+    }
 
-		usuario.setContrasenaHash(proteccionContrasena.generarHash(datos.getContrasena()));
+    private boolean documentoExiste(byte[] documentoHash) {
 
-		return usuario;
-	}
+        return usuarioRepository.existsByDocumentoHash(documentoHash);
+    }
 
-	private void completarCampos(Usuario usuario) {
+    private boolean telefonoExiste(String telefono) {
 
-		OffsetDateTime ahora = OffsetDateTime.now();
+        return usuarioRepository.existsByTelefono(telefono.trim());
+    }
 
-		usuario.setIdUsuario(UUID.randomUUID());
-		usuario.setCorreoVerificado(false);
-		usuario.setEstado(EstadoUsuario.PENDIENTE_VERIFICACION);
-		usuario.setRestringido(false);
-		usuario.setIntentosFallidos(0);
-		usuario.setMotivoRestriccion(null);
-		usuario.setFechaRegistro(ahora);
-		usuario.setFechaActualizacion(ahora);
-	}
+    private Usuario crearUsuario(
+            RegistrarUsuarioRequest datos,
+            ProteccionDocumento.DatosDocumento datosDocumento,
+            Rol rol) {
 
-	public boolean generarCodigoRecuperacion(String correo) {
+        Usuario usuario = new Usuario();
 
-		if (correo == null || correo.isBlank()) {
-			return false;
-		}
+        usuario.setNombre(datos.getNombre());
+        usuario.setApellido(datos.getApellido());
+        usuario.setCorreo(datos.getCorreo().trim());
+        usuario.setTipoDocumento(datos.getTipoDocumento());
+        usuario.setTelefono(datos.getTelefono().trim());
 
-		Optional<Usuario> resultado = usuarioRepository.findByCorreoIgnoreCase(correo.trim());
+        usuario.setRol(rol);
 
-		if (resultado.isEmpty()) {
-			return false;
-		}
+        usuario.setDocumentoCifrado(datosDocumento.documentoCifrado());
+        usuario.setDocumentoNonce(datosDocumento.documentoNonce());
+        usuario.setDocumentoHash(datosDocumento.documentoHash());
 
-		String correoUsuario = resultado.get().getCorreo();
+        usuario.setContrasenaHash(
+                proteccionContrasena.generarHash(datos.getContrasena())
+        );
 
-		String codigo = String.format("%06d", random.nextInt(1_000_000));
+        return usuario;
+    }
 
-		String clave = "recuperacion:contrasena:" + correoUsuario.toLowerCase(java.util.Locale.ROOT);
+    private void completarCampos(Usuario usuario) {
 
-		redisTemplate.opsForValue().set(clave, calcularHashCodigo(codigo), 5, TimeUnit.MINUTES);
+        OffsetDateTime ahora = OffsetDateTime.now();
 
-		try {
-			correoExterno.enviarCodigoRecuperacion(correoUsuario, codigo);
-			return true;
+        usuario.setIdUsuario(UUID.randomUUID());
+        usuario.setCorreoVerificado(false);
+        usuario.setEstado(EstadoUsuario.PENDIENTE_VERIFICACION);
+        usuario.setRestringido(false);
+        usuario.setIntentosFallidos(0);
+        usuario.setMotivoRestriccion(null);
+        usuario.setFechaRegistro(ahora);
+        usuario.setFechaActualizacion(ahora);
+    }
 
-		} catch (Exception e) {
-			redisTemplate.delete(clave);
-			throw e;
-		}
-	}
+    public boolean generarCodigoRecuperacion(String correo) {
 
-	private String calcularHashCodigo(String codigo) {
-		try {
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			byte[] hash = digest.digest(codigo.getBytes(StandardCharsets.UTF_8));
+        if (correo == null || correo.isBlank()) {
+            return false;
+        }
 
-			return HexFormat.of().formatHex(hash);
+        Optional<Usuario> resultado =
+                usuarioRepository.findByCorreoIgnoreCase(correo.trim());
 
-		} catch (Exception e) {
-			throw new IllegalStateException("No se pudo generar el hash del código", e);
-		}
-	}
+        if (resultado.isEmpty()) {
+            return false;
+        }
 
-	public boolean validarCodigoRecuperacion(String correo, String codigo) {
+        String correoUsuario = resultado.get().getCorreo();
 
-		if (correo == null || correo.isBlank() || codigo == null || !codigo.matches("\\d{6}")) {
-			return false;
-		}
+        String codigo = String.format(
+                "%06d",
+                random.nextInt(1_000_000)
+        );
 
-		String correoNormalizado = correo.trim().toLowerCase(java.util.Locale.ROOT);
+        String clave = "recuperacion:contrasena:"
+                + correoUsuario.toLowerCase(Locale.ROOT);
 
-		String claveCodigo = "recuperacion:contrasena:" + correoNormalizado;
-		String claveIntentos = "recuperacion:contrasena:intentos:" + correoNormalizado;
+        redisTemplate.opsForValue().set(
+                clave,
+                calcularHashCodigo(codigo),
+                5,
+                TimeUnit.MINUTES
+        );
 
-		String hashGuardado = redisTemplate.opsForValue().get(claveCodigo);
+        try {
+            correoExterno.enviarCodigoRecuperacion(correoUsuario, codigo);
+            return true;
 
-		// Si no existe, el código expiró o no se solicitó.
-		if (hashGuardado == null) {
-			return false;
-		}
+        } catch (Exception e) {
+            redisTemplate.delete(clave);
+            throw e;
+        }
+    }
 
-		String hashIngresado = calcularHashCodigo(codigo);
+    private String calcularHashCodigo(String codigo) {
 
-		// El código es correcto.
-		if (hashGuardado.equals(hashIngresado)) {
-			return true;
-		}
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
-		// Aumentar el contador de intentos incorrectos.
-		Long intentos = redisTemplate.opsForValue().increment(claveIntentos);
+            byte[] hash = digest.digest(
+                    codigo.getBytes(StandardCharsets.UTF_8)
+            );
 
-		// El contador también debe expirar en cinco minutos.
-		if (intentos != null && intentos == 1) {
-			redisTemplate.expire(claveIntentos, 5, TimeUnit.MINUTES);
-		}
+            return HexFormat.of().formatHex(hash);
 
-		// Al quinto intento incorrecto, invalidar el código.
-		if (intentos != null && intentos >= 5) {
-			redisTemplate.delete(claveCodigo);
-			redisTemplate.delete(claveIntentos);
-		}
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "No se pudo generar el hash del código",
+                    e
+            );
+        }
+    }
 
-		return false;
-	}
+    public boolean validarCodigoRecuperacion(
+            String correo,
+            String codigo) {
 
-	public boolean restablecerContrasena(String correo, String codigo, String nuevaContrasena) {
+        if (correo == null || correo.isBlank()
+                || codigo == null
+                || !codigo.matches("\\d{6}")) {
+            return false;
+        }
 
-		if (correo == null || correo.isBlank() || nuevaContrasena == null || nuevaContrasena.isBlank()) {
-			return false;
-		}
+        String correoNormalizado =
+                correo.trim().toLowerCase(Locale.ROOT);
 
-		// Primero comprobamos que el código sea válido.
-		if (!validarCodigoRecuperacion(correo, codigo)) {
-			return false;
-		}
+        String claveCodigo =
+                "recuperacion:contrasena:" + correoNormalizado;
 
-		Optional<Usuario> resultado = usuarioRepository.findByCorreoIgnoreCase(correo.trim());
+        String claveIntentos =
+                "recuperacion:contrasena:intentos:" + correoNormalizado;
 
-		if (resultado.isEmpty()) {
-			return false;
-		}
+        String hashGuardado =
+                redisTemplate.opsForValue().get(claveCodigo);
 
-		Usuario usuario = resultado.get();
+        if (hashGuardado == null) {
+            return false;
+        }
 
-		// Guardamos la contraseña usando el hash seguro existente.
-		usuario.setContrasenaHash(proteccionContrasena.generarHash(nuevaContrasena));
+        String hashIngresado = calcularHashCodigo(codigo);
 
-		usuario.setFechaActualizacion(OffsetDateTime.now());
+        if (hashGuardado.equals(hashIngresado)) {
+            return true;
+        }
 
-		usuarioRepository.save(usuario);
+        Long intentos =
+                redisTemplate.opsForValue().increment(claveIntentos);
 
-		// Invalidamos el código y el contador para impedir su reutilización.
-		String correoNormalizado = usuario.getCorreo().toLowerCase(java.util.Locale.ROOT);
+        if (intentos != null && intentos == 1) {
+            redisTemplate.expire(
+                    claveIntentos,
+                    5,
+                    TimeUnit.MINUTES
+            );
+        }
 
-		redisTemplate.delete("recuperacion:contrasena:" + correoNormalizado);
+        if (intentos != null && intentos >= 5) {
+            redisTemplate.delete(claveCodigo);
+            redisTemplate.delete(claveIntentos);
+        }
 
-		redisTemplate.delete("recuperacion:contrasena:intentos:" + correoNormalizado);
+        return false;
+    }
 
-		return true;
-	}
+    public boolean restablecerContrasena(
+            String correo,
+            String codigo,
+            String nuevaContrasena) {
 
+        if (correo == null || correo.isBlank()
+                || nuevaContrasena == null
+                || nuevaContrasena.isBlank()) {
+            return false;
+        }
+
+        if (!validarCodigoRecuperacion(correo, codigo)) {
+            return false;
+        }
+
+        Optional<Usuario> resultado =
+                usuarioRepository.findByCorreoIgnoreCase(correo.trim());
+
+        if (resultado.isEmpty()) {
+            return false;
+        }
+
+        Usuario usuario = resultado.get();
+
+        usuario.setContrasenaHash(
+                proteccionContrasena.generarHash(nuevaContrasena)
+        );
+
+        usuario.setFechaActualizacion(OffsetDateTime.now());
+
+        usuarioRepository.save(usuario);
+
+        String correoNormalizado =
+                usuario.getCorreo().toLowerCase(Locale.ROOT);
+
+        redisTemplate.delete(
+                "recuperacion:contrasena:" + correoNormalizado
+        );
+
+        redisTemplate.delete(
+                "recuperacion:contrasena:intentos:" + correoNormalizado
+        );
+
+        return true;
+    }
 }

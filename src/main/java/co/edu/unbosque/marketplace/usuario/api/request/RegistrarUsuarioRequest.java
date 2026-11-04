@@ -1,20 +1,15 @@
 package co.edu.unbosque.marketplace.usuario.api.request;
 
-import java.util.UUID;
-
 public class RegistrarUsuarioRequest {
 
     private String nombre;
     private String apellido;
     private String correo;
-
     private String tipoDocumento;
     private String documentoIdentidad;
-
     private String telefono;
     private String contrasena;
-
-    private UUID idRol;
+    private String rol;
 
     public RegistrarUsuarioRequest() {
     }
@@ -75,11 +70,11 @@ public class RegistrarUsuarioRequest {
         this.contrasena = contrasena;
     }
 
-    public UUID getIdRol() {
-        return idRol;
+    public String getRol() {
+        return rol;
     }
 
-    public void setIdRol(UUID idRol) {
-        this.idRol = idRol;
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 }
