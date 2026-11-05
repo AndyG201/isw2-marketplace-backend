@@ -3,6 +3,8 @@ package co.edu.unbosque.marketplace.config;
 
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,57 +35,70 @@ public class SecurityConfig {
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             UserDetailsService userDetailsService) {
+
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.userDetailsService = userDetailsService;
     }
 
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            AuthenticationProvider authenticationProvider) throws Exception {
 
-@Bean
-public SecurityFilterChain securityFilterChain(
-        HttpSecurity http,
-        AuthenticationProvider authenticationProvider) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> {})
+            .authorizeHttpRequests(auth -> auth
 
-    http
-        .csrf(csrf -> csrf.disable())
-        .cors(cors -> {})
-        .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/autenticacion/**").permitAll()
+                .requestMatchers("/verificacion-correo/**").permitAll()
 
-            // Registro y verificación del correo
-            .requestMatchers("/autenticacion/**").permitAll()
-            .requestMatchers("/verificacion-correo/**").permitAll()
+                .requestMatchers(
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/v3/api-docs/**"
+                ).permitAll()
 
-            // Swagger
-            .requestMatchers(
-                "/swagger-ui/**",
-                "/swagger-ui.html",
-                "/v3/api-docs/**"
-            ).permitAll()
+                .requestMatchers("/recuperacion-contrasena/**").permitAll()
 
-            // Prueba temporal de Redis
-            .requestMatchers("/redis-prueba").permitAll()
-            .requestMatchers("/recuperacion-contrasena/**").permitAll()
-            .requestMatchers(
-            	    HttpMethod.PATCH,
-            	    "/administracion/usuarios/reactivar-bloqueo"
-            	).hasAuthority("ROLE_ADMINISTRADOR")
+                .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/administracion/usuarios/reactivar-bloqueo"
+                ).hasAuthority("ROLE_ADMINISTRADOR")
 
-            // Las demás rutas requieren autenticación
-            .anyRequest().authenticated()
-        )
-        .sessionManagement(session ->
-            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        )
-        .authenticationProvider(authenticationProvider)
-        .addFilterBefore(
-            jwtAuthenticationFilter,
-            UsernamePasswordAuthenticationFilter.class
-        );
+                .anyRequest().authenticated()
+            )
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    response.getWriter().write(
+                        "{\"mensaje\":\"Debes iniciar sesión para acceder a este recurso.\"}"
+                    );
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    response.getWriter().write(
+                        "{\"mensaje\":\"No tienes permisos para realizar esta operación.\"}"
+                    );
+                })
+            )
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authenticationProvider(authenticationProvider)
+            .addFilterBefore(
+                jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class
+            );
 
-    return http.build();
-}
-
+        return http.build();
+    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
