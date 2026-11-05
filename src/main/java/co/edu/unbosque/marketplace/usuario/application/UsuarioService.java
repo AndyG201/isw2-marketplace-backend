@@ -23,6 +23,7 @@ import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.RolReposit
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionContrasena;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionDocumento;
+import co.edu.unbosque.marketplace.usuario.api.response.ConsultarCuentaResponse;
 
 @Service
 public class UsuarioService {
@@ -283,28 +284,44 @@ public class UsuarioService {
 
 	public void reactivarBloqueo(String correo) {
 
-	    if (correo == null || correo.isBlank()) {
-	        throw new IllegalArgumentException(
-	                "Debes proporcionar el correo del usuario");
-	    }
+		if (correo == null || correo.isBlank()) {
+			throw new IllegalArgumentException("Debes proporcionar el correo del usuario");
+		}
 
-	    Usuario usuario = usuarioRepository
-	            .findByCorreoIgnoreCase(correo.trim())
-	            .orElseThrow(() ->
-	                    new IllegalArgumentException("Usuario no encontrado"));
+		Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(correo.trim())
+				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
-	    if (usuario.getIntentosFallidos() < 5
-	            || !"Bloqueo automático por intentos fallidos"
-	                    .equals(usuario.getMotivoBloqueo())) {
+		if (usuario.getIntentosFallidos() < 5
+				|| !"Bloqueo automático por intentos fallidos".equals(usuario.getMotivoBloqueo())) {
 
-	        throw new IllegalStateException(
-	                "La cuenta no tiene un bloqueo automático pendiente de reactivación");
-	    }
+			throw new IllegalStateException("La cuenta no tiene un bloqueo automático pendiente de reactivación");
+		}
 
-	    usuario.setIntentosFallidos(0);
-	    usuario.setMotivoBloqueo(null);
-	    usuario.setFechaActualizacion(OffsetDateTime.now());
+		usuario.setIntentosFallidos(0);
+		usuario.setMotivoBloqueo(null);
+		usuario.setFechaActualizacion(OffsetDateTime.now());
 
-	    usuarioRepository.save(usuario);
+		usuarioRepository.save(usuario);
 	}
+
+	public ConsultarCuentaResponse consultarMiCuenta(UUID idUsuario) {
+
+		if (idUsuario == null) {
+			throw new IllegalArgumentException("No se pudo identificar al usuario.");
+		}
+
+		Usuario usuario = usuarioRepository.findById(idUsuario)
+				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+		if (usuario.getRol() == null) {
+			throw new IllegalStateException("El usuario no tiene un rol asignado.");
+		}
+
+		String documento = proteccionDocumento.descifrarDocumento(usuario.getDocumentoCifrado(),
+				usuario.getDocumentoNonce());
+
+		return new ConsultarCuentaResponse(usuario.getNombre(), usuario.getApellido(), usuario.getCorreo(),
+				usuario.getTipoDocumento(), documento, usuario.getRol().getNombre());
+	}
+
 }
