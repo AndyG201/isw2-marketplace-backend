@@ -80,6 +80,13 @@ public class SecurityConfig {
                 	    "/publicaciones/mis-publicaciones",
                 	    "/publicaciones/mis-publicaciones/**"
                 	).hasAuthority("ROLE_ANFITRION")
+                .requestMatchers(
+                	    HttpMethod.PUT,
+                	    "/publicaciones/**"
+                	).hasAnyAuthority(
+                	    "ROLE_ANFITRION",
+                	    "ROLE_ADMINISTRADOR"
+                	)
 
                 .anyRequest().authenticated()
             )
