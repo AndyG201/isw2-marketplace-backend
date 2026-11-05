@@ -65,6 +65,16 @@ public class SecurityConfig {
 
                 .requestMatchers("/administracion/usuarios/**")
                 .hasAuthority("ROLE_ADMINISTRADOR")
+                .requestMatchers(
+                	    HttpMethod.POST,
+                	    "/alojamientos"
+                	).hasAuthority("ROLE_ANFITRION")
+                
+                .requestMatchers(
+                	    HttpMethod.GET,
+                	    "/servicios",
+                	    "/politicas-cancelacion/activas"
+                	).hasAuthority("ROLE_ANFITRION")
 
                 .anyRequest().authenticated()
             )

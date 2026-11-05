@@ -1,3 +1,4 @@
+
 package co.edu.unbosque.marketplace.servicio.domain;
 
 import java.util.UUID;
@@ -18,42 +19,33 @@ public class Servicio {
     @Column(name = "nombre", length = 100, nullable = false)
     private String nombre;
 
-    @Column(name = "descripcion")
+    @Column(name = "descripcion", columnDefinition = "text")
     private String descripcion;
 
     public Servicio() {
     }
 
-	public Servicio(UUID idServicio, String nombre, String descripcion) {
-		super();
-		this.idServicio = idServicio;
-		this.nombre = nombre;
-		this.descripcion = descripcion;
-	}
+    public UUID getIdServicio() {
+        return idServicio;
+    }
 
-	public UUID getIdServicio() {
-		return idServicio;
-	}
+    public void setIdServicio(UUID idServicio) {
+        this.idServicio = idServicio;
+    }
 
-	public void setIdServicio(UUID idServicio) {
-		this.idServicio = idServicio;
-	}
+    public String getNombre() {
+        return nombre;
+    }
 
-	public String getNombre() {
-		return nombre;
-	}
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
 
-	public void setNombre(String nombre) {
-		this.nombre = nombre;
-	}
+    public String getDescripcion() {
+        return descripcion;
+    }
 
-	public String getDescripcion() {
-		return descripcion;
-	}
-
-	public void setDescripcion(String descripcion) {
-		this.descripcion = descripcion;
-	}
-
-    
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
 }

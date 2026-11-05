@@ -8,6 +8,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
@@ -42,6 +43,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authorizationHeader =
                 request.getHeader("Authorization");
 
+        logger.info("[JWT] Peticion: "
+                + request.getMethod()
+                + " "
+                + request.getRequestURI());
+
+        logger.info("[JWT] Authorization presente: "
+                + (authorizationHeader != null));
+
         if (authorizationHeader != null
                 && authorizationHeader.startsWith("Bearer ")) {
 
@@ -51,6 +60,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 String username = jwtUtil.extractUsername(jwt);
 
+                logger.info("[JWT] Usuario extraido correctamente.");
+
                 if (username != null
                         && SecurityContextHolder.getContext()
                                 .getAuthentication() == null) {
@@ -58,9 +69,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UserDetails userDetails =
                             userDetailsService.loadUserByUsername(username);
 
-                    if (userDetails instanceof Usuario usuario
-                            && jwtUtil.validateToken(jwt, userDetails)
-                            && cuentaPuedeUsarSesion(usuario)) {
+                    boolean tokenValido =
+                            jwtUtil.validateToken(jwt, userDetails);
+
+                    boolean cuentaHabilitada = false;
+
+                    if (userDetails instanceof Usuario usuario) {
+                        cuentaHabilitada =
+                                cuentaPuedeUsarSesion(usuario);
+                    }
+
+                    logger.info("[JWT] Token valido: " + tokenValido);
+
+                    logger.info("[JWT] Cuenta habilitada: "
+                            + cuentaHabilitada);
+
+                    logger.info("[JWT] Autoridades: "
+                            + userDetails.getAuthorities());
+
+                    if (userDetails instanceof Usuario
+                            && tokenValido
+                            && cuentaHabilitada) {
 
                         UsernamePasswordAuthenticationToken authenticationToken =
                                 new UsernamePasswordAuthenticationToken(
@@ -70,16 +99,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 );
 
                         authenticationToken.setDetails(
-                                new org.springframework.security.web.authentication
-                                        .WebAuthenticationDetailsSource()
+                                new WebAuthenticationDetailsSource()
                                         .buildDetails(request)
                         );
 
                         SecurityContextHolder.getContext()
                                 .setAuthentication(authenticationToken);
 
+                        logger.info("[JWT] Autenticacion establecida correctamente.");
+
                     } else {
+
                         SecurityContextHolder.clearContext();
+
+                        logger.warn("[JWT] Autenticacion rechazada.");
                     }
                 }
 
@@ -87,7 +120,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.clearContext();
 
-                logger.warn("No se pudo validar el token JWT");
+                logger.error("[JWT] Error validando autenticacion: "
+                        + e.getMessage(), e);
             }
         }
 
