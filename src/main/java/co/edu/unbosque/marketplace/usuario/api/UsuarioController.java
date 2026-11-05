@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 
 import co.edu.unbosque.marketplace.usuario.api.request.AutenticacionRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.RegistrarUsuarioRequest;
+import co.edu.unbosque.marketplace.usuario.api.request.ReactivarCuentaRequest;
 import co.edu.unbosque.marketplace.usuario.api.response.AutenticacionResponse;
 import co.edu.unbosque.marketplace.usuario.application.AutenticacionService;
 import co.edu.unbosque.marketplace.usuario.application.UsuarioService;
@@ -56,6 +57,28 @@ public class UsuarioController {
             String token = autenticacionService.iniciarSesion(solicitud);
 
             return ResponseEntity.ok(new AutenticacionResponse(token));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(e.getMessage());
+
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/reactivar")
+    public ResponseEntity<String> reactivarCuenta(
+            @Valid @RequestBody ReactivarCuentaRequest solicitud) {
+
+        try {
+            usuarioService.reactivarCuenta(solicitud);
+
+            return ResponseEntity.ok(
+                    "Tu cuenta ha sido reactivada correctamente. "
+                    + "Inicia sesión nuevamente."
+            );
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

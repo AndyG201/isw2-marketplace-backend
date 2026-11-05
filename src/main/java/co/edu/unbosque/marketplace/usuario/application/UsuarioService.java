@@ -25,9 +25,16 @@ import co.edu.unbosque.marketplace.usuario.security.ProteccionContrasena;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionDocumento;
 import co.edu.unbosque.marketplace.usuario.api.response.ConsultarCuentaResponse;
 import co.edu.unbosque.marketplace.usuario.api.request.ActualizarPerfilRequest;
+import co.edu.unbosque.marketplace.usuario.api.request.ReactivarCuentaRequest;
+
+import org.springframework.transaction.annotation.Transactional;
+import co.edu.unbosque.marketplace.usuario.security.JwtUtil;
 
 @Service
 public class UsuarioService {
+
+	@Autowired
+	private JwtUtil jwtUtil;
 
 	@Autowired
 	private UsuarioRepository usuarioRepository;
@@ -481,6 +488,80 @@ public class UsuarioService {
 
 		usuario.setContrasenaHash(proteccionContrasena.generarHash(solicitud.getNuevaContrasena()));
 
+		usuario.setFechaActualizacion(OffsetDateTime.now());
+
+		usuarioRepository.save(usuario);
+	}
+
+	@Transactional
+	public void desactivarCuenta(UUID idUsuario) {
+
+		if (idUsuario == null) {
+			throw new IllegalArgumentException("No se pudo identificar al usuario.");
+		}
+
+		Usuario usuario = usuarioRepository.findById(idUsuario)
+				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+		if (usuario.isRestringido()) {
+			throw new IllegalStateException("No puedes desactivar una cuenta con restricción administrativa.");
+		}
+
+		if (usuario.getIntentosFallidos() >= 5
+				|| "Bloqueo automático por intentos fallidos".equals(usuario.getMotivoBloqueo())) {
+
+			throw new IllegalStateException("No puedes desactivar una cuenta bloqueada por intentos fallidos.");
+		}
+
+		if (usuario.getEstado() != EstadoUsuario.ACTIVA || !usuario.isCorreoVerificado()) {
+
+			throw new IllegalStateException("La cuenta no se encuentra activa.");
+		}
+
+		usuario.setEstado(EstadoUsuario.INACTIVA);
+		usuario.setFechaActualizacion(OffsetDateTime.now());
+
+		usuarioRepository.save(usuario);
+
+		jwtUtil.invalidarSesiones(idUsuario);
+	}
+
+	public void reactivarCuenta(ReactivarCuentaRequest solicitud) {
+
+		if (solicitud == null || textoVacio(solicitud.getCorreo()) || textoVacio(solicitud.getContrasena())) {
+
+			throw new IllegalArgumentException("Debes proporcionar el correo y la contraseña.");
+		}
+
+		Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(solicitud.getCorreo().trim())
+				.orElseThrow(() -> new IllegalArgumentException("Correo o contraseña incorrectos."));
+
+		if (usuario.isRestringido()) {
+			throw new IllegalStateException(
+					"Tu cuenta tiene una restricción administrativa. " + "Debes comunicarte con un Administrador.");
+		}
+
+		if (usuario.getIntentosFallidos() >= 5
+				|| "Bloqueo automático por intentos fallidos".equals(usuario.getMotivoBloqueo())) {
+
+			throw new IllegalStateException("Tu cuenta está bloqueada por intentos fallidos. "
+					+ "Debes solicitar su reactivación a un Administrador.");
+		}
+
+		if (usuario.getEstado() != EstadoUsuario.INACTIVA) {
+			throw new IllegalStateException("La cuenta no se encuentra desactivada.");
+		}
+
+		if (!usuario.isCorreoVerificado()) {
+			throw new IllegalStateException("Debes tener el correo verificado para reactivar tu cuenta.");
+		}
+
+		if (!proteccionContrasena.verificar(solicitud.getContrasena(), usuario.getContrasenaHash())) {
+
+			throw new IllegalArgumentException("Correo o contraseña incorrectos.");
+		}
+
+		usuario.setEstado(EstadoUsuario.ACTIVA);
 		usuario.setFechaActualizacion(OffsetDateTime.now());
 
 		usuarioRepository.save(usuario);

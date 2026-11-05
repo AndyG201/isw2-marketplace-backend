@@ -28,101 +28,102 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 @SecurityRequirement(name = "bearerAuth")
 public class CuentaController {
 
-    private final UsuarioService usuarioService;
+	private final UsuarioService usuarioService;
 
-    public CuentaController(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
-    }
+	public CuentaController(UsuarioService usuarioService) {
+		this.usuarioService = usuarioService;
+	}
 
-    @GetMapping("/mi_cuenta")
-    public ResponseEntity<?> consultarMiCuenta(
-            @AuthenticationPrincipal Usuario usuario) {
+	@GetMapping("/mi_cuenta")
+	public ResponseEntity<?> consultarMiCuenta(@AuthenticationPrincipal Usuario usuario) {
 
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+		if (usuario == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
 
-        ConsultarCuentaResponse respuesta =
-                usuarioService.consultarMiCuenta(usuario.getIdUsuario());
+		ConsultarCuentaResponse respuesta = usuarioService.consultarMiCuenta(usuario.getIdUsuario());
 
-        return ResponseEntity.ok(respuesta);
-    }
+		return ResponseEntity.ok(respuesta);
+	}
 
-    @PutMapping("/mi_cuenta/perfil")
-    public ResponseEntity<String> actualizarPerfil(
-            @AuthenticationPrincipal Usuario usuario,
-            @Valid @RequestBody ActualizarPerfilRequest solicitud) {
+	@PutMapping("/mi_cuenta/perfil")
+	public ResponseEntity<String> actualizarPerfil(@AuthenticationPrincipal Usuario usuario,
+			@Valid @RequestBody ActualizarPerfilRequest solicitud) {
 
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+		if (usuario == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
 
-        try {
-            String resultado = usuarioService.actualizarPerfil(
-                    usuario.getIdUsuario(),
-                    solicitud
-            );
+		try {
+			String resultado = usuarioService.actualizarPerfil(usuario.getIdUsuario(), solicitud);
 
-            return ResponseEntity.ok(resultado);
+			return ResponseEntity.ok(resultado);
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
 
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(e.getMessage());
-        }
-    }
+		} catch (IllegalStateException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+	}
 
-    @PostMapping("/mi_cuenta/correo/confirmar")
-    public ResponseEntity<String> confirmarCambioCorreo(
-            @AuthenticationPrincipal Usuario usuario,
-            @Valid @RequestBody ConfirmarCambioCorreoRequest solicitud) {
+	@PostMapping("/mi_cuenta/correo/confirmar")
+	public ResponseEntity<String> confirmarCambioCorreo(@AuthenticationPrincipal Usuario usuario,
+			@Valid @RequestBody ConfirmarCambioCorreoRequest solicitud) {
 
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+		if (usuario == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
 
-        try {
-            usuarioService.confirmarCambioCorreo(
-                    usuario.getIdUsuario(),
-                    solicitud.getCodigo()
-            );
+		try {
+			usuarioService.confirmarCambioCorreo(usuario.getIdUsuario(), solicitud.getCodigo());
 
-            return ResponseEntity.ok(
-                    "El correo electrónico se actualizó y verificó correctamente."
-            );
+			return ResponseEntity.ok("El correo electrónico se actualizó y verificó correctamente.");
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
 
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(e.getMessage());
-        }
-    }
+		} catch (IllegalStateException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+	}
 
-    @PatchMapping("/mi_cuenta/contrasena")
-    public ResponseEntity<String> actualizarContrasena(
-            @AuthenticationPrincipal Usuario usuario,
-            @Valid @RequestBody ActualizarContrasenaRequest solicitud) {
+	@PatchMapping("/mi_cuenta/contrasena")
+	public ResponseEntity<String> actualizarContrasena(@AuthenticationPrincipal Usuario usuario,
+			@Valid @RequestBody ActualizarContrasenaRequest solicitud) {
 
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+		if (usuario == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
 
-        try {
-            usuarioService.actualizarContrasena(
-                    usuario.getIdUsuario(),
-                    solicitud
-            );
+		try {
+			usuarioService.actualizarContrasena(usuario.getIdUsuario(), solicitud);
 
-            return ResponseEntity.ok(
-                    "La contraseña se actualizó correctamente."
-            );
+			return ResponseEntity.ok("La contraseña se actualizó correctamente.");
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@PatchMapping("/mi_cuenta/desactivar")
+	public ResponseEntity<String> desactivarCuenta(@AuthenticationPrincipal Usuario usuario) {
+
+		if (usuario == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+
+		try {
+			usuarioService.desactivarCuenta(usuario.getIdUsuario());
+
+			return ResponseEntity.ok("Tu cuenta ha sido desactivada correctamente.");
+
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+
+		} catch (IllegalStateException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+	}
+
 }
