@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-
+import co.edu.unbosque.marketplace.usuario.api.request.ActualizarContrasenaRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.RegistrarUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Rol;
@@ -24,6 +24,7 @@ import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRep
 import co.edu.unbosque.marketplace.usuario.security.ProteccionContrasena;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionDocumento;
 import co.edu.unbosque.marketplace.usuario.api.response.ConsultarCuentaResponse;
+import co.edu.unbosque.marketplace.usuario.api.request.ActualizarPerfilRequest;
 
 @Service
 public class UsuarioService {
@@ -50,6 +51,8 @@ public class UsuarioService {
 	private ExternalHTTPRequestMapping correoExterno;
 
 	private final SecureRandom random = new SecureRandom();
+	private static final long VIGENCIA_CAMBIO_CORREO = 5;
+	private static final int MAX_INTENTOS_CAMBIO_CORREO = 5;
 
 	public int registrar(RegistrarUsuarioRequest nuevoUsuario) {
 
@@ -322,6 +325,165 @@ public class UsuarioService {
 
 		return new ConsultarCuentaResponse(usuario.getNombre(), usuario.getApellido(), usuario.getCorreo(),
 				usuario.getTipoDocumento(), documento, usuario.getRol().getNombre());
+	}
+
+	public String actualizarPerfil(UUID idUsuario, ActualizarPerfilRequest solicitud) {
+
+		if (idUsuario == null || solicitud == null || solicitud.getNombre() == null || solicitud.getNombre().isBlank()
+				|| solicitud.getApellido() == null || solicitud.getApellido().isBlank() || solicitud.getCorreo() == null
+				|| solicitud.getCorreo().isBlank()) {
+
+			throw new IllegalArgumentException("Debes proporcionar todos los datos del perfil.");
+		}
+
+		Usuario usuario = usuarioRepository.findById(idUsuario)
+				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+		String nombre = solicitud.getNombre().trim();
+		String apellido = solicitud.getApellido().trim();
+		String correoNuevo = solicitud.getCorreo().trim();
+
+		boolean cambioCorreo = !usuario.getCorreo().equalsIgnoreCase(correoNuevo);
+
+		if (cambioCorreo) {
+
+			if (usuarioRepository.existsByCorreoIgnoreCaseAndIdUsuarioNot(correoNuevo, idUsuario)) {
+
+				throw new IllegalStateException("El correo electrónico ya está asociado a otra cuenta.");
+			}
+
+			String codigo = String.format("%06d", random.nextInt(1_000_000));
+
+			String prefijo = "perfil:cambio-correo:" + idUsuario;
+
+			redisTemplate.opsForValue().set(prefijo + ":correo", correoNuevo, VIGENCIA_CAMBIO_CORREO, TimeUnit.MINUTES);
+
+			redisTemplate.opsForValue().set(prefijo + ":codigo", calcularHashCodigo(codigo), VIGENCIA_CAMBIO_CORREO,
+					TimeUnit.MINUTES);
+
+			redisTemplate.opsForValue().set(prefijo + ":intentos", "0", VIGENCIA_CAMBIO_CORREO, TimeUnit.MINUTES);
+
+			try {
+
+				correoExterno.enviarCodigoVerificacion(correoNuevo, codigo);
+
+			} catch (RuntimeException e) {
+
+				eliminarDatosCambioCorreo(idUsuario);
+
+				throw new IllegalStateException("No se pudo enviar el código al nuevo correo.", e);
+			}
+		}
+
+		usuario.setNombre(nombre);
+		usuario.setApellido(apellido);
+		usuario.setFechaActualizacion(OffsetDateTime.now());
+
+		try {
+			usuarioRepository.save(usuario);
+
+		} catch (RuntimeException e) {
+
+			if (cambioCorreo) {
+				eliminarDatosCambioCorreo(idUsuario);
+			}
+
+			throw e;
+		}
+
+		if (cambioCorreo) {
+			return "Perfil actualizado. Se envió un código al nuevo correo para confirmar el cambio.";
+		}
+
+		return "Perfil actualizado correctamente.";
+	}
+
+	public void confirmarCambioCorreo(UUID idUsuario, String codigo) {
+
+		if (idUsuario == null || codigo == null || !codigo.matches("\\d{6}")) {
+
+			throw new IllegalArgumentException("Debes proporcionar un código válido de seis dígitos.");
+		}
+
+		Usuario usuario = usuarioRepository.findById(idUsuario)
+				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+		String prefijo = "perfil:cambio-correo:" + idUsuario;
+
+		String correoNuevo = redisTemplate.opsForValue().get(prefijo + ":correo");
+
+		String hashGuardado = redisTemplate.opsForValue().get(prefijo + ":codigo");
+
+		if (correoNuevo == null || hashGuardado == null) {
+
+			eliminarDatosCambioCorreo(idUsuario);
+
+			throw new IllegalStateException("El código ha expirado o no existe una solicitud pendiente.");
+		}
+
+		String hashIngresado = calcularHashCodigo(codigo);
+
+		if (!hashGuardado.equals(hashIngresado)) {
+
+			Long intentos = redisTemplate.opsForValue().increment(prefijo + ":intentos");
+
+			if (intentos != null && intentos >= MAX_INTENTOS_CAMBIO_CORREO) {
+
+				eliminarDatosCambioCorreo(idUsuario);
+
+				throw new IllegalStateException(
+						"Superaste los cinco intentos. Solicita nuevamente el cambio de correo.");
+			}
+
+			throw new IllegalArgumentException("El código de verificación es incorrecto.");
+		}
+
+		if (usuarioRepository.existsByCorreoIgnoreCaseAndIdUsuarioNot(correoNuevo, idUsuario)) {
+
+			eliminarDatosCambioCorreo(idUsuario);
+
+			throw new IllegalStateException("El correo electrónico ya está asociado a otra cuenta.");
+		}
+
+		usuario.setCorreo(correoNuevo);
+		usuario.setCorreoVerificado(true);
+		usuario.setFechaActualizacion(OffsetDateTime.now());
+
+		usuarioRepository.save(usuario);
+
+		eliminarDatosCambioCorreo(idUsuario);
+	}
+
+	private void eliminarDatosCambioCorreo(UUID idUsuario) {
+
+		String prefijo = "perfil:cambio-correo:" + idUsuario;
+
+		redisTemplate.delete(prefijo + ":correo");
+		redisTemplate.delete(prefijo + ":codigo");
+		redisTemplate.delete(prefijo + ":intentos");
+	}
+
+	public void actualizarContrasena(UUID idUsuario, ActualizarContrasenaRequest solicitud) {
+
+		if (idUsuario == null || solicitud == null || textoVacio(solicitud.getContrasenaActual())
+				|| textoVacio(solicitud.getNuevaContrasena())) {
+
+			throw new IllegalArgumentException("Debes proporcionar la contraseña actual y la nueva contraseña.");
+		}
+
+		Usuario usuario = usuarioRepository.findById(idUsuario)
+				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+		if (!proteccionContrasena.verificar(solicitud.getContrasenaActual(), usuario.getContrasenaHash())) {
+
+			throw new IllegalArgumentException("La contraseña actual es incorrecta.");
+		}
+
+		usuario.setContrasenaHash(proteccionContrasena.generarHash(solicitud.getNuevaContrasena()));
+
+		usuario.setFechaActualizacion(OffsetDateTime.now());
+
+		usuarioRepository.save(usuario);
 	}
 
 }
