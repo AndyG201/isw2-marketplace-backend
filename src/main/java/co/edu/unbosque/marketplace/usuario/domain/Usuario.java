@@ -75,6 +75,9 @@ public class Usuario implements UserDetails {
 
     @Column(name = "motivo_restriccion")
     private String motivoRestriccion;
+    
+    @Column(name = "motivo_bloqueo", length = 255)
+    private String motivoBloqueo;
 
     @Column(name = "fecha_registro", nullable = false)
     private OffsetDateTime fechaRegistro;
@@ -187,6 +190,13 @@ public class Usuario implements UserDetails {
 
     public void setEstado(EstadoUsuario estado) {
         this.estado = estado;
+    }
+    public String getMotivoBloqueo() {
+        return motivoBloqueo;
+    }
+
+    public void setMotivoBloqueo(String motivoBloqueo) {
+        this.motivoBloqueo = motivoBloqueo;
     }
 
     public boolean isRestringido() {

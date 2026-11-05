@@ -64,6 +64,10 @@ public SecurityFilterChain securityFilterChain(
             // Prueba temporal de Redis
             .requestMatchers("/redis-prueba").permitAll()
             .requestMatchers("/recuperacion-contrasena/**").permitAll()
+            .requestMatchers(
+            	    HttpMethod.PATCH,
+            	    "/administracion/usuarios/reactivar-bloqueo"
+            	).hasAuthority("ROLE_ADMINISTRADOR")
 
             // Las demás rutas requieren autenticación
             .anyRequest().authenticated()

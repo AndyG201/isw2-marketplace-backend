@@ -1,6 +1,8 @@
 
 package co.edu.unbosque.marketplace.usuario.application;
 
+import java.time.OffsetDateTime;
+
 import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.marketplace.usuario.api.request.AutenticacionRequest;
@@ -17,6 +19,10 @@ public class AutenticacionService {
     private final ProteccionContrasena proteccionContrasena;
     private final JwtUtil jwtUtil;
 
+    private static final int MAX_INTENTOS = 5;
+
+    private static final String MOTIVO_BLOQUEO = "Bloqueo automático por intentos fallidos";
+
     public AutenticacionService(
             UsuarioRepository usuarioRepository,
             ProteccionContrasena proteccionContrasena,
@@ -27,13 +33,8 @@ public class AutenticacionService {
         this.jwtUtil = jwtUtil;
     }
 
-    // =====================================================
-    // INICIAR SESIÓN - HU-002
-    // =====================================================
-
     public String iniciarSesion(AutenticacionRequest solicitud) {
 
-        // 1. Validar campos obligatorios.
         if (solicitud == null
                 || solicitud.getCorreo() == null
                 || solicitud.getCorreo().isBlank()
@@ -45,33 +46,12 @@ public class AutenticacionService {
             );
         }
 
-        // 2. Buscar usuario por correo.
         Usuario usuario = usuarioRepository
                 .findByCorreoIgnoreCase(solicitud.getCorreo().trim())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Correo o contraseña incorrectos."
                 ));
 
-        // 3. Verificar contraseña.
-        if (!proteccionContrasena.verificar(
-                solicitud.getContrasena(),
-                usuario.getContrasenaHash())) {
-
-            throw new IllegalArgumentException(
-                    "Correo o contraseña incorrectos."
-            );
-        }
-
-        // 4. Verificar que el correo esté confirmado.
-        if (!usuario.isCorreoVerificado()
-                || usuario.getEstado() == EstadoUsuario.PENDIENTE_VERIFICACION) {
-
-            throw new IllegalStateException(
-                    "Debes verificar tu correo antes de iniciar sesión."
-            );
-        }
-
-        // 5. Verificar restricción administrativa.
         if (usuario.isRestringido()) {
 
             throw new IllegalStateException(
@@ -80,8 +60,7 @@ public class AutenticacionService {
             );
         }
 
-        // 6. Verificar bloqueo por intentos fallidos.
-        if (usuario.getIntentosFallidos() >= 5) {
+        if (usuario.getIntentosFallidos() >= MAX_INTENTOS) {
 
             throw new IllegalStateException(
                     "Tu cuenta está bloqueada por intentos fallidos. "
@@ -89,16 +68,21 @@ public class AutenticacionService {
             );
         }
 
-        // 7. Verificar si el usuario desactivó su cuenta.
-        if (usuario.getEstado() == EstadoUsuario.INACTIVA) {
+        if (!usuario.isCorreoVerificado()
+                || usuario.getEstado() == EstadoUsuario.PENDIENTE_VERIFICACION) {
 
             throw new IllegalStateException(
-                    "Tu cuenta está desactivada. "
-                    + "Solo puedes acceder a la opción de reactivarla."
+                    "Debes verificar tu correo antes de iniciar sesión."
             );
         }
 
-        // 8. Comprobar que la cuenta esté activa.
+        if (usuario.getEstado() == EstadoUsuario.INACTIVA) {
+
+            throw new IllegalStateException(
+                    "Tu cuenta está desactivada."
+            );
+        }
+
         if (usuario.getEstado() != EstadoUsuario.ACTIVA) {
 
             throw new IllegalStateException(
@@ -106,7 +90,26 @@ public class AutenticacionService {
             );
         }
 
-        // 9. Comprobar que tenga un rol asignado.
+        if (!proteccionContrasena.verificar(
+                solicitud.getContrasena(),
+                usuario.getContrasenaHash())) {
+
+            registrarIntentoFallido(usuario);
+
+            if (usuario.getIntentosFallidos() >= MAX_INTENTOS) {
+
+                throw new IllegalStateException(
+                        "Tu cuenta ha sido bloqueada por alcanzar "
+                        + "cinco intentos fallidos. "
+                        + "Debes solicitar su reactivación a un Administrador."
+                );
+            }
+
+            throw new IllegalArgumentException(
+                    "Correo o contraseña incorrectos."
+            );
+        }
+
         if (usuario.getRol() == null
                 || usuario.getRol().getNombre() == null
                 || usuario.getRol().getNombre().isBlank()) {
@@ -116,19 +119,30 @@ public class AutenticacionService {
             );
         }
 
-        // 10. Restablecer intentos fallidos después de un
-        // inicio de sesión exitoso.
         if (usuario.getIntentosFallidos() > 0) {
 
             usuario.setIntentosFallidos(0);
-            usuario.setFechaActualizacion(
-                    java.time.OffsetDateTime.now()
-            );
+            usuario.setMotivoBloqueo(null);
+            usuario.setFechaActualizacion(OffsetDateTime.now());
 
             usuarioRepository.save(usuario);
         }
 
-        // 11. Generar JWT con la identificación del rol.
         return jwtUtil.generateToken(usuario);
+    }
+
+    private void registrarIntentoFallido(Usuario usuario) {
+
+        int nuevosIntentos = usuario.getIntentosFallidos() + 1;
+
+        usuario.setIntentosFallidos(nuevosIntentos);
+
+        usuario.setFechaActualizacion(OffsetDateTime.now());
+
+        if (nuevosIntentos >= MAX_INTENTOS) {
+            usuario.setMotivoBloqueo(MOTIVO_BLOQUEO);
+        }
+
+        usuarioRepository.save(usuario);
     }
 }

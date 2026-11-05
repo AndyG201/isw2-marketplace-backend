@@ -27,319 +27,284 @@ import co.edu.unbosque.marketplace.usuario.security.ProteccionDocumento;
 @Service
 public class UsuarioService {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+	@Autowired
+	private UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private RolRepository rolRepository;
+	@Autowired
+	private RolRepository rolRepository;
 
-    @Autowired
-    private ProteccionDocumento proteccionDocumento;
+	@Autowired
+	private ProteccionDocumento proteccionDocumento;
 
-    @Autowired
-    private ProteccionContrasena proteccionContrasena;
+	@Autowired
+	private ProteccionContrasena proteccionContrasena;
 
-    @Autowired
-    private VerificacionCorreoService verificacionCorreoService;
+	@Autowired
+	private VerificacionCorreoService verificacionCorreoService;
 
-    @Autowired
-    private StringRedisTemplate redisTemplate;
+	@Autowired
+	private StringRedisTemplate redisTemplate;
 
-    @Autowired
-    private ExternalHTTPRequestMapping correoExterno;
+	@Autowired
+	private ExternalHTTPRequestMapping correoExterno;
 
-    private final SecureRandom random = new SecureRandom();
+	private final SecureRandom random = new SecureRandom();
 
-    public int registrar(RegistrarUsuarioRequest nuevoUsuario) {
+	public int registrar(RegistrarUsuarioRequest nuevoUsuario) {
 
-        if (datosInvalidos(nuevoUsuario)) {
-            return 0;
-        }
+		if (datosInvalidos(nuevoUsuario)) {
+			return 0;
+		}
 
-        Optional<Rol> rolEncontrado =
-                buscarRolPermitido(nuevoUsuario.getRol());
+		Optional<Rol> rolEncontrado = buscarRolPermitido(nuevoUsuario.getRol());
 
-        if (rolEncontrado.isEmpty()) {
-            return 0;
-        }
+		if (rolEncontrado.isEmpty()) {
+			return 0;
+		}
 
-        if (correoExiste(nuevoUsuario.getCorreo())) {
-            return 0;
-        }
+		if (correoExiste(nuevoUsuario.getCorreo())) {
+			return 0;
+		}
 
-        if (telefonoExiste(nuevoUsuario.getTelefono())) {
-            return 0;
-        }
+		if (telefonoExiste(nuevoUsuario.getTelefono())) {
+			return 0;
+		}
 
-        ProteccionDocumento.DatosDocumento datosDocumento =
-                proteccionDocumento.protegerDocumento(
-                        nuevoUsuario.getTipoDocumento(),
-                        nuevoUsuario.getDocumentoIdentidad()
-                );
+		ProteccionDocumento.DatosDocumento datosDocumento = proteccionDocumento
+				.protegerDocumento(nuevoUsuario.getTipoDocumento(), nuevoUsuario.getDocumentoIdentidad());
 
-        if (documentoExiste(datosDocumento.documentoHash())) {
-            return 0;
-        }
+		if (documentoExiste(datosDocumento.documentoHash())) {
+			return 0;
+		}
 
-        Usuario usuario = crearUsuario(
-                nuevoUsuario,
-                datosDocumento,
-                rolEncontrado.get()
-        );
+		Usuario usuario = crearUsuario(nuevoUsuario, datosDocumento, rolEncontrado.get());
 
-        completarCampos(usuario);
+		completarCampos(usuario);
 
-        usuarioRepository.save(usuario);
+		usuarioRepository.save(usuario);
 
-        verificacionCorreoService.enviarCodigo(usuario.getCorreo());
+		verificacionCorreoService.enviarCodigo(usuario.getCorreo());
 
-        return 1;
-    }
+		return 1;
+	}
 
-    private Optional<Rol> buscarRolPermitido(String nombreRol) {
+	private Optional<Rol> buscarRolPermitido(String nombreRol) {
 
-        if (textoVacio(nombreRol)) {
-            return Optional.empty();
-        }
+		if (textoVacio(nombreRol)) {
+			return Optional.empty();
+		}
 
-        String rolNormalizado =
-                nombreRol.trim().toUpperCase(Locale.ROOT);
+		String rolNormalizado = nombreRol.trim().toUpperCase(Locale.ROOT);
 
-        if (!rolNormalizado.equals("HUESPED")
-                && !rolNormalizado.equals("ANFITRION")) {
-            return Optional.empty();
-        }
+		if (!rolNormalizado.equals("HUESPED") && !rolNormalizado.equals("ANFITRION")) {
+			return Optional.empty();
+		}
 
-        return rolRepository.findByNombreIgnoreCase(rolNormalizado);
-    }
+		return rolRepository.findByNombreIgnoreCase(rolNormalizado);
+	}
 
-    private boolean datosInvalidos(RegistrarUsuarioRequest datos) {
+	private boolean datosInvalidos(RegistrarUsuarioRequest datos) {
 
-        return datos == null
-                || textoVacio(datos.getNombre())
-                || textoVacio(datos.getApellido())
-                || textoVacio(datos.getCorreo())
-                || textoVacio(datos.getTipoDocumento())
-                || textoVacio(datos.getDocumentoIdentidad())
-                || textoVacio(datos.getTelefono())
-                || textoVacio(datos.getContrasena())
-                || textoVacio(datos.getRol());
-    }
+		return datos == null || textoVacio(datos.getNombre()) || textoVacio(datos.getApellido())
+				|| textoVacio(datos.getCorreo()) || textoVacio(datos.getTipoDocumento())
+				|| textoVacio(datos.getDocumentoIdentidad()) || textoVacio(datos.getTelefono())
+				|| textoVacio(datos.getContrasena()) || textoVacio(datos.getRol());
+	}
 
-    private boolean textoVacio(String texto) {
-        return texto == null || texto.isBlank();
-    }
+	private boolean textoVacio(String texto) {
+		return texto == null || texto.isBlank();
+	}
 
-    private boolean correoExiste(String correo) {
+	private boolean correoExiste(String correo) {
 
-        return usuarioRepository
-                .findByCorreoIgnoreCase(correo.trim())
-                .isPresent();
-    }
+		return usuarioRepository.findByCorreoIgnoreCase(correo.trim()).isPresent();
+	}
 
-    private boolean documentoExiste(byte[] documentoHash) {
+	private boolean documentoExiste(byte[] documentoHash) {
 
-        return usuarioRepository.existsByDocumentoHash(documentoHash);
-    }
+		return usuarioRepository.existsByDocumentoHash(documentoHash);
+	}
 
-    private boolean telefonoExiste(String telefono) {
+	private boolean telefonoExiste(String telefono) {
 
-        return usuarioRepository.existsByTelefono(telefono.trim());
-    }
+		return usuarioRepository.existsByTelefono(telefono.trim());
+	}
 
-    private Usuario crearUsuario(
-            RegistrarUsuarioRequest datos,
-            ProteccionDocumento.DatosDocumento datosDocumento,
-            Rol rol) {
+	private Usuario crearUsuario(RegistrarUsuarioRequest datos, ProteccionDocumento.DatosDocumento datosDocumento,
+			Rol rol) {
 
-        Usuario usuario = new Usuario();
+		Usuario usuario = new Usuario();
 
-        usuario.setNombre(datos.getNombre());
-        usuario.setApellido(datos.getApellido());
-        usuario.setCorreo(datos.getCorreo().trim());
-        usuario.setTipoDocumento(datos.getTipoDocumento());
-        usuario.setTelefono(datos.getTelefono().trim());
+		usuario.setNombre(datos.getNombre());
+		usuario.setApellido(datos.getApellido());
+		usuario.setCorreo(datos.getCorreo().trim());
+		usuario.setTipoDocumento(datos.getTipoDocumento());
+		usuario.setTelefono(datos.getTelefono().trim());
 
-        usuario.setRol(rol);
+		usuario.setRol(rol);
 
-        usuario.setDocumentoCifrado(datosDocumento.documentoCifrado());
-        usuario.setDocumentoNonce(datosDocumento.documentoNonce());
-        usuario.setDocumentoHash(datosDocumento.documentoHash());
+		usuario.setDocumentoCifrado(datosDocumento.documentoCifrado());
+		usuario.setDocumentoNonce(datosDocumento.documentoNonce());
+		usuario.setDocumentoHash(datosDocumento.documentoHash());
 
-        usuario.setContrasenaHash(
-                proteccionContrasena.generarHash(datos.getContrasena())
-        );
+		usuario.setContrasenaHash(proteccionContrasena.generarHash(datos.getContrasena()));
 
-        return usuario;
-    }
+		return usuario;
+	}
 
-    private void completarCampos(Usuario usuario) {
+	private void completarCampos(Usuario usuario) {
 
-        OffsetDateTime ahora = OffsetDateTime.now();
+		OffsetDateTime ahora = OffsetDateTime.now();
 
-        usuario.setIdUsuario(UUID.randomUUID());
-        usuario.setCorreoVerificado(false);
-        usuario.setEstado(EstadoUsuario.PENDIENTE_VERIFICACION);
-        usuario.setRestringido(false);
-        usuario.setIntentosFallidos(0);
-        usuario.setMotivoRestriccion(null);
-        usuario.setFechaRegistro(ahora);
-        usuario.setFechaActualizacion(ahora);
-    }
+		usuario.setIdUsuario(UUID.randomUUID());
+		usuario.setCorreoVerificado(false);
+		usuario.setEstado(EstadoUsuario.PENDIENTE_VERIFICACION);
+		usuario.setRestringido(false);
+		usuario.setIntentosFallidos(0);
+		usuario.setMotivoRestriccion(null);
+		usuario.setFechaRegistro(ahora);
+		usuario.setFechaActualizacion(ahora);
+	}
 
-    public boolean generarCodigoRecuperacion(String correo) {
+	public boolean generarCodigoRecuperacion(String correo) {
 
-        if (correo == null || correo.isBlank()) {
-            return false;
-        }
+		if (correo == null || correo.isBlank()) {
+			return false;
+		}
 
-        Optional<Usuario> resultado =
-                usuarioRepository.findByCorreoIgnoreCase(correo.trim());
+		Optional<Usuario> resultado = usuarioRepository.findByCorreoIgnoreCase(correo.trim());
 
-        if (resultado.isEmpty()) {
-            return false;
-        }
+		if (resultado.isEmpty()) {
+			return false;
+		}
 
-        String correoUsuario = resultado.get().getCorreo();
+		String correoUsuario = resultado.get().getCorreo();
 
-        String codigo = String.format(
-                "%06d",
-                random.nextInt(1_000_000)
-        );
+		String codigo = String.format("%06d", random.nextInt(1_000_000));
 
-        String clave = "recuperacion:contrasena:"
-                + correoUsuario.toLowerCase(Locale.ROOT);
+		String clave = "recuperacion:contrasena:" + correoUsuario.toLowerCase(Locale.ROOT);
 
-        redisTemplate.opsForValue().set(
-                clave,
-                calcularHashCodigo(codigo),
-                5,
-                TimeUnit.MINUTES
-        );
+		redisTemplate.opsForValue().set(clave, calcularHashCodigo(codigo), 5, TimeUnit.MINUTES);
 
-        try {
-            correoExterno.enviarCodigoRecuperacion(correoUsuario, codigo);
-            return true;
+		try {
+			correoExterno.enviarCodigoRecuperacion(correoUsuario, codigo);
+			return true;
 
-        } catch (Exception e) {
-            redisTemplate.delete(clave);
-            throw e;
-        }
-    }
+		} catch (Exception e) {
+			redisTemplate.delete(clave);
+			throw e;
+		}
+	}
 
-    private String calcularHashCodigo(String codigo) {
+	private String calcularHashCodigo(String codigo) {
 
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
-            byte[] hash = digest.digest(
-                    codigo.getBytes(StandardCharsets.UTF_8)
-            );
+			byte[] hash = digest.digest(codigo.getBytes(StandardCharsets.UTF_8));
 
-            return HexFormat.of().formatHex(hash);
+			return HexFormat.of().formatHex(hash);
 
-        } catch (Exception e) {
-            throw new IllegalStateException(
-                    "No se pudo generar el hash del código",
-                    e
-            );
-        }
-    }
+		} catch (Exception e) {
+			throw new IllegalStateException("No se pudo generar el hash del código", e);
+		}
+	}
 
-    public boolean validarCodigoRecuperacion(
-            String correo,
-            String codigo) {
+	public boolean validarCodigoRecuperacion(String correo, String codigo) {
 
-        if (correo == null || correo.isBlank()
-                || codigo == null
-                || !codigo.matches("\\d{6}")) {
-            return false;
-        }
+		if (correo == null || correo.isBlank() || codigo == null || !codigo.matches("\\d{6}")) {
+			return false;
+		}
 
-        String correoNormalizado =
-                correo.trim().toLowerCase(Locale.ROOT);
+		String correoNormalizado = correo.trim().toLowerCase(Locale.ROOT);
 
-        String claveCodigo =
-                "recuperacion:contrasena:" + correoNormalizado;
+		String claveCodigo = "recuperacion:contrasena:" + correoNormalizado;
 
-        String claveIntentos =
-                "recuperacion:contrasena:intentos:" + correoNormalizado;
+		String claveIntentos = "recuperacion:contrasena:intentos:" + correoNormalizado;
 
-        String hashGuardado =
-                redisTemplate.opsForValue().get(claveCodigo);
+		String hashGuardado = redisTemplate.opsForValue().get(claveCodigo);
 
-        if (hashGuardado == null) {
-            return false;
-        }
+		if (hashGuardado == null) {
+			return false;
+		}
 
-        String hashIngresado = calcularHashCodigo(codigo);
+		String hashIngresado = calcularHashCodigo(codigo);
 
-        if (hashGuardado.equals(hashIngresado)) {
-            return true;
-        }
+		if (hashGuardado.equals(hashIngresado)) {
+			return true;
+		}
 
-        Long intentos =
-                redisTemplate.opsForValue().increment(claveIntentos);
+		Long intentos = redisTemplate.opsForValue().increment(claveIntentos);
 
-        if (intentos != null && intentos == 1) {
-            redisTemplate.expire(
-                    claveIntentos,
-                    5,
-                    TimeUnit.MINUTES
-            );
-        }
+		if (intentos != null && intentos == 1) {
+			redisTemplate.expire(claveIntentos, 5, TimeUnit.MINUTES);
+		}
 
-        if (intentos != null && intentos >= 5) {
-            redisTemplate.delete(claveCodigo);
-            redisTemplate.delete(claveIntentos);
-        }
+		if (intentos != null && intentos >= 5) {
+			redisTemplate.delete(claveCodigo);
+			redisTemplate.delete(claveIntentos);
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    public boolean restablecerContrasena(
-            String correo,
-            String codigo,
-            String nuevaContrasena) {
+	public boolean restablecerContrasena(String correo, String codigo, String nuevaContrasena) {
 
-        if (correo == null || correo.isBlank()
-                || nuevaContrasena == null
-                || nuevaContrasena.isBlank()) {
-            return false;
-        }
+		if (correo == null || correo.isBlank() || nuevaContrasena == null || nuevaContrasena.isBlank()) {
+			return false;
+		}
 
-        if (!validarCodigoRecuperacion(correo, codigo)) {
-            return false;
-        }
+		if (!validarCodigoRecuperacion(correo, codigo)) {
+			return false;
+		}
 
-        Optional<Usuario> resultado =
-                usuarioRepository.findByCorreoIgnoreCase(correo.trim());
+		Optional<Usuario> resultado = usuarioRepository.findByCorreoIgnoreCase(correo.trim());
 
-        if (resultado.isEmpty()) {
-            return false;
-        }
+		if (resultado.isEmpty()) {
+			return false;
+		}
 
-        Usuario usuario = resultado.get();
+		Usuario usuario = resultado.get();
 
-        usuario.setContrasenaHash(
-                proteccionContrasena.generarHash(nuevaContrasena)
-        );
+		usuario.setContrasenaHash(proteccionContrasena.generarHash(nuevaContrasena));
 
-        usuario.setFechaActualizacion(OffsetDateTime.now());
+		usuario.setFechaActualizacion(OffsetDateTime.now());
 
-        usuarioRepository.save(usuario);
+		usuarioRepository.save(usuario);
 
-        String correoNormalizado =
-                usuario.getCorreo().toLowerCase(Locale.ROOT);
+		String correoNormalizado = usuario.getCorreo().toLowerCase(Locale.ROOT);
 
-        redisTemplate.delete(
-                "recuperacion:contrasena:" + correoNormalizado
-        );
+		redisTemplate.delete("recuperacion:contrasena:" + correoNormalizado);
 
-        redisTemplate.delete(
-                "recuperacion:contrasena:intentos:" + correoNormalizado
-        );
+		redisTemplate.delete("recuperacion:contrasena:intentos:" + correoNormalizado);
 
-        return true;
-    }
+		return true;
+	}
+
+	public void reactivarBloqueo(String correo) {
+
+	    if (correo == null || correo.isBlank()) {
+	        throw new IllegalArgumentException(
+	                "Debes proporcionar el correo del usuario");
+	    }
+
+	    Usuario usuario = usuarioRepository
+	            .findByCorreoIgnoreCase(correo.trim())
+	            .orElseThrow(() ->
+	                    new IllegalArgumentException("Usuario no encontrado"));
+
+	    if (usuario.getIntentosFallidos() < 5
+	            || !"Bloqueo automático por intentos fallidos"
+	                    .equals(usuario.getMotivoBloqueo())) {
+
+	        throw new IllegalStateException(
+	                "La cuenta no tiene un bloqueo automático pendiente de reactivación");
+	    }
+
+	    usuario.setIntentosFallidos(0);
+	    usuario.setMotivoBloqueo(null);
+	    usuario.setFechaActualizacion(OffsetDateTime.now());
+
+	    usuarioRepository.save(usuario);
+	}
 }
