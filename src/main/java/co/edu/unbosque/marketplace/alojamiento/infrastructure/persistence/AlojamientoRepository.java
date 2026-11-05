@@ -1,6 +1,7 @@
 
 package co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,4 +13,5 @@ import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
 public interface AlojamientoRepository
         extends JpaRepository<Alojamiento, UUID> {
 
+    List<Alojamiento> findByIdAnfitrion(UUID idAnfitrion);
 }

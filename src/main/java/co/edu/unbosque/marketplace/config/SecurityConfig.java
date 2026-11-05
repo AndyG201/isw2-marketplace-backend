@@ -75,6 +75,11 @@ public class SecurityConfig {
                 	    "/servicios",
                 	    "/politicas-cancelacion/activas"
                 	).hasAuthority("ROLE_ANFITRION")
+                .requestMatchers(
+                	    HttpMethod.GET,
+                	    "/publicaciones/mis-publicaciones",
+                	    "/publicaciones/mis-publicaciones/**"
+                	).hasAuthority("ROLE_ANFITRION")
 
                 .anyRequest().authenticated()
             )
