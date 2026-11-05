@@ -292,28 +292,6 @@ public class UsuarioService {
 		return true;
 	}
 
-	public void reactivarBloqueo(String correo) {
-
-		if (correo == null || correo.isBlank()) {
-			throw new IllegalArgumentException("Debes proporcionar el correo del usuario");
-		}
-
-		Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(correo.trim())
-				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-
-		if (usuario.getIntentosFallidos() < 5
-				|| !"Bloqueo automático por intentos fallidos".equals(usuario.getMotivoBloqueo())) {
-
-			throw new IllegalStateException("La cuenta no tiene un bloqueo automático pendiente de reactivación");
-		}
-
-		usuario.setIntentosFallidos(0);
-		usuario.setMotivoBloqueo(null);
-		usuario.setFechaActualizacion(OffsetDateTime.now());
-
-		usuarioRepository.save(usuario);
-	}
-
 	public ConsultarCuentaResponse consultarMiCuenta(UUID idUsuario) {
 
 		if (idUsuario == null) {

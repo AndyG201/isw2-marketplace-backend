@@ -63,10 +63,8 @@ public class SecurityConfig {
 
                 .requestMatchers("/recuperacion-contrasena/**").permitAll()
 
-                .requestMatchers(
-                    HttpMethod.PATCH,
-                    "/administracion/usuarios/reactivar-bloqueo"
-                ).hasAuthority("ROLE_ADMINISTRADOR")
+                .requestMatchers("/administracion/usuarios/**")
+                .hasAuthority("ROLE_ADMINISTRADOR")
 
                 .anyRequest().authenticated()
             )
