@@ -1,6 +1,4 @@
-package co.edu.unbosque.marketplace.usuario.api.response;
-
-import co.edu.unbosque.marketplace.usuario.api.UsuarioController;
+package co.edu.unbosque.marketplace.usuario.api;
 import co.edu.unbosque.marketplace.usuario.api.request.AutenticacionRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.RegistrarUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.ReactivarCuentaRequest;

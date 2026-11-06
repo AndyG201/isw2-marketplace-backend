@@ -1,8 +1,7 @@
-package co.edu.unbosque.marketplace.usuario.api.response;
+package co.edu.unbosque.marketplace.usuario.api;
 
 import java.util.Map;
 
-import co.edu.unbosque.marketplace.usuario.api.RecuperacionContrasenaController;
 import co.edu.unbosque.marketplace.usuario.api.request.RestablecerContrasenaRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.SolicitarRecuperacionRequest;
 import co.edu.unbosque.marketplace.usuario.application.UsuarioService;

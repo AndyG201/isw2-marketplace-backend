@@ -1,12 +1,12 @@
-package co.edu.unbosque.marketplace.usuario.api.response;
+package co.edu.unbosque.marketplace.usuario.api;
 
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import co.edu.unbosque.marketplace.usuario.api.CuentaController;
 import co.edu.unbosque.marketplace.usuario.api.request.ActualizarContrasenaRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.ActualizarPerfilRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.ConfirmarCambioCorreoRequest;
+import co.edu.unbosque.marketplace.usuario.api.response.ConsultarCuentaResponse;
 import co.edu.unbosque.marketplace.usuario.application.UsuarioService;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
