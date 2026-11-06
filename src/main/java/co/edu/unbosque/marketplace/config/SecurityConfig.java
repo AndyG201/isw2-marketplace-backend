@@ -95,6 +95,11 @@ public class SecurityConfig {
                 	    HttpMethod.PATCH,
                 	    "/administracion/publicaciones/**"
                 	).hasAuthority("ROLE_ADMINISTRADOR")
+                .requestMatchers(
+                	    HttpMethod.PATCH,
+                	    "/publicaciones/*/pausar",
+                	    "/publicaciones/*/reactivar"
+                	).hasAuthority("ROLE_ANFITRION")
 
                 .anyRequest().authenticated()
             )
