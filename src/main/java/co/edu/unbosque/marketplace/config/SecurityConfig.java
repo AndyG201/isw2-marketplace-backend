@@ -87,6 +87,10 @@ public class SecurityConfig {
                 	    "ROLE_ANFITRION",
                 	    "ROLE_ADMINISTRADOR"
                 	)
+                .requestMatchers(
+                	    HttpMethod.PATCH,
+                	    "/publicaciones/*/enviar-revision"
+                	).hasAuthority("ROLE_ANFITRION")
 
                 .anyRequest().authenticated()
             )
