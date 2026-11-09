@@ -1,4 +1,3 @@
-
 # Java
 *.class
 *.jar
@@ -34,3 +33,13 @@ out/
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+# Archivos generados por el entorno de desarrollo
+bin/
+
+# Archivos cargados por los usuarios
+uploads/
+
+# Logs
+*.log
+logs/
