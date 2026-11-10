@@ -1,4 +1,4 @@
-# Marketplace de Alojamientos - Backend
+# Marketplace de Alojamientos - Backend.
 
 ## Descripción del proyecto
 
