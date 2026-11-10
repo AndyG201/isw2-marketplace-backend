@@ -2,59 +2,64 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import java.time.OffsetDateTime;
-import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
-import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.DecisionPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.RevisionPublicacion;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.RevisionPublicacionRepository;
-import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioAdministracionQuery;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
 @Service
 public class RevisionAdministrativaService {
 
     private final PublicacionRepository publicacionRepository;
-    private final AlojamientoRepository alojamientoRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final AlojamientoPublicacionQuery alojamientoQuery;
+    private final UsuarioAdministracionQuery usuarioAdministracionQuery;
+    private final UsuarioPublicacionQuery usuarioPublicacionQuery;
     private final RevisionPublicacionRepository revisionRepository;
 
     public RevisionAdministrativaService(
             PublicacionRepository publicacionRepository,
-            AlojamientoRepository alojamientoRepository,
-            UsuarioRepository usuarioRepository,
+            AlojamientoPublicacionQuery alojamientoQuery,
+            UsuarioAdministracionQuery usuarioAdministracionQuery,
+            UsuarioPublicacionQuery usuarioPublicacionQuery,
             RevisionPublicacionRepository revisionRepository) {
 
         this.publicacionRepository = publicacionRepository;
-        this.alojamientoRepository = alojamientoRepository;
-        this.usuarioRepository = usuarioRepository;
+        this.alojamientoQuery = alojamientoQuery;
+        this.usuarioAdministracionQuery = usuarioAdministracionQuery;
+        this.usuarioPublicacionQuery = usuarioPublicacionQuery;
         this.revisionRepository = revisionRepository;
     }
 
     @Transactional
     public DecisionPublicacionResponse aprobarPublicacion(
-            Usuario administrador,
+            UUID idAdministrador,
             UUID idPublicacion) {
 
-        validarAdministrador(administrador);
+        validarAdministrador(idAdministrador);
 
         Publicacion publicacion = obtenerPublicacion(idPublicacion);
 
         validarEstadoRevision(publicacion);
 
-        Alojamiento alojamiento = obtenerAlojamiento(publicacion);
+        UUID idAnfitrion = alojamientoQuery
+                .consultarIdAnfitrion(publicacion.getIdAlojamiento())
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "No se encontró el alojamiento asociado a la publicación."));
 
-        Usuario anfitrion = usuarioRepository
-                .findById(alojamiento.getIdAnfitrion())
+        UsuarioPublicacionInfo anfitrion = usuarioPublicacionQuery
+                .consultarParaPublicacion(idAnfitrion)
                 .orElseThrow(() ->
                         new IllegalStateException(
                                 "No se encontró la cuenta del anfitrión."));
@@ -71,7 +76,7 @@ public class RevisionAdministrativaService {
         publicacionRepository.save(publicacion);
 
         RevisionPublicacion revision = registrarRevision(
-                administrador.getIdUsuario(),
+                idAdministrador,
                 publicacion.getIdPublicacion(),
                 "APROBAR_PUBLICACION",
                 "APROBADA",
@@ -93,11 +98,11 @@ public class RevisionAdministrativaService {
 
     @Transactional
     public DecisionPublicacionResponse rechazarPublicacion(
-            Usuario administrador,
+            UUID idAdministrador,
             UUID idPublicacion,
             String motivo) {
 
-        validarAdministrador(administrador);
+        validarAdministrador(idAdministrador);
 
         if (motivo == null || motivo.isBlank()) {
             throw new IllegalArgumentException(
@@ -125,7 +130,7 @@ public class RevisionAdministrativaService {
         publicacionRepository.save(publicacion);
 
         RevisionPublicacion revision = registrarRevision(
-                administrador.getIdUsuario(),
+                idAdministrador,
                 publicacion.getIdPublicacion(),
                 "RECHAZAR_PUBLICACION",
                 "RECHAZADA",
@@ -145,22 +150,10 @@ public class RevisionAdministrativaService {
         );
     }
 
-    private void validarAdministrador(Usuario administrador) {
+    private void validarAdministrador(UUID idAdministrador) {
 
-        if (administrador == null
-                || administrador.getIdUsuario() == null) {
-
-            throw new AccessDeniedException(
-                    "Debes iniciar sesión para realizar esta operación.");
-        }
-
-        String rol = administrador.getRol() == null
-                ? ""
-                : administrador.getRol().getNombre()
-                        .trim()
-                        .toUpperCase(Locale.ROOT);
-
-        if (!"ADMINISTRADOR".equals(rol)) {
+        if (idAdministrador == null
+                || !usuarioAdministracionQuery.esAdministrador(idAdministrador)) {
 
             throw new AccessDeniedException(
                     "Solo un Administrador puede aprobar o rechazar publicaciones.");
@@ -180,15 +173,6 @@ public class RevisionAdministrativaService {
                                 "La publicación no existe."));
     }
 
-    private Alojamiento obtenerAlojamiento(Publicacion publicacion) {
-
-        return alojamientoRepository
-                .findById(publicacion.getIdAlojamiento())
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "No se encontró el alojamiento asociado a la publicación."));
-    }
-
     private void validarEstadoRevision(Publicacion publicacion) {
 
         if (!"PENDIENTE_REVISION".equals(publicacion.getEstado())) {
@@ -199,40 +183,34 @@ public class RevisionAdministrativaService {
         }
     }
 
-    private void validarCuentaAnfitrion(Usuario anfitrion) {
+    private void validarCuentaAnfitrion(
+            UsuarioPublicacionInfo anfitrion) {
 
-        if (anfitrion.getEstado() != EstadoUsuario.ACTIVA) {
-
+        if (!anfitrion.cuentaActiva()) {
             throw new IllegalStateException(
                     "No se puede activar la publicación porque la cuenta "
                     + "del anfitrión está desactivada.");
         }
 
-        if (anfitrion.isRestringido()) {
-
+        if (anfitrion.restringido()) {
             throw new IllegalStateException(
                     "No se puede activar la publicación porque la cuenta "
                     + "del anfitrión tiene una restricción administrativa.");
         }
 
-        if (!anfitrion.isCorreoVerificado()) {
-
+        if (!anfitrion.correoVerificado()) {
             throw new IllegalStateException(
                     "No se puede activar la publicación porque el correo "
                     + "del anfitrión no está verificado.");
         }
 
-        if (anfitrion.getIntentosFallidos() >= 5) {
-
+        if (anfitrion.intentosFallidos() >= 5) {
             throw new IllegalStateException(
                     "No se puede activar la publicación porque la cuenta "
                     + "del anfitrión está bloqueada por intentos fallidos.");
         }
 
-        if (anfitrion.getRol() == null
-                || !"ANFITRION".equalsIgnoreCase(
-                        anfitrion.getRol().getNombre())) {
-
+        if (!anfitrion.esAnfitrion()) {
             throw new IllegalStateException(
                     "La cuenta propietaria ya no tiene el rol de ANFITRION.");
         }

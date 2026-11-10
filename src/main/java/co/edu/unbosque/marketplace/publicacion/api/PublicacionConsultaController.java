@@ -1,9 +1,7 @@
-
 package co.edu.unbosque.marketplace.publicacion.api;
 
 import java.util.Map;
 import java.util.UUID;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -11,12 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import co.edu.unbosque.marketplace.publicacion.api.response.MisPublicacionesResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionConsultaService;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
-
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController
@@ -34,9 +29,9 @@ public class PublicacionConsultaController {
 
     @GetMapping
     public ResponseEntity<?> consultarMisPublicaciones(
-            @AuthenticationPrincipal Usuario usuario) {
+            @AuthenticationPrincipal(expression = "idUsuario") UUID idUsuario) {
 
-        if (usuario == null) {
+        if (idUsuario == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "mensaje",
@@ -46,7 +41,7 @@ public class PublicacionConsultaController {
 
         MisPublicacionesResponse respuesta =
                 consultaService.consultarMisPublicaciones(
-                        usuario.getIdUsuario()
+                        idUsuario
                 );
 
         return ResponseEntity.ok(respuesta);
@@ -54,10 +49,10 @@ public class PublicacionConsultaController {
 
     @GetMapping("/{idPublicacion}")
     public ResponseEntity<?> consultarDetalle(
-            @AuthenticationPrincipal Usuario usuario,
+            @AuthenticationPrincipal(expression = "idUsuario") UUID idUsuario,
             @PathVariable UUID idPublicacion) {
 
-        if (usuario == null) {
+        if (idUsuario == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "mensaje",
@@ -69,7 +64,7 @@ public class PublicacionConsultaController {
 
             PublicacionDetalleResponse respuesta =
                     consultaService.consultarDetalle(
-                            usuario.getIdUsuario(),
+                            idUsuario,
                             idPublicacion
                     );
 

@@ -9,43 +9,43 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
-import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.ImagenPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.MisPublicacionesResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionResumenResponse;
+import co.edu.unbosque.marketplace.publicacion.api.response.ServicioPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
-import co.edu.unbosque.marketplace.servicio.api.response.ServicioResponse;
-import co.edu.unbosque.marketplace.servicio.domain.Servicio;
-import co.edu.unbosque.marketplace.servicio.infrastructure.persistence.ServicioRepository;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 
 @Service
 public class PublicacionConsultaService {
 
-    private final AlojamientoRepository alojamientoRepository;
+    private final AlojamientoPublicacionQuery alojamientoPublicacionQuery;
     private final PublicacionRepository publicacionRepository;
     private final ImagenPublicacionRepository imagenRepository;
     private final PublicacionServicioRepository publicacionServicioRepository;
-    private final ServicioRepository servicioRepository;
+    private final ServicioPublicacionQuery servicioPublicacionQuery;
 
     public PublicacionConsultaService(
-            AlojamientoRepository alojamientoRepository,
+            AlojamientoPublicacionQuery alojamientoPublicacionQuery,
             PublicacionRepository publicacionRepository,
             ImagenPublicacionRepository imagenRepository,
             PublicacionServicioRepository publicacionServicioRepository,
-            ServicioRepository servicioRepository) {
+            ServicioPublicacionQuery servicioPublicacionQuery) {
 
-        this.alojamientoRepository = alojamientoRepository;
+        this.alojamientoPublicacionQuery = alojamientoPublicacionQuery;
         this.publicacionRepository = publicacionRepository;
         this.imagenRepository = imagenRepository;
         this.publicacionServicioRepository = publicacionServicioRepository;
-        this.servicioRepository = servicioRepository;
+        this.servicioPublicacionQuery = servicioPublicacionQuery;
     }
 
     public MisPublicacionesResponse consultarMisPublicaciones(
@@ -56,8 +56,9 @@ public class PublicacionConsultaService {
                     "No se pudo identificar al anfitrión.");
         }
 
-        List<Alojamiento> alojamientos =
-                alojamientoRepository.findByIdAnfitrion(idAnfitrion);
+        List<AlojamientoPublicacionInfo> alojamientos =
+                alojamientoPublicacionQuery.consultarPorAnfitrion(
+                        idAnfitrion);
 
         if (alojamientos.isEmpty()) {
             return new MisPublicacionesResponse(
@@ -67,14 +68,15 @@ public class PublicacionConsultaService {
         }
 
         List<UUID> idsAlojamientos = alojamientos.stream()
-                .map(Alojamiento::getIdAlojamiento)
+                .map(AlojamientoPublicacionInfo::idAlojamiento)
                 .toList();
 
-        Map<UUID, Alojamiento> alojamientosPorId = alojamientos.stream()
-                .collect(Collectors.toMap(
-                        Alojamiento::getIdAlojamiento,
-                        Function.identity()
-                ));
+        Map<UUID, AlojamientoPublicacionInfo> alojamientosPorId =
+                alojamientos.stream()
+                        .collect(Collectors.toMap(
+                                AlojamientoPublicacionInfo::idAlojamiento,
+                                Function.identity()
+                        ));
 
         List<Publicacion> publicaciones =
                 publicacionRepository
@@ -93,18 +95,18 @@ public class PublicacionConsultaService {
                 publicaciones.stream()
                         .map(publicacion -> {
 
-                            Alojamiento alojamiento =
+                            AlojamientoPublicacionInfo alojamiento =
                                     alojamientosPorId.get(
                                             publicacion.getIdAlojamiento()
                                     );
 
                             return new PublicacionResumenResponse(
                                     publicacion.getIdPublicacion(),
-                                    alojamiento.getIdAlojamiento(),
+                                    alojamiento.idAlojamiento(),
                                     publicacion.getTitulo(),
-                                    alojamiento.getCiudad(),
-                                    alojamiento.getTipoAlojamiento(),
-                                    alojamiento.getCapacidad(),
+                                    alojamiento.ciudad(),
+                                    alojamiento.tipoAlojamiento(),
+                                    alojamiento.capacidad(),
                                     publicacion.getPrecioPorNoche(),
                                     publicacion.getEstado(),
                                     publicacion.getFechaCreacion()
@@ -127,11 +129,12 @@ public class PublicacionConsultaService {
                     "No se pudo identificar la publicación.");
         }
 
-        List<Alojamiento> alojamientos =
-                alojamientoRepository.findByIdAnfitrion(idAnfitrion);
+        List<AlojamientoPublicacionInfo> alojamientos =
+                alojamientoPublicacionQuery.consultarPorAnfitrion(
+                        idAnfitrion);
 
         List<UUID> idsAlojamientos = alojamientos.stream()
-                .map(Alojamiento::getIdAlojamiento)
+                .map(AlojamientoPublicacionInfo::idAlojamiento)
                 .toList();
 
         if (idsAlojamientos.isEmpty()) {
@@ -149,8 +152,8 @@ public class PublicacionConsultaService {
                                 "La publicación no existe o no pertenece a tu cuenta."
                         ));
 
-        Alojamiento alojamiento = alojamientos.stream()
-                .filter(a -> a.getIdAlojamiento()
+        AlojamientoPublicacionInfo alojamiento = alojamientos.stream()
+                .filter(a -> a.idAlojamiento()
                         .equals(publicacion.getIdAlojamiento()))
                 .findFirst()
                 .orElseThrow(() ->
@@ -177,13 +180,15 @@ public class PublicacionConsultaService {
                 .map(PublicacionServicio::getIdServicio)
                 .toList();
 
-        List<ServicioResponse> servicios =
-                servicioRepository.findAllById(idsServicios)
-                        .stream()
-                        .map(servicio -> new ServicioResponse(
-                                servicio.getIdServicio(),
-                                servicio.getNombre(),
-                                servicio.getDescripcion()
+        List<ServicioInfo> serviciosConsultados =
+                servicioPublicacionQuery.consultarPorIds(idsServicios);
+
+        List<ServicioPublicacionResponse> servicios =
+                serviciosConsultados.stream()
+                        .map(servicio -> new ServicioPublicacionResponse(
+                                servicio.idServicio(),
+                                servicio.nombre(),
+                                servicio.descripcion()
                         ))
                         .toList();
 
@@ -200,10 +205,10 @@ public class PublicacionConsultaService {
                 publicacion.getEstado(),
                 publicacion.getFechaCreacion(),
                 publicacion.getFechaActualizacion(),
-                alojamiento.getUbicacion(),
-                alojamiento.getCiudad(),
-                alojamiento.getTipoAlojamiento(),
-                alojamiento.getCapacidad(),
+                alojamiento.ubicacion(),
+                alojamiento.ciudad(),
+                alojamiento.tipoAlojamiento(),
+                alojamiento.capacidad(),
                 servicios,
                 imagenes
         );

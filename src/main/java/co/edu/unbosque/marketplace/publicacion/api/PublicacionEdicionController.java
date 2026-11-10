@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.publicacion.api;
 
 import java.util.Map;
@@ -23,7 +22,6 @@ import jakarta.validation.Valid;
 import co.edu.unbosque.marketplace.publicacion.api.request.EditarPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAlojamientoResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionEdicionService;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
@@ -45,12 +43,12 @@ public class PublicacionEdicionController {
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public ResponseEntity<?> editarPublicacion(
-            @AuthenticationPrincipal Usuario usuario,
+            @AuthenticationPrincipal(expression = "idUsuario") UUID idActor,
             @PathVariable UUID idPublicacion,
             @Valid @ModelAttribute EditarPublicacionRequest solicitud,
             BindingResult resultadoValidacion) {
 
-        if (usuario == null) {
+        if (idActor == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "mensaje",
@@ -75,7 +73,7 @@ public class PublicacionEdicionController {
 
             PublicacionAlojamientoResponse respuesta =
                     edicionService.actualizarPublicacion(
-                            usuario,
+                            idActor,
                             idPublicacion,
                             solicitud
                     );

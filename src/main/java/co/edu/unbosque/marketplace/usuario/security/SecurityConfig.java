@@ -1,5 +1,5 @@
 
-package co.edu.unbosque.marketplace.config;
+package co.edu.unbosque.marketplace.usuario.security;
 
 import java.util.List;
 
@@ -22,8 +22,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import co.edu.unbosque.marketplace.usuario.security.JwtAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
