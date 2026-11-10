@@ -1,4 +1,3 @@
-
 name: Backend CI
 
 on:
@@ -66,17 +65,15 @@ jobs:
       - name: Build and execute tests
         run: ./mvnw -B clean verify
 
-      
-- name: Analyze with SonarQube Cloud
-  env:
-    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  run: >
-    ./mvnw -B
-    org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar
-    -Dsonar.projectKey=AndyG201_isw2-marketplace-backend
-    -Dsonar.organization=andyg201
-    -Dsonar.host.url=https://sonarcloud.io
-
+      - name: Analyze with SonarQube Cloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          ./mvnw -B
+          org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar
+          -Dsonar.projectKey=AndyG201_isw2-marketplace-backend
+          -Dsonar.organization=andyg201
+          -Dsonar.host.url=https://sonarcloud.io
 
       - name: Upload test reports
         if: always()
