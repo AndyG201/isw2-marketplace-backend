@@ -50,6 +50,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configure Java 22
         uses: actions/setup-java@v4
@@ -63,6 +65,16 @@ jobs:
 
       - name: Build and execute tests
         run: ./mvnw -B clean verify
+
+      - name: Analyze with SonarQube Cloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          ./mvnw -B
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.projectKey=AndyG201_isw2-marketplace-backend
+          -Dsonar.organization=AndyG201
+          -Dsonar.host.url=https://sonarcloud.io
 
       - name: Upload test reports
         if: always()
