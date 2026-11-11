@@ -1,4 +1,5 @@
 package co.edu.unbosque.marketplace.publicacion.api.response;
+
 import java.util.List;
 
 public class MisPublicacionesResponse {
