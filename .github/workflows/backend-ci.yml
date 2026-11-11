@@ -1,3 +1,4 @@
+
 name: Backend CI
 
 on:
@@ -47,11 +48,13 @@ jobs:
           --health-retries 10
 
     steps:
+      # Descargar repositorio
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # Configurar Java 22
       - name: Configure Java 22
         uses: actions/setup-java@v4
         with:
@@ -59,12 +62,19 @@ jobs:
           java-version: '22'
           cache: maven
 
+      # Permisos Maven Wrapper
       - name: Give execution permission to Maven Wrapper
         run: chmod +x mvnw
 
-      - name: Build and execute tests
+      # Compilar, ejecutar pruebas y generar cobertura
+      - name: Build, test and generate coverage
         run: ./mvnw -B clean verify
 
+      # Comprobar que JaCoCo haya generado el informe
+      - name: Verify JaCoCo report
+        run: test -s target/site/jacoco/jacoco.xml
+
+      # Análisis de calidad SonarCloud
       - name: Analyze with SonarQube Cloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -74,11 +84,15 @@ jobs:
           -Dsonar.projectKey=AndyG201_isw2-marketplace-backend
           -Dsonar.organization=andyg201
           -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
-      - name: Upload test reports
+      # Guardar informes de pruebas y cobertura
+      - name: Upload test and coverage reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: backend-test-reports
-          path: target/surefire-reports/
+          name: backend-test-and-coverage-reports
+          path: |
+            target/surefire-reports/
+            target/site/jacoco/
           if-no-files-found: ignore
