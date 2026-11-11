@@ -8,6 +8,7 @@ on:
       - 'integration/**'
       - 'test/**'
       - 'feature/**'
+      - 'qa/**'
 
   pull_request:
     branches:
