@@ -1,8 +1,7 @@
+
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import java.time.OffsetDateTime;
-import co.edu.unbosque.marketplace.cancelacion.domain.PoliticaCancelacion;
-import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.PoliticaCancelacionRepository;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -14,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import co.edu.unbosque.marketplace.alojamiento.api.request.CrearAlojamientoRequest;
-import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
-import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
+import co.edu.unbosque.marketplace.alojamiento.contracts.CrearAlojamientoParaPublicacion;
+import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.request.CrearPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAlojamientoResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
@@ -26,42 +25,40 @@ import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.Imagen
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.storage.AlmacenamientoImagenService;
-import co.edu.unbosque.marketplace.servicio.domain.Servicio;
-import co.edu.unbosque.marketplace.servicio.infrastructure.persistence.ServicioRepository;
-import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
-
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
 @Service
 public class PublicacionAlojamientoService {
 
-    private final AlojamientoRepository alojamientoRepository;
+    private final AlojamientoPublicacionCommand alojamientoCommand;
     private final PublicacionRepository publicacionRepository;
     private final PublicacionServicioRepository publicacionServicioRepository;
     private final ImagenPublicacionRepository imagenPublicacionRepository;
-    private final ServicioRepository servicioRepository;
-    private final PoliticaCancelacionRepository politicaRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final ServicioPublicacionQuery servicioPublicacionQuery;
+    private final PoliticaCancelacionQuery politicaCancelacionQuery;
+    private final UsuarioPublicacionQuery usuarioPublicacionQuery;
     private final AlmacenamientoImagenService almacenamientoImagenService;
 
     public PublicacionAlojamientoService(
-            AlojamientoRepository alojamientoRepository,
+            AlojamientoPublicacionCommand alojamientoCommand,
             PublicacionRepository publicacionRepository,
             PublicacionServicioRepository publicacionServicioRepository,
             ImagenPublicacionRepository imagenPublicacionRepository,
-            ServicioRepository servicioRepository,
-            PoliticaCancelacionRepository politicaRepository,
-            UsuarioRepository usuarioRepository,
+            ServicioPublicacionQuery servicioPublicacionQuery,
+            PoliticaCancelacionQuery politicaCancelacionQuery,
+            UsuarioPublicacionQuery usuarioPublicacionQuery,
             AlmacenamientoImagenService almacenamientoImagenService) {
 
-        this.alojamientoRepository = alojamientoRepository;
+        this.alojamientoCommand = alojamientoCommand;
         this.publicacionRepository = publicacionRepository;
         this.publicacionServicioRepository = publicacionServicioRepository;
         this.imagenPublicacionRepository = imagenPublicacionRepository;
-        this.servicioRepository = servicioRepository;
-        this.politicaRepository = politicaRepository;
-        this.usuarioRepository = usuarioRepository;
+        this.servicioPublicacionQuery = servicioPublicacionQuery;
+        this.politicaCancelacionQuery = politicaCancelacionQuery;
+        this.usuarioPublicacionQuery = usuarioPublicacionQuery;
         this.almacenamientoImagenService = almacenamientoImagenService;
     }
 
@@ -72,32 +69,28 @@ public class PublicacionAlojamientoService {
 
         validarSolicitud(idAnfitrion, solicitud);
 
-        Usuario anfitrion = usuarioRepository.findById(idAnfitrion)
+        UsuarioPublicacionInfo anfitrion = usuarioPublicacionQuery
+                .consultarParaPublicacion(idAnfitrion)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Anfitrión no encontrado."));
+                        new IllegalArgumentException(
+                                "Anfitrión no encontrado."));
 
-        if (anfitrion.getRol() == null
-                || !"ANFITRION".equalsIgnoreCase(
-                        anfitrion.getRol().getNombre())) {
-
+        if (!anfitrion.esAnfitrion()) {
             throw new IllegalStateException(
                     "Solo un usuario con rol ANFITRION puede crear alojamientos.");
         }
 
-        if (!anfitrion.isCorreoVerificado()
-                || anfitrion.getEstado() != EstadoUsuario.ACTIVA
-                || anfitrion.isRestringido()
-                || anfitrion.getIntentosFallidos() >= 5) {
-
+        if (!anfitrion.cuentaHabilitadaParaPublicar()) {
             throw new IllegalStateException(
                     "La cuenta no está habilitada para crear publicaciones.");
         }
 
-        PoliticaCancelacion politica = politicaRepository
-                .findByIdPoliticaAndActivaTrue(solicitud.getIdPolitica())
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La política seleccionada no existe o está inactiva."));
+        if (!politicaCancelacionQuery.existePoliticaActiva(
+                solicitud.getIdPolitica())) {
+
+            throw new IllegalArgumentException(
+                    "La política seleccionada no existe o está inactiva.");
+        }
 
         Set<UUID> idsServicios =
                 new HashSet<>(solicitud.getIdsServicios());
@@ -107,8 +100,8 @@ public class PublicacionAlojamientoService {
                     "No puedes seleccionar un mismo servicio varias veces.");
         }
 
-        List<Servicio> servicios =
-                servicioRepository.findAllById(idsServicios);
+        List<ServicioInfo> servicios =
+                servicioPublicacionQuery.consultarPorIds(idsServicios);
 
         if (servicios.size() != idsServicios.size()) {
             throw new IllegalArgumentException(
@@ -125,8 +118,7 @@ public class PublicacionAlojamientoService {
 
                         if (status == STATUS_ROLLED_BACK) {
                             rutasGuardadas.forEach(
-                                    almacenamientoImagenService::eliminar
-                            );
+                                    almacenamientoImagenService::eliminar);
                         }
                     }
                 }
@@ -134,24 +126,21 @@ public class PublicacionAlojamientoService {
 
         OffsetDateTime ahora = OffsetDateTime.now();
 
-        Alojamiento alojamiento = new Alojamiento();
-
-        alojamiento.setIdAlojamiento(UUID.randomUUID());
-        alojamiento.setIdAnfitrion(idAnfitrion);
-        alojamiento.setUbicacion(solicitud.getUbicacion().trim());
-        alojamiento.setCiudad(solicitud.getCiudad().trim());
-        alojamiento.setTipoAlojamiento(
-                solicitud.getTipoAlojamiento().trim());
-        alojamiento.setCapacidad(solicitud.getCapacidad());
-        alojamiento.setFechaCreacion(ahora);
-
-        alojamientoRepository.save(alojamiento);
+        UUID idAlojamiento = alojamientoCommand.crearAlojamiento(
+                new CrearAlojamientoParaPublicacion(
+                        idAnfitrion,
+                        solicitud.getUbicacion().trim(),
+                        solicitud.getCiudad().trim(),
+                        solicitud.getTipoAlojamiento().trim(),
+                        solicitud.getCapacidad()
+                )
+        );
 
         Publicacion publicacion = new Publicacion();
 
         publicacion.setIdPublicacion(UUID.randomUUID());
-        publicacion.setIdAlojamiento(alojamiento.getIdAlojamiento());
-        publicacion.setIdPolitica(politica.getIdPolitica());
+        publicacion.setIdAlojamiento(idAlojamiento);
+        publicacion.setIdPolitica(solicitud.getIdPolitica());
         publicacion.setTitulo(solicitud.getTitulo().trim());
         publicacion.setDescripcion(solicitud.getDescripcion().trim());
         publicacion.setReglas(solicitud.getReglas().trim());
@@ -184,8 +173,7 @@ public class PublicacionAlojamientoService {
         for (int i = 0; i < solicitud.getImagenes().size(); i++) {
 
             String ruta = almacenamientoImagenService.guardar(
-                    solicitud.getImagenes().get(i)
-            );
+                    solicitud.getImagenes().get(i));
 
             rutasGuardadas.add(ruta);
             rutasImagenes.add(ruta);
@@ -202,7 +190,7 @@ public class PublicacionAlojamientoService {
         }
 
         return new PublicacionAlojamientoResponse(
-                alojamiento.getIdAlojamiento(),
+                idAlojamiento,
                 publicacion.getIdPublicacion(),
                 publicacion.getTitulo(),
                 publicacion.getEstado(),

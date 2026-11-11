@@ -29,6 +29,9 @@ import co.edu.unbosque.marketplace.usuario.api.request.ReactivarCuentaRequest;
 
 import org.springframework.transaction.annotation.Transactional;
 import co.edu.unbosque.marketplace.usuario.security.JwtUtil;
+import org.springframework.context.ApplicationEventPublisher;
+
+import co.edu.unbosque.marketplace.usuario.contracts.CuentaDesactivadaEvent;
 
 @Service
 public class UsuarioService {
@@ -56,6 +59,9 @@ public class UsuarioService {
 
 	@Autowired
 	private ExternalHTTPRequestMapping correoExterno;
+
+	@Autowired
+	private ApplicationEventPublisher eventPublisher;
 
 	private final SecureRandom random = new SecureRandom();
 	private static final long VIGENCIA_CAMBIO_CORREO = 5;
@@ -496,12 +502,16 @@ public class UsuarioService {
 			throw new IllegalStateException("La cuenta no se encuentra activa.");
 		}
 
+		OffsetDateTime ahora = OffsetDateTime.now();
+
 		usuario.setEstado(EstadoUsuario.INACTIVA);
-		usuario.setFechaActualizacion(OffsetDateTime.now());
+		usuario.setFechaActualizacion(ahora);
 
 		usuarioRepository.save(usuario);
 
 		jwtUtil.invalidarSesiones(idUsuario);
+
+		eventPublisher.publishEvent(new CuentaDesactivadaEvent(idUsuario, ahora));
 	}
 
 	public void reactivarCuenta(ReactivarCuentaRequest solicitud) {
