@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,9 +69,12 @@ public class ModeracionPublicacionService {
     @Transactional
     public ModeracionPublicacionResponse bloquearPublicacion(
             UUID idAdministrador,
-            UUID idPublicacion) {
+            UUID idPublicacion,
+            String motivo) {
 
         validarAdministrador(idAdministrador);
+
+        String motivoFinal = validarMotivo(motivo);
 
         Publicacion publicacion = obtenerPublicacion(idPublicacion);
 
@@ -95,7 +98,7 @@ public class ModeracionPublicacionService {
                 idPublicacion,
                 "BLOQUEAR_PUBLICACION",
                 BLOQUEADA,
-                null,
+                motivoFinal,
                 ahora
         );
 
@@ -105,7 +108,7 @@ public class ModeracionPublicacionService {
                 revision.getAccion(),
                 estadoAnterior,
                 BLOQUEADA,
-                null,
+                motivoFinal,
                 "La publicación ha sido bloqueada correctamente.",
                 ahora
         );
@@ -121,19 +124,7 @@ public class ModeracionPublicacionService {
 
         validarAdministrador(idAdministrador);
 
-        if (motivo == null || motivo.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Debes proporcionar el motivo del desbloqueo."
-            );
-        }
-
-        String motivoFinal = motivo.trim();
-
-        if (motivoFinal.length() > 2000) {
-            throw new IllegalArgumentException(
-                    "El motivo no puede superar los 2000 caracteres."
-            );
-        }
+        String motivoFinal = validarMotivo(motivo);
 
         Publicacion publicacion = obtenerPublicacion(idPublicacion);
 
@@ -169,6 +160,8 @@ public class ModeracionPublicacionService {
                 ahora
         );
 
+        // Notificar al módulo de notificaciones.
+
         eventPublisher.publishEvent(
                 new PublicacionDesbloqueadaEvent(
                         idPublicacion,
@@ -191,7 +184,7 @@ public class ModeracionPublicacionService {
         );
     }
 
-    // VALIDACIONES
+    // VALIDAR ADMINISTRADOR
 
     private void validarAdministrador(UUID idAdministrador) {
 
@@ -201,6 +194,29 @@ public class ModeracionPublicacionService {
             );
         }
     }
+
+    // VALIDAR MOTIVO
+
+    private String validarMotivo(String motivo) {
+
+        if (motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Debes proporcionar el motivo de la operación."
+            );
+        }
+
+        String motivoFinal = motivo.trim();
+
+        if (motivoFinal.length() > 2000) {
+            throw new IllegalArgumentException(
+                    "El motivo no puede superar los 2000 caracteres."
+            );
+        }
+
+        return motivoFinal;
+    }
+
+    // OBTENER PUBLICACION
 
     private Publicacion obtenerPublicacion(UUID idPublicacion) {
 
