@@ -9,8 +9,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import co.edu.unbosque.marketplace.usuario.api.request.ActualizarContrasenaRequest;
@@ -36,37 +34,42 @@ import co.edu.unbosque.marketplace.usuario.contracts.CuentaDesactivadaEvent;
 @Service
 public class UsuarioService {
 
-	@Autowired
-	private JwtUtil jwtUtil;
-
-	@Autowired
-	private UsuarioRepository usuarioRepository;
-
-	@Autowired
-	private RolRepository rolRepository;
-
-	@Autowired
-	private ProteccionDocumento proteccionDocumento;
-
-	@Autowired
-	private ProteccionContrasena proteccionContrasena;
-
-	@Autowired
-	private VerificacionCorreoService verificacionCorreoService;
-
-	@Autowired
-	private StringRedisTemplate redisTemplate;
-
-	@Autowired
-	private ExternalHTTPRequestMapping correoExterno;
-
-	@Autowired
-	private ApplicationEventPublisher eventPublisher;
+	private final JwtUtil jwtUtil;
+	private final UsuarioRepository usuarioRepository;
+	private final RolRepository rolRepository;
+	private final ProteccionDocumento proteccionDocumento;
+	private final ProteccionContrasena proteccionContrasena;
+	private final VerificacionCorreoService verificacionCorreoService;
+	private final StringRedisTemplate redisTemplate;
+	private final ExternalHTTPRequestMapping correoExterno;
+	private final ApplicationEventPublisher eventPublisher;
 
 	private final SecureRandom random = new SecureRandom();
+
 	private static final long VIGENCIA_CAMBIO_CORREO = 5;
 	private static final int MAX_INTENTOS_CAMBIO_CORREO = 5;
 
+	public UsuarioService(
+	        JwtUtil jwtUtil,
+	        UsuarioRepository usuarioRepository,
+	        RolRepository rolRepository,
+	        ProteccionDocumento proteccionDocumento,
+	        ProteccionContrasena proteccionContrasena,
+	        VerificacionCorreoService verificacionCorreoService,
+	        StringRedisTemplate redisTemplate,
+	        ExternalHTTPRequestMapping correoExterno,
+	        ApplicationEventPublisher eventPublisher) {
+
+	    this.jwtUtil = jwtUtil;
+	    this.usuarioRepository = usuarioRepository;
+	    this.rolRepository = rolRepository;
+	    this.proteccionDocumento = proteccionDocumento;
+	    this.proteccionContrasena = proteccionContrasena;
+	    this.verificacionCorreoService = verificacionCorreoService;
+	    this.redisTemplate = redisTemplate;
+	    this.correoExterno = correoExterno;
+	    this.eventPublisher = eventPublisher;
+	}
 	public int registrar(RegistrarUsuarioRequest nuevoUsuario) {
 
 		if (datosInvalidos(nuevoUsuario)) {
