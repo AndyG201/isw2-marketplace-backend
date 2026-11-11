@@ -3,6 +3,8 @@ package co.edu.unbosque.marketplace.auditoria.domain;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.ColumnTransformer;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -35,6 +37,7 @@ public class BandejaSalidaAuditoria {
     private UUID idEntidadAfectada;
 
     @Column(name = "detalle", columnDefinition = "jsonb")
+    @ColumnTransformer(write = "?::jsonb")
     private String detalle;
 
     @Column(name = "id_correlacion", length = 100)
