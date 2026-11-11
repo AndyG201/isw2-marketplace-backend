@@ -1,6 +1,7 @@
 
 package co.edu.unbosque.marketplace.alojamiento.application;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,4 +59,24 @@ public class AlojamientoPublicacionQueryService implements AlojamientoPublicacio
 				.toList();
 	}
 
+	@Override
+	public List<AlojamientoPublicacionInfo> consultarPorIdsAlojamiento(
+	        Collection<UUID> idsAlojamientos) {
+
+	    if (idsAlojamientos == null || idsAlojamientos.isEmpty()) {
+	        return List.of();
+	    }
+
+	    return alojamientoRepository.findAllById(idsAlojamientos)
+	            .stream()
+	            .map(alojamiento -> new AlojamientoPublicacionInfo(
+	                    alojamiento.getIdAlojamiento(),
+	                    alojamiento.getIdAnfitrion(),
+	                    alojamiento.getUbicacion(),
+	                    alojamiento.getCiudad(),
+	                    alojamiento.getTipoAlojamiento(),
+	                    alojamiento.getCapacidad()
+	            ))
+	            .toList();
+	}
 }

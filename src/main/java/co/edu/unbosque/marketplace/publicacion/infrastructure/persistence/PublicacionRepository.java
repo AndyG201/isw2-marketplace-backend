@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.publicacion.infrastructure.persistence;
 
 import java.time.OffsetDateTime;
@@ -43,6 +42,8 @@ public interface PublicacionRepository
             """)
     int pausarPublicacionesActivasPorAlojamientos(
             @Param("idsAlojamientos") Collection<UUID> idsAlojamientos,
-            @Param("fechaActualizacion") OffsetDateTime fechaActualizacion
+            @Param("fechaActualizacion") OffsetDateTime fechaActualizacion);
+    List<Publicacion> findByEstadoOrderByFechaCreacionDesc(
+            String estado
     );
 }

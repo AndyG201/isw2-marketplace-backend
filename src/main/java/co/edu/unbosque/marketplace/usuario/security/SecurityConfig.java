@@ -27,152 +27,102 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final UserDetailsService userDetailsService;
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+	private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthenticationFilter,
-            UserDetailsService userDetailsService) {
+	public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, UserDetailsService userDetailsService) {
 
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.userDetailsService = userDetailsService;
-    }
+		this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+		this.userDetailsService = userDetailsService;
+	}
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            AuthenticationProvider authenticationProvider) throws Exception {
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider)
+			throws Exception {
 
-        http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> {})
-            .authorizeHttpRequests(auth -> auth
+		http.csrf(csrf -> csrf.disable()).cors(cors -> {
+		}).authorizeHttpRequests(auth -> auth
 
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                .requestMatchers("/autenticacion/**").permitAll()
-                .requestMatchers("/verificacion-correo/**").permitAll()
+				.requestMatchers("/autenticacion/**").permitAll().requestMatchers("/verificacion-correo/**").permitAll()
 
-                .requestMatchers(
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/v3/api-docs/**"
-                ).permitAll()
+				.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 
-                .requestMatchers("/recuperacion-contrasena/**").permitAll()
+				.requestMatchers("/recuperacion-contrasena/**").permitAll()
 
-                .requestMatchers("/administracion/usuarios/**")
-                .hasAuthority("ROLE_ADMINISTRADOR")
-                .requestMatchers(
-                	    HttpMethod.POST,
-                	    "/alojamientos"
-                	).hasAuthority("ROLE_ANFITRION")
-                
-                .requestMatchers(
-                	    HttpMethod.GET,
-                	    "/servicios",
-                	    "/politicas-cancelacion/activas"
-                	).hasAuthority("ROLE_ANFITRION")
-                .requestMatchers(
-                	    HttpMethod.GET,
-                	    "/publicaciones/mis-publicaciones",
-                	    "/publicaciones/mis-publicaciones/**"
-                	).hasAuthority("ROLE_ANFITRION")
-                .requestMatchers(
-                	    HttpMethod.PUT,
-                	    "/publicaciones/**"
-                	).hasAnyAuthority(
-                	    "ROLE_ANFITRION",
-                	    "ROLE_ADMINISTRADOR"
-                	)
-                .requestMatchers(
-                	    HttpMethod.PATCH,
-                	    "/publicaciones/*/enviar-revision"
-                	).hasAuthority("ROLE_ANFITRION")
-                .requestMatchers(
-                	    HttpMethod.PATCH,
-                	    "/administracion/publicaciones/**"
-                	).hasAuthority("ROLE_ADMINISTRADOR")
-                .requestMatchers(
-                	    HttpMethod.PATCH,
-                	    "/publicaciones/*/pausar",
-                	    "/publicaciones/*/reactivar"
-                	).hasAuthority("ROLE_ANFITRION")
+				.requestMatchers("/administracion/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
+				.requestMatchers(HttpMethod.POST, "/alojamientos").hasAuthority("ROLE_ANFITRION")
 
-                .anyRequest().authenticated()
-            )
-            .exceptionHandling(exception -> exception
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write(
-                        "{\"mensaje\":\"Debes iniciar sesión para acceder a este recurso.\"}"
-                    );
-                })
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write(
-                        "{\"mensaje\":\"No tienes permisos para realizar esta operación.\"}"
-                    );
-                })
-            )
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .authenticationProvider(authenticationProvider)
-            .addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class
-            );
+				.requestMatchers(HttpMethod.GET, "/servicios", "/politicas-cancelacion/activas")
+				.hasAuthority("ROLE_ANFITRION")
+				.requestMatchers(HttpMethod.GET, "/publicaciones/mis-publicaciones",
+						"/publicaciones/mis-publicaciones/**")
+				.hasAuthority("ROLE_ANFITRION").requestMatchers(HttpMethod.PUT, "/publicaciones/**")
+				.hasAnyAuthority("ROLE_ANFITRION", "ROLE_ADMINISTRADOR")
+				.requestMatchers(HttpMethod.PATCH, "/publicaciones/*/enviar-revision").hasAuthority("ROLE_ANFITRION")
+				.requestMatchers(HttpMethod.GET, "/administracion/publicaciones", "/administracion/publicaciones/**")
+				.hasAuthority("ROLE_ADMINISTRADOR")
+				.requestMatchers(HttpMethod.PATCH, "/administracion/publicaciones/**")
+				.hasAuthority("ROLE_ADMINISTRADOR")
+				.requestMatchers(HttpMethod.PATCH, "/publicaciones/*/pausar", "/publicaciones/*/reactivar")
+				.hasAuthority("ROLE_ANFITRION").requestMatchers(HttpMethod.GET, "/publicaciones/catalogo").permitAll()
 
-        return http.build();
-    }
+				.anyRequest().authenticated())
+				.exceptionHandling(
+						exception -> exception.authenticationEntryPoint((request, response, authException) -> {
+							response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+							response.setContentType("application/json");
+							response.setCharacterEncoding("UTF-8");
+							response.getWriter()
+									.write("{\"mensaje\":\"Debes iniciar sesión para acceder a este recurso.\"}");
+						}).accessDeniedHandler((request, response, accessDeniedException) -> {
+							response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+							response.setContentType("application/json");
+							response.setCharacterEncoding("UTF-8");
+							response.getWriter()
+									.write("{\"mensaje\":\"No tienes permisos para realizar esta operación.\"}");
+						}))
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authenticationProvider(authenticationProvider)
+				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+		return http.build();
+	}
 
-        CorsConfiguration configuration = new CorsConfiguration();
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
 
-        configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173",
-            "http://127.0.0.1:5173"
-        ));
+		CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedMethods(List.of(
-            "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
-        ));
+		configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
 
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-        UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+		configuration.setAllowedHeaders(List.of("*"));
+		configuration.setAllowCredentials(true);
 
-        source.registerCorsConfiguration("/**", configuration);
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        return source;
-    }
+		source.registerCorsConfiguration("/**", configuration);
 
-    @Bean
-    public AuthenticationProvider authenticationProvider(
-            PasswordEncoder passwordEncoder) {
+		return source;
+	}
 
-        DaoAuthenticationProvider authProvider =
-            new DaoAuthenticationProvider();
+	@Bean
+	public AuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
 
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
 
-        return authProvider;
-    }
+		authProvider.setUserDetailsService(userDetailsService);
+		authProvider.setPasswordEncoder(passwordEncoder);
 
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+		return authProvider;
+	}
 
-        return config.getAuthenticationManager();
-    }
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+
+		return config.getAuthenticationManager();
+	}
 }
