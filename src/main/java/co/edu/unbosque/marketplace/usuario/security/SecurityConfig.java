@@ -67,6 +67,8 @@ public class SecurityConfig {
 				.hasAuthority("ROLE_ADMINISTRADOR")
 				.requestMatchers(HttpMethod.PATCH, "/publicaciones/*/pausar", "/publicaciones/*/reactivar")
 				.hasAuthority("ROLE_ANFITRION").requestMatchers(HttpMethod.GET, "/publicaciones/catalogo").permitAll()
+				.requestMatchers(HttpMethod.GET, "/administracion/publicaciones", "/administracion/publicaciones/**")
+				.hasAuthority("ROLE_ADMINISTRADOR")
 
 				.anyRequest().authenticated())
 				.exceptionHandling(

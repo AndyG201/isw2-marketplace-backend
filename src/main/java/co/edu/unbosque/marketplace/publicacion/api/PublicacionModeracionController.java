@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 
+import co.edu.unbosque.marketplace.publicacion.api.request.BloquearPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.api.request.DesbloquearPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.application.ModeracionPublicacionService;
 
@@ -38,6 +39,8 @@ public class PublicacionModeracionController {
         this.moderacionService = moderacionService;
     }
 
+    // CONSULTAR PUBLICACIONES
+
     @GetMapping
     public ResponseEntity<?> consultarPublicaciones() {
 
@@ -46,11 +49,18 @@ public class PublicacionModeracionController {
         );
     }
 
+    // BLOQUEAR PUBLICACION
+
     @PatchMapping("/{idPublicacion}/bloquear")
     public ResponseEntity<?> bloquearPublicacion(
             @AuthenticationPrincipal(expression = "idUsuario")
             UUID idAdministrador,
-            @PathVariable UUID idPublicacion) {
+
+            @PathVariable UUID idPublicacion,
+
+            @Valid @RequestBody BloquearPublicacionRequest solicitud,
+
+            BindingResult resultadoValidacion) {
 
         if (idAdministrador == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -60,12 +70,23 @@ public class PublicacionModeracionController {
                     ));
         }
 
+        if (resultadoValidacion.hasErrors()) {
+
+            String mensaje = obtenerErroresValidacion(
+                    resultadoValidacion
+            );
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of("mensaje", mensaje));
+        }
+
         try {
 
             return ResponseEntity.ok(
                     moderacionService.bloquearPublicacion(
                             idAdministrador,
-                            idPublicacion
+                            idPublicacion,
+                            solicitud.getMotivo()
                     )
             );
 
@@ -86,12 +107,17 @@ public class PublicacionModeracionController {
         }
     }
 
+    // DESBLOQUEAR PUBLICACION
+
     @PatchMapping("/{idPublicacion}/desbloquear")
     public ResponseEntity<?> desbloquearPublicacion(
             @AuthenticationPrincipal(expression = "idUsuario")
             UUID idAdministrador,
+
             @PathVariable UUID idPublicacion,
+
             @Valid @RequestBody DesbloquearPublicacionRequest solicitud,
+
             BindingResult resultadoValidacion) {
 
         if (idAdministrador == null) {
@@ -104,12 +130,9 @@ public class PublicacionModeracionController {
 
         if (resultadoValidacion.hasErrors()) {
 
-            String mensaje = resultadoValidacion.getFieldErrors()
-                    .stream()
-                    .map(error -> error.getDefaultMessage())
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .collect(Collectors.joining(" "));
+            String mensaje = obtenerErroresValidacion(
+                    resultadoValidacion
+            );
 
             return ResponseEntity.badRequest()
                     .body(Map.of("mensaje", mensaje));
@@ -140,5 +163,18 @@ public class PublicacionModeracionController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("mensaje", e.getMessage()));
         }
+    }
+
+    // CONSTRUIR MENSAJES DE VALIDACION
+
+    private String obtenerErroresValidacion(
+            BindingResult resultadoValidacion) {
+
+        return resultadoValidacion.getFieldErrors()
+                .stream()
+                .map(error -> error.getDefaultMessage())
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.joining(" "));
     }
 }
