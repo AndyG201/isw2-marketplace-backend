@@ -27,333 +27,220 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final UserDetailsService userDetailsService;
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+	private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthenticationFilter,
-            UserDetailsService userDetailsService) {
+	public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, UserDetailsService userDetailsService) {
 
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.userDetailsService = userDetailsService;
-    }
+		this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+		this.userDetailsService = userDetailsService;
+	}
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            AuthenticationProvider authenticationProvider)
-            throws Exception {
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider)
+			throws Exception {
 
-        http
-            /*
-             * API REST sin estado.
-             *
-             * La autenticación utiliza exclusivamente JWT enviado
-             * mediante el encabezado Authorization: Bearer.
-             *
-             * JwtAuthenticationFilter no obtiene credenciales
-             * de cookies ni utiliza sesiones de navegador.
-             *
-             * Por tanto, no existe autenticación automática
-             * basada en cookies que requiera protección CSRF.
-             */
-            .csrf(csrf -> csrf.disable())
+		http
+				/*
+				 * API REST sin estado.
+				 *
+				 * La autenticación utiliza exclusivamente JWT enviado mediante el encabezado
+				 * Authorization: Bearer.
+				 *
+				 * JwtAuthenticationFilter no obtiene credenciales de cookies ni utiliza
+				 * sesiones de navegador.
+				 *
+				 * Por tanto, no existe autenticación automática basada en cookies que requiera
+				 * protección CSRF.
+				 */
+				.csrf(csrf -> csrf.disable())
 
-            .cors(cors -> {})
+				.cors(cors -> {
+				})
 
-            .authorizeHttpRequests(auth -> auth
+				.authorizeHttpRequests(auth -> auth
 
-                .requestMatchers(
-                    HttpMethod.OPTIONS,
-                    "/**"
-                ).permitAll()
+						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Autenticación y verificación de correo.
+						// Autenticación y verificación de correo.
 
-                .requestMatchers(
-                    "/autenticacion/**",
-                    "/verificacion-correo/**"
-                ).permitAll()
+						.requestMatchers("/autenticacion/**", "/verificacion-correo/**").permitAll()
 
-                // Documentación Swagger.
+						// Documentación Swagger.
 
-                .requestMatchers(
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/v3/api-docs/**"
-                ).permitAll()
+						.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 
-                // Recuperación de contraseña.
+						// Recuperación de contraseña.
 
-                .requestMatchers(
-                    "/recuperacion-contrasena/**"
-                ).permitAll()
+						.requestMatchers("/recuperacion-contrasena/**").permitAll()
 
-                // Administración de usuarios.
+						// Administración de usuarios.
 
-                .requestMatchers(
-                    "/administracion/usuarios/**"
-                ).hasAuthority("ROLE_ADMINISTRADOR")
+						.requestMatchers("/administracion/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
 
-                // Creación de alojamientos.
+						// Creación de alojamientos.
 
-                .requestMatchers(
-                    HttpMethod.POST,
-                    "/alojamientos"
-                ).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.POST, "/alojamientos").hasAuthority("ROLE_ANFITRION")
 
-             // Consultar periodos disponibles.
+						// Consultar periodos disponibles.
 
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/alojamientos/*/periodos-disponibles"
-                ).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.GET, "/alojamientos/*/periodos-disponibles")
+						.hasAuthority("ROLE_ANFITRION")
 
-                // Registrar periodos disponibles.
+						// Registrar periodos disponibles.
 
-                .requestMatchers(
-                    HttpMethod.POST,
-                    "/alojamientos/*/periodos-disponibles"
-                ).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.POST, "/alojamientos/*/periodos-disponibles")
+						.hasAuthority("ROLE_ANFITRION")
 
-                // Actualizar periodos disponibles.
+						// Actualizar periodos disponibles.
 
-                .requestMatchers(
-                    HttpMethod.PUT,
-                    "/alojamientos/*/periodos-disponibles/*"
-                ).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.PUT, "/alojamientos/*/periodos-disponibles/*")
+						.hasAuthority("ROLE_ANFITRION")
 
-                // Deshabilitar periodos disponibles.
+						// Deshabilitar periodos disponibles.
 
-                .requestMatchers(
-                    HttpMethod.DELETE,
-                    "/alojamientos/*/periodos-disponibles/*"
-                ).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.DELETE, "/alojamientos/*/periodos-disponibles/*")
+						.hasAuthority("ROLE_ANFITRION")
 
-                // Consultas de servicios y políticas.
+						// Consultas de servicios y políticas.
 
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/servicios",
-                    "/politicas-cancelacion/activas"
-                ).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.GET, "/servicios", "/politicas-cancelacion/activas")
+						.hasAuthority("ROLE_ANFITRION")
 
-                // Publicaciones propias del anfitrión.
+						// Publicaciones propias del anfitrión.
 
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/publicaciones/mis-publicaciones",
-                    "/publicaciones/mis-publicaciones/**"
-                ).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.GET, "/publicaciones/mis-publicaciones",
+								"/publicaciones/mis-publicaciones/**")
+						.hasAuthority("ROLE_ANFITRION")
 
-                // Edición de publicaciones.
+						// Edición de publicaciones.
 
-                .requestMatchers(
-                    HttpMethod.PUT,
-                    "/publicaciones/**"
-                ).hasAnyAuthority(
-                    "ROLE_ANFITRION",
-                    "ROLE_ADMINISTRADOR"
-                )
+						.requestMatchers(HttpMethod.PUT, "/publicaciones/**")
+						.hasAnyAuthority("ROLE_ANFITRION", "ROLE_ADMINISTRADOR")
 
-                // Enviar publicación a revisión.
+						// Enviar publicación a revisión.
 
-                .requestMatchers(
-                    HttpMethod.PATCH,
-                    "/publicaciones/*/enviar-revision"
-                ).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.PATCH, "/publicaciones/*/enviar-revision")
+						.hasAuthority("ROLE_ANFITRION")
 
-                // Consulta administrativa de publicaciones.
+						// Consulta administrativa de publicaciones.
 
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/administracion/publicaciones",
-                    "/administracion/publicaciones/**"
-                ).hasAuthority("ROLE_ADMINISTRADOR")
+						.requestMatchers(HttpMethod.GET, "/administracion/publicaciones",
+								"/administracion/publicaciones/**")
+						.hasAuthority("ROLE_ADMINISTRADOR")
 
-                // Moderación administrativa.
+						// Moderación administrativa.
 
-                .requestMatchers(
-                    HttpMethod.PATCH,
-                    "/administracion/publicaciones/**"
-                ).hasAuthority("ROLE_ADMINISTRADOR")
+						.requestMatchers(HttpMethod.PATCH, "/administracion/publicaciones/**")
+						.hasAuthority("ROLE_ADMINISTRADOR")
 
-                // Pausar y reactivar publicaciones.
+						// Pausar y reactivar publicaciones.
 
-                .requestMatchers(
-                    HttpMethod.PATCH,
-                    "/publicaciones/*/pausar",
-                    "/publicaciones/*/reactivar"
-                ).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.PATCH, "/publicaciones/*/pausar", "/publicaciones/*/reactivar")
+						.hasAuthority("ROLE_ANFITRION")
 
-                // Catálogo público.
+						// Catálogo público.
 
-                .requestMatchers(
-                    HttpMethod.GET,
-                    "/publicaciones/catalogo"
-                ).permitAll()
+						.requestMatchers(HttpMethod.GET, "/publicaciones/catalogo").permitAll()
 
-.requestMatchers(
-        HttpMethod.GET,
-        "/publicaciones/catalogo"
-).permitAll()
+						.requestMatchers(HttpMethod.GET, "/publicaciones/catalogo").permitAll()
 
 // Consulta de política de cancelación de la publicación.
-.requestMatchers(
-        HttpMethod.GET,
-        "/publicaciones/*/politica-cancelacion"
-).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.GET, "/publicaciones/*/politica-cancelacion")
+						.hasAuthority("ROLE_ANFITRION")
 
 // Selección de política de cancelación.
-.requestMatchers(
-        HttpMethod.PATCH,
-        "/publicaciones/*/politica-cancelacion"
-).hasAuthority("ROLE_ANFITRION")
+						.requestMatchers(HttpMethod.PATCH, "/publicaciones/*/politica-cancelacion")
+						.hasAuthority("ROLE_ANFITRION")
 
 // Consultar modo de aceptación.
-.requestMatchers(
-        HttpMethod.GET,
-        "/publicaciones/*/modo-aceptacion"
-).hasAnyAuthority(
-        "ROLE_ANFITRION",
-        "ROLE_ADMINISTRADOR"
-)
+						.requestMatchers(HttpMethod.GET, "/publicaciones/*/modo-aceptacion")
+						.hasAnyAuthority("ROLE_ANFITRION", "ROLE_ADMINISTRADOR")
 
 // Modificar modo de aceptación.
-.requestMatchers(
-        HttpMethod.PATCH,
-        "/publicaciones/*/modo-aceptacion"
-).hasAnyAuthority(
-        "ROLE_ANFITRION",
-        "ROLE_ADMINISTRADOR"
-)
-//HU-023: consulta pública de disponibilidad por fechas.
-.requestMatchers(
-     HttpMethod.GET,
-     "/alojamientos/*/disponibilidad"
-).permitAll()
+						.requestMatchers(HttpMethod.PATCH, "/publicaciones/*/modo-aceptacion")
+						.hasAnyAuthority("ROLE_ANFITRION", "ROLE_ADMINISTRADOR")
+						// HU-023: consulta pública de disponibilidad por fechas.
+						.requestMatchers(HttpMethod.GET, "/alojamientos/*/disponibilidad").permitAll()
 
-//HU-023: calendario completo exclusivo del anfitrión.
-.requestMatchers(
-     HttpMethod.GET,
-     "/alojamientos/*/calendario"
-).hasAuthority("ROLE_ANFITRION")
+						// HU-023: calendario completo exclusivo del anfitrión.
+						.requestMatchers(HttpMethod.GET, "/alojamientos/*/calendario").hasAuthority("ROLE_ANFITRION")
 
-// Todo lo demás requiere autenticación.
-.anyRequest().authenticated()
+						// Todo lo demás requiere autenticación.
+						.anyRequest().authenticated())
 
+				// Manejo de errores de autenticación y autorización.
 
-                .anyRequest().authenticated()
-            )
+				.exceptionHandling(exception -> exception
 
-            // Manejo de errores de autenticación y autorización.
+						.authenticationEntryPoint((request, response, authException) -> {
 
-            .exceptionHandling(exception -> exception
+							response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-                .authenticationEntryPoint(
-                    (request, response, authException) -> {
+							response.setContentType("application/json");
+							response.setCharacterEncoding("UTF-8");
 
-                        response.setStatus(
-                                HttpServletResponse.SC_UNAUTHORIZED
-                        );
+							response.getWriter()
+									.write("{\"mensaje\":\"Debes iniciar sesión para acceder a este recurso.\"}");
+						})
 
-                        response.setContentType("application/json");
-                        response.setCharacterEncoding("UTF-8");
+						.accessDeniedHandler((request, response, accessDeniedException) -> {
 
-                        response.getWriter().write(
-                            "{\"mensaje\":\"Debes iniciar sesión para acceder a este recurso.\"}"
-                        );
-                    }
-                )
+							response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
-                .accessDeniedHandler(
-                    (request, response, accessDeniedException) -> {
+							response.setContentType("application/json");
+							response.setCharacterEncoding("UTF-8");
 
-                        response.setStatus(
-                                HttpServletResponse.SC_FORBIDDEN
-                        );
+							response.getWriter()
+									.write("{\"mensaje\":\"No tienes permisos para realizar esta operación.\"}");
+						}))
 
-                        response.setContentType("application/json");
-                        response.setCharacterEncoding("UTF-8");
+				// API sin estado y sin sesiones HTTP.
 
-                        response.getWriter().write(
-                            "{\"mensaje\":\"No tienes permisos para realizar esta operación.\"}"
-                        );
-                    }
-                )
-            )
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // API sin estado y sin sesiones HTTP.
+				.authenticationProvider(authenticationProvider)
 
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(
-                    SessionCreationPolicy.STATELESS
-                )
-            )
+				// Incorporar filtro JWT antes del filtro de usuario y contraseña.
 
-            .authenticationProvider(authenticationProvider)
+				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-            // Incorporar filtro JWT antes del filtro de usuario y contraseña.
+		return http.build();
+	}
 
-            .addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class
-            );
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
 
-        return http.build();
-    }
+		CorsConfiguration configuration = new CorsConfiguration();
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+		configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
 
-        CorsConfiguration configuration = new CorsConfiguration();
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-        configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173",
-            "http://127.0.0.1:5173"
-        ));
+		configuration.setAllowedHeaders(List.of("*"));
+		configuration.setAllowCredentials(true);
 
-        configuration.setAllowedMethods(List.of(
-            "GET",
-            "POST",
-            "PUT",
-            "PATCH",
-            "DELETE",
-            "OPTIONS"
-        ));
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+		source.registerCorsConfiguration("/**", configuration);
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+		return source;
+	}
 
-        source.registerCorsConfiguration(
-                "/**",
-                configuration
-        );
+	@Bean
+	public AuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
 
-        return source;
-    }
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
 
-    @Bean
-    public AuthenticationProvider authenticationProvider(
-            PasswordEncoder passwordEncoder) {
+		authProvider.setUserDetailsService(userDetailsService);
+		authProvider.setPasswordEncoder(passwordEncoder);
 
-        DaoAuthenticationProvider authProvider =
-                new DaoAuthenticationProvider();
+		return authProvider;
+	}
 
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
 
-        return authProvider;
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config)
-            throws Exception {
-
-        return config.getAuthenticationManager();
-    }
+		return config.getAuthenticationManager();
+	}
 }
