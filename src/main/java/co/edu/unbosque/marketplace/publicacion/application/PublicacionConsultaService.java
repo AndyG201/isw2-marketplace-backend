@@ -16,7 +16,6 @@ import co.edu.unbosque.marketplace.publicacion.api.response.MisPublicacionesResp
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionResumenResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.ServicioPublicacionResponse;
-import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
