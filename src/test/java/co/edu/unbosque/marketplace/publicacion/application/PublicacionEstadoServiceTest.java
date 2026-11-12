@@ -1,292 +1,452 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.security.access.AccessDeniedException;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.Answers;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.security.access.AccessDeniedException;
 
-import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
-import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
+import co.edu.unbosque.marketplace.publicacion.api.response.EstadoPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
-import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
-
-import static org.mockito.Mockito.when;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class PublicacionEstadoServiceTest {
 
     @Mock
     private PublicacionRepository publicacionRepository;
 
     @Mock
-    private AlojamientoRepository alojamientoRepository;
+    private AlojamientoPublicacionQuery alojamientoPublicacionQuery;
 
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private Usuario anfitrion;
+    @Mock
+    private UsuarioPublicacionQuery usuarioPublicacionQuery;
 
     @Mock
     private Publicacion publicacion;
 
     @Mock
-    private Alojamiento alojamiento;
+    private UsuarioPublicacionInfo anfitrion;
 
     @InjectMocks
     private PublicacionEstadoService service;
 
-    private UUID idUsuario;
+    private UUID idAnfitrion;
     private UUID idPublicacion;
     private UUID idAlojamiento;
 
     @BeforeEach
     void setUp() {
-        idUsuario = UUID.randomUUID();
+
+        idAnfitrion = UUID.randomUUID();
         idPublicacion = UUID.randomUUID();
         idAlojamiento = UUID.randomUUID();
 
-        when(anfitrion.getIdUsuario()).thenReturn(idUsuario);
-        when(anfitrion.getRol().getNombre()).thenReturn("ANFITRION");
-        when(anfitrion.isCorreoVerificado()).thenReturn(true);
-        when(anfitrion.getEstado()).thenReturn(EstadoUsuario.ACTIVA);
-        when(anfitrion.isRestringido()).thenReturn(false);
-        when(anfitrion.getIntentosFallidos()).thenReturn(0);
+        when(anfitrion.esAnfitrion()).thenReturn(true);
+        when(anfitrion.cuentaHabilitadaParaPublicar()).thenReturn(true);
+    }
 
-        when(publicacion.getIdPublicacion()).thenReturn(idPublicacion);
-        when(publicacion.getIdAlojamiento()).thenReturn(idAlojamiento);
+    private void configurarAnfitrionValido() {
 
-        when(alojamiento.getIdAnfitrion()).thenReturn(idUsuario);
+        when(usuarioPublicacionQuery.consultarParaPublicacion(idAnfitrion))
+                .thenReturn(Optional.of(anfitrion));
     }
 
     private void prepararPublicacion(String estado) {
+
+        configurarAnfitrionValido();
+
         when(publicacionRepository.findById(idPublicacion))
                 .thenReturn(Optional.of(publicacion));
 
-        when(alojamientoRepository.findById(idAlojamiento))
-                .thenReturn(Optional.of(alojamiento));
+        when(publicacion.getIdPublicacion())
+                .thenReturn(idPublicacion);
 
-        when(publicacion.getEstado()).thenReturn(estado);
+        when(publicacion.getIdAlojamiento())
+                .thenReturn(idAlojamiento);
+
+        when(publicacion.getEstado())
+                .thenReturn(estado);
+
+        when(alojamientoPublicacionQuery.consultarIdAnfitrion(idAlojamiento))
+                .thenReturn(Optional.of(idAnfitrion));
     }
 
     @Test
     void pausarPublicacionCorrectamente() {
+
         prepararPublicacion("ACTIVA");
 
-        assertDoesNotThrow(() ->
-                service.pausarPublicacion(anfitrion, idPublicacion));
+        EstadoPublicacionResponse respuesta =
+                service.pausarPublicacion(idAnfitrion, idPublicacion);
+
+        assertNotNull(respuesta);
 
         verify(publicacion).setEstado("PAUSADA");
-        verify(publicacion).setFechaActualizacion(any());
+
+        verify(publicacion).setFechaActualizacion(
+                any(java.time.OffsetDateTime.class));
+
         verify(publicacionRepository).save(publicacion);
     }
 
     @Test
     void reactivarPublicacionCorrectamente() {
+
         prepararPublicacion("PAUSADA");
 
-        assertDoesNotThrow(() ->
-                service.reactivarPublicacion(anfitrion, idPublicacion));
+        EstadoPublicacionResponse respuesta =
+                service.reactivarPublicacion(idAnfitrion, idPublicacion);
+
+        assertNotNull(respuesta);
 
         verify(publicacion).setEstado("ACTIVA");
-        verify(publicacion).setFechaActualizacion(any());
+
+        verify(publicacion).setFechaActualizacion(
+                any(java.time.OffsetDateTime.class));
+
         verify(publicacionRepository).save(publicacion);
     }
 
     @Test
     void pausarConAnfitrionNulo() {
-        assertThrows(AccessDeniedException.class,
-                () -> service.pausarPublicacion(null, idPublicacion));
 
-        verifyNoInteractions(publicacionRepository, alojamientoRepository);
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.pausarPublicacion(null, idPublicacion)
+        );
+
+        verifyNoInteractions(
+                publicacionRepository,
+                alojamientoPublicacionQuery,
+                usuarioPublicacionQuery
+        );
     }
 
     @Test
-    void reactivarConAnfitrionSinIdentificador() {
-        when(anfitrion.getIdUsuario()).thenReturn(null);
+    void reactivarConAnfitrionNulo() {
 
-        assertThrows(AccessDeniedException.class,
-                () -> service.reactivarPublicacion(anfitrion, idPublicacion));
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.reactivarPublicacion(null, idPublicacion)
+        );
 
-        verifyNoInteractions(publicacionRepository, alojamientoRepository);
+        verifyNoInteractions(
+                publicacionRepository,
+                alojamientoPublicacionQuery,
+                usuarioPublicacionQuery
+        );
+    }
+
+    @Test
+    void pausarConAnfitrionInexistente() {
+
+        when(usuarioPublicacionQuery.consultarParaPublicacion(idAnfitrion))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
+        );
+
+        verifyNoInteractions(
+                publicacionRepository,
+                alojamientoPublicacionQuery
+        );
+    }
+
+    @Test
+    void reactivarConAnfitrionInexistente() {
+
+        when(usuarioPublicacionQuery.consultarParaPublicacion(idAnfitrion))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
+        );
+
+        verifyNoInteractions(
+                publicacionRepository,
+                alojamientoPublicacionQuery
+        );
     }
 
     @Test
     void pausarConRolDiferenteDeAnfitrion() {
-        when(anfitrion.getRol().getNombre()).thenReturn("CLIENTE");
 
-        assertThrows(AccessDeniedException.class,
-                () -> service.pausarPublicacion(anfitrion, idPublicacion));
+        configurarAnfitrionValido();
 
-        verifyNoInteractions(publicacionRepository, alojamientoRepository);
+        when(anfitrion.esAnfitrion()).thenReturn(false);
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
+        );
+
+        verifyNoInteractions(
+                publicacionRepository,
+                alojamientoPublicacionQuery
+        );
     }
 
     @Test
-    void reactivarConCorreoNoVerificado() {
-        when(anfitrion.isCorreoVerificado()).thenReturn(false);
+    void reactivarConRolDiferenteDeAnfitrion() {
 
-        assertThrows(AccessDeniedException.class,
-                () -> service.reactivarPublicacion(anfitrion, idPublicacion));
+        configurarAnfitrionValido();
 
-        verifyNoInteractions(publicacionRepository, alojamientoRepository);
+        when(anfitrion.esAnfitrion()).thenReturn(false);
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
+        );
+
+        verifyNoInteractions(
+                publicacionRepository,
+                alojamientoPublicacionQuery
+        );
     }
 
     @Test
-    void pausarConCuentaRestringida() {
-        when(anfitrion.isRestringido()).thenReturn(true);
+    void pausarConCuentaNoHabilitada() {
 
-        assertThrows(AccessDeniedException.class,
-                () -> service.pausarPublicacion(anfitrion, idPublicacion));
+        configurarAnfitrionValido();
 
-        verifyNoInteractions(publicacionRepository, alojamientoRepository);
+        when(anfitrion.cuentaHabilitadaParaPublicar()).thenReturn(false);
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
+        );
+
+        verifyNoInteractions(
+                publicacionRepository,
+                alojamientoPublicacionQuery
+        );
     }
 
     @Test
-    void reactivarConCincoIntentosFallidos() {
-        when(anfitrion.getIntentosFallidos()).thenReturn(5);
+    void reactivarConCuentaNoHabilitada() {
 
-        assertThrows(AccessDeniedException.class,
-                () -> service.reactivarPublicacion(anfitrion, idPublicacion));
+        configurarAnfitrionValido();
 
-        verifyNoInteractions(publicacionRepository, alojamientoRepository);
+        when(anfitrion.cuentaHabilitadaParaPublicar()).thenReturn(false);
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
+        );
+
+        verifyNoInteractions(
+                publicacionRepository,
+                alojamientoPublicacionQuery
+        );
     }
 
     @Test
-    void pausarConIdentificadorNulo() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.pausarPublicacion(anfitrion, null));
+    void pausarConIdentificadorPublicacionNulo() {
 
-        verifyNoInteractions(publicacionRepository, alojamientoRepository);
+        configurarAnfitrionValido();
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.pausarPublicacion(idAnfitrion, null)
+        );
+
+        verifyNoInteractions(
+                publicacionRepository,
+                alojamientoPublicacionQuery
+        );
+    }
+
+    @Test
+    void reactivarConIdentificadorPublicacionNulo() {
+
+        configurarAnfitrionValido();
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.reactivarPublicacion(idAnfitrion, null)
+        );
+
+        verifyNoInteractions(
+                publicacionRepository,
+                alojamientoPublicacionQuery
+        );
     }
 
     @Test
     void reactivarPublicacionInexistente() {
+
+        configurarAnfitrionValido();
+
         when(publicacionRepository.findById(idPublicacion))
                 .thenReturn(Optional.empty());
 
-        assertThrows(java.util.NoSuchElementException.class,
-                () -> service.reactivarPublicacion(anfitrion, idPublicacion));
+        assertThrows(
+                NoSuchElementException.class,
+                () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
+        );
 
-        verifyNoInteractions(alojamientoRepository);
+        verifyNoInteractions(alojamientoPublicacionQuery);
     }
 
     @Test
     void pausarSinAlojamientoAsociado() {
+
+        configurarAnfitrionValido();
+
         when(publicacionRepository.findById(idPublicacion))
                 .thenReturn(Optional.of(publicacion));
 
-        when(alojamientoRepository.findById(idAlojamiento))
+        when(publicacion.getIdAlojamiento())
+                .thenReturn(idAlojamiento);
+
+        when(alojamientoPublicacionQuery.consultarIdAnfitrion(idAlojamiento))
                 .thenReturn(Optional.empty());
 
-        assertThrows(IllegalStateException.class,
-                () -> service.pausarPublicacion(anfitrion, idPublicacion));
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
+        );
 
         verify(publicacionRepository, never()).save(any());
     }
 
     @Test
     void pausarPublicacionDeOtroAnfitrion() {
+
+        configurarAnfitrionValido();
+
         UUID otroAnfitrion = UUID.randomUUID();
 
         when(publicacionRepository.findById(idPublicacion))
                 .thenReturn(Optional.of(publicacion));
 
-        when(alojamientoRepository.findById(idAlojamiento))
-                .thenReturn(Optional.of(alojamiento));
+        when(publicacion.getIdAlojamiento())
+                .thenReturn(idAlojamiento);
 
-        when(alojamiento.getIdAnfitrion()).thenReturn(otroAnfitrion);
+        when(alojamientoPublicacionQuery.consultarIdAnfitrion(idAlojamiento))
+                .thenReturn(Optional.of(otroAnfitrion));
 
-        assertThrows(AccessDeniedException.class,
-                () -> service.pausarPublicacion(anfitrion, idPublicacion));
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
+        );
 
         verify(publicacionRepository, never()).save(any());
     }
 
     @Test
     void reactivarPublicacionDeOtroAnfitrion() {
+
+        configurarAnfitrionValido();
+
         UUID otroAnfitrion = UUID.randomUUID();
 
         when(publicacionRepository.findById(idPublicacion))
                 .thenReturn(Optional.of(publicacion));
 
-        when(alojamientoRepository.findById(idAlojamiento))
-                .thenReturn(Optional.of(alojamiento));
+        when(publicacion.getIdAlojamiento())
+                .thenReturn(idAlojamiento);
 
-        when(alojamiento.getIdAnfitrion()).thenReturn(otroAnfitrion);
+        when(alojamientoPublicacionQuery.consultarIdAnfitrion(idAlojamiento))
+                .thenReturn(Optional.of(otroAnfitrion));
 
-        assertThrows(AccessDeniedException.class,
-                () -> service.reactivarPublicacion(anfitrion, idPublicacion));
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
+        );
 
         verify(publicacionRepository, never()).save(any());
     }
 
     @Test
     void pausarPublicacionBloqueada() {
+
         prepararPublicacion("BLOQUEADA");
 
-        assertThrows(IllegalStateException.class,
-                () -> service.pausarPublicacion(anfitrion, idPublicacion));
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
+        );
 
         verify(publicacionRepository, never()).save(any());
     }
 
     @Test
     void reactivarPublicacionBloqueada() {
+
         prepararPublicacion("BLOQUEADA");
 
-        assertThrows(IllegalStateException.class,
-                () -> service.reactivarPublicacion(anfitrion, idPublicacion));
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
+        );
 
         verify(publicacionRepository, never()).save(any());
     }
 
     @Test
     void pausarPublicacionQueNoEstaActiva() {
+
         prepararPublicacion("PAUSADA");
 
-        assertThrows(IllegalStateException.class,
-                () -> service.pausarPublicacion(anfitrion, idPublicacion));
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
+        );
 
         verify(publicacionRepository, never()).save(any());
     }
 
     @Test
     void reactivarPublicacionQueNoEstaPausada() {
+
         prepararPublicacion("ACTIVA");
 
-        assertThrows(IllegalStateException.class,
-                () -> service.reactivarPublicacion(anfitrion, idPublicacion));
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
+        );
 
         verify(publicacionRepository, never()).save(any());
     }
 
     @Test
     void pausarRetornaRespuesta() {
+
         prepararPublicacion("ACTIVA");
 
-        var respuesta = service.pausarPublicacion(anfitrion, idPublicacion);
+        EstadoPublicacionResponse respuesta =
+                service.pausarPublicacion(idAnfitrion, idPublicacion);
 
         assertNotNull(respuesta);
     }
 
     @Test
     void reactivarRetornaRespuesta() {
+
         prepararPublicacion("PAUSADA");
 
-        var respuesta = service.reactivarPublicacion(anfitrion, idPublicacion);
+        EstadoPublicacionResponse respuesta =
+                service.reactivarPublicacion(idAnfitrion, idPublicacion);
 
         assertNotNull(respuesta);
     }

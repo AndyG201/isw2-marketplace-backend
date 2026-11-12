@@ -1,3 +1,4 @@
+
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,16 +13,17 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.security.access.AccessDeniedException;
 
-import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
-import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
-import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.PoliticaCancelacionRepository;
+import co.edu.unbosque.marketplace.alojamiento.contracts.ActualizarAlojamientoParaPublicacion;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
+import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.request.EditarPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAlojamientoResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
@@ -31,9 +33,11 @@ import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.Imagen
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.storage.AlmacenamientoImagenService;
-import co.edu.unbosque.marketplace.servicio.domain.Servicio;
-import co.edu.unbosque.marketplace.servicio.infrastructure.persistence.ServicioRepository;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioAdministracionQuery;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -43,19 +47,28 @@ class PublicacionEdicionServiceTest {
     private PublicacionRepository publicacionRepository;
 
     @Mock
-    private AlojamientoRepository alojamientoRepository;
-
-    @Mock
     private PublicacionServicioRepository publicacionServicioRepository;
 
     @Mock
     private ImagenPublicacionRepository imagenRepository;
 
     @Mock
-    private ServicioRepository servicioRepository;
+    private AlojamientoPublicacionQuery alojamientoQuery;
 
     @Mock
-    private PoliticaCancelacionRepository politicaRepository;
+    private AlojamientoPublicacionCommand alojamientoCommand;
+
+    @Mock
+    private UsuarioAdministracionQuery usuarioAdministracionQuery;
+
+    @Mock
+    private UsuarioPublicacionQuery usuarioPublicacionQuery;
+
+    @Mock
+    private ServicioPublicacionQuery servicioPublicacionQuery;
+
+    @Mock
+    private PoliticaCancelacionQuery politicaCancelacionQuery;
 
     @Mock
     private AlmacenamientoImagenService almacenamientoImagenService;
@@ -70,18 +83,23 @@ class PublicacionEdicionServiceTest {
 
     @BeforeEach
     void setUp() {
+
         service = new PublicacionEdicionService(
                 publicacionRepository,
-                alojamientoRepository,
                 publicacionServicioRepository,
                 imagenRepository,
-                servicioRepository,
-                politicaRepository,
+                alojamientoQuery,
+                alojamientoCommand,
+                usuarioAdministracionQuery,
+                usuarioPublicacionQuery,
+                servicioPublicacionQuery,
+                politicaCancelacionQuery,
                 almacenamientoImagenService
         );
     }
 
     private EditarPublicacionRequest crearSolicitudValida() {
+
         EditarPublicacionRequest solicitud =
                 mock(EditarPublicacionRequest.class);
 
@@ -89,39 +107,31 @@ class PublicacionEdicionServiceTest {
         idsServicios.add(idServicio);
 
         when(solicitud.getCapacidad()).thenReturn(3);
+
         when(solicitud.getPrecioPorNoche())
                 .thenReturn(new BigDecimal("150000"));
+
         when(solicitud.getTarifaLimpieza())
                 .thenReturn(new BigDecimal("20000"));
+
         when(solicitud.getIdsServicios()).thenReturn(idsServicios);
         when(solicitud.getIdPolitica()).thenReturn(idPolitica);
 
-        when(solicitud.getUbicacion()).thenReturn(" Calle 10 ");
-        when(solicitud.getCiudad()).thenReturn(" Bogotá ");
-        when(solicitud.getTipoAlojamiento()).thenReturn(" Apartamento ");
-        when(solicitud.getTitulo()).thenReturn(" Apartamento actualizado ");
-        when(solicitud.getDescripcion()).thenReturn(" Nueva descripción ");
-        when(solicitud.getReglas()).thenReturn(" No fumar ");
-        when(solicitud.getModoAceptacion()).thenReturn(" automatica ");
+        when(solicitud.getUbicacion()).thenReturn("Calle 10");
+        when(solicitud.getCiudad()).thenReturn("Bogotá");
+        when(solicitud.getTipoAlojamiento()).thenReturn("Apartamento");
+        when(solicitud.getTitulo()).thenReturn("Apartamento actualizado");
+        when(solicitud.getDescripcion()).thenReturn("Nueva descripción");
+        when(solicitud.getReglas()).thenReturn("No fumar");
+        when(solicitud.getModoAceptacion()).thenReturn("AUTOMATICA");
 
         when(solicitud.getImagenes()).thenReturn(new ArrayList<>());
 
         return solicitud;
     }
 
-    private Usuario crearAnfitrion() {
-        Usuario actor = mock(
-                Usuario.class,
-                Answers.RETURNS_DEEP_STUBS
-        );
-
-        when(actor.getIdUsuario()).thenReturn(idAnfitrion);
-        when(actor.getRol().getNombre()).thenReturn("ANFITRION");
-
-        return actor;
-    }
-
     private Publicacion crearPublicacion() {
+
         Publicacion publicacion = mock(Publicacion.class);
 
         when(publicacion.getIdPublicacion()).thenReturn(idPublicacion);
@@ -131,29 +141,49 @@ class PublicacionEdicionServiceTest {
         return publicacion;
     }
 
-    private Alojamiento crearAlojamiento() {
-        Alojamiento alojamiento = mock(Alojamiento.class);
+    private AlojamientoPublicacionInfo crearAlojamiento() {
 
-        when(alojamiento.getIdAlojamiento()).thenReturn(idAlojamiento);
-        when(alojamiento.getIdAnfitrion()).thenReturn(idAnfitrion);
+        AlojamientoPublicacionInfo alojamiento =
+                mock(AlojamientoPublicacionInfo.class);
+
+        when(alojamiento.idAlojamiento()).thenReturn(idAlojamiento);
+        when(alojamiento.idAnfitrion()).thenReturn(idAnfitrion);
 
         return alojamiento;
     }
 
-    private void prepararPublicacionYPermisos(
-            Usuario actor,
+    private UsuarioPublicacionInfo crearAnfitrion() {
+
+        UsuarioPublicacionInfo anfitrion =
+                mock(UsuarioPublicacionInfo.class);
+
+        when(anfitrion.esAnfitrion()).thenReturn(true);
+
+        return anfitrion;
+    }
+
+    private void configurarPublicacionYPermisos(
             Publicacion publicacion,
-            Alojamiento alojamiento) {
+            AlojamientoPublicacionInfo alojamiento) {
+
+        UsuarioPublicacionInfo anfitrion = crearAnfitrion();
 
         when(publicacionRepository.findById(idPublicacion))
                 .thenReturn(Optional.of(publicacion));
 
-        when(alojamientoRepository.findById(idAlojamiento))
+        when(alojamientoQuery.consultarDatosParaPublicacion(idAlojamiento))
                 .thenReturn(Optional.of(alojamiento));
+
+        when(usuarioAdministracionQuery.esAdministrador(idAnfitrion))
+                .thenReturn(false);
+
+        when(usuarioPublicacionQuery.consultarParaPublicacion(idAnfitrion))
+                .thenReturn(Optional.of(anfitrion));
     }
 
     @Test
     void actualizarPublicacionConActorNulo() {
+
         EditarPublicacionRequest solicitud = crearSolicitudValida();
 
         assertThrows(
@@ -167,7 +197,7 @@ class PublicacionEdicionServiceTest {
 
     @Test
     void actualizarPublicacionConCapacidadInvalida() {
-        Usuario actor = crearAnfitrion();
+
         EditarPublicacionRequest solicitud = crearSolicitudValida();
 
         when(solicitud.getCapacidad()).thenReturn(0);
@@ -175,7 +205,7 @@ class PublicacionEdicionServiceTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.actualizarPublicacion(
-                        actor, idPublicacion, solicitud)
+                        idAnfitrion, idPublicacion, solicitud)
         );
 
         verifyNoInteractions(publicacionRepository);
@@ -183,7 +213,7 @@ class PublicacionEdicionServiceTest {
 
     @Test
     void actualizarPublicacionInexistente() {
-        Usuario actor = crearAnfitrion();
+
         EditarPublicacionRequest solicitud = crearSolicitudValida();
 
         when(publicacionRepository.findById(idPublicacion))
@@ -192,84 +222,95 @@ class PublicacionEdicionServiceTest {
         assertThrows(
                 java.util.NoSuchElementException.class,
                 () -> service.actualizarPublicacion(
-                        actor, idPublicacion, solicitud)
+                        idAnfitrion, idPublicacion, solicitud)
         );
 
         verify(publicacionRepository).findById(idPublicacion);
-        verifyNoInteractions(alojamientoRepository);
+        verifyNoInteractions(alojamientoQuery);
     }
 
     @Test
     void actualizarPublicacionSinAlojamientoAsociado() {
-        Usuario actor = crearAnfitrion();
+
         EditarPublicacionRequest solicitud = crearSolicitudValida();
+
         Publicacion publicacion = crearPublicacion();
 
         when(publicacionRepository.findById(idPublicacion))
                 .thenReturn(Optional.of(publicacion));
 
-        when(alojamientoRepository.findById(idAlojamiento))
+        when(alojamientoQuery.consultarDatosParaPublicacion(idAlojamiento))
                 .thenReturn(Optional.empty());
 
         assertThrows(
                 IllegalStateException.class,
                 () -> service.actualizarPublicacion(
-                        actor, idPublicacion, solicitud)
+                        idAnfitrion, idPublicacion, solicitud)
         );
 
-        verify(alojamientoRepository).findById(idAlojamiento);
-        verifyNoInteractions(politicaRepository);
+        verify(alojamientoQuery)
+                .consultarDatosParaPublicacion(idAlojamiento);
+
+        verifyNoInteractions(politicaCancelacionQuery);
     }
 
     @Test
     void actualizarPublicacionSinPermisos() {
-        Usuario actor = crearAnfitrion();
+
         EditarPublicacionRequest solicitud = crearSolicitudValida();
 
-        when(actor.getRol().getNombre()).thenReturn("CLIENTE");
-
         Publicacion publicacion = crearPublicacion();
-        Alojamiento alojamiento = crearAlojamiento();
 
-        prepararPublicacionYPermisos(actor, publicacion, alojamiento);
+        AlojamientoPublicacionInfo alojamiento = crearAlojamiento();
+
+        configurarPublicacionYPermisos(publicacion, alojamiento);
+
+        UsuarioPublicacionInfo usuario =
+                mock(UsuarioPublicacionInfo.class);
+
+        when(usuario.esAnfitrion()).thenReturn(false);
+
+        when(usuarioPublicacionQuery.consultarParaPublicacion(idAnfitrion))
+                .thenReturn(Optional.of(usuario));
 
         assertThrows(
                 AccessDeniedException.class,
                 () -> service.actualizarPublicacion(
-                        actor, idPublicacion, solicitud)
+                        idAnfitrion, idPublicacion, solicitud)
         );
 
-        verifyNoInteractions(politicaRepository);
+        verifyNoInteractions(politicaCancelacionQuery);
     }
 
     @Test
     void actualizarPublicacionConPoliticaInexistente() {
-        Usuario actor = crearAnfitrion();
+
         EditarPublicacionRequest solicitud = crearSolicitudValida();
 
         Publicacion publicacion = crearPublicacion();
-        Alojamiento alojamiento = crearAlojamiento();
 
-        prepararPublicacionYPermisos(actor, publicacion, alojamiento);
+        AlojamientoPublicacionInfo alojamiento = crearAlojamiento();
 
-        when(politicaRepository.findByIdPoliticaAndActivaTrue(idPolitica))
-                .thenReturn(Optional.empty());
+        configurarPublicacionYPermisos(publicacion, alojamiento);
+
+        when(politicaCancelacionQuery.existePoliticaActiva(idPolitica))
+                .thenReturn(false);
 
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.actualizarPublicacion(
-                        actor, idPublicacion, solicitud)
+                        idAnfitrion, idPublicacion, solicitud)
         );
 
-        verify(politicaRepository)
-                .findByIdPoliticaAndActivaTrue(idPolitica);
+        verify(politicaCancelacionQuery)
+                .existePoliticaActiva(idPolitica);
 
-        verifyNoInteractions(servicioRepository);
+        verifyNoInteractions(servicioPublicacionQuery);
     }
 
     @Test
     void actualizarPublicacionConServiciosDuplicados() {
-        Usuario actor = crearAnfitrion();
+
         EditarPublicacionRequest solicitud = crearSolicitudValida();
 
         List<UUID> idsDuplicados = new ArrayList<>();
@@ -279,42 +320,40 @@ class PublicacionEdicionServiceTest {
         when(solicitud.getIdsServicios()).thenReturn(idsDuplicados);
 
         Publicacion publicacion = crearPublicacion();
-        Alojamiento alojamiento = crearAlojamiento();
 
-        prepararPublicacionYPermisos(actor, publicacion, alojamiento);
+        AlojamientoPublicacionInfo alojamiento = crearAlojamiento();
 
-        when(politicaRepository.findByIdPoliticaAndActivaTrue(idPolitica))
-                .thenReturn(Optional.of(mock(
-                        co.edu.unbosque.marketplace.cancelacion.domain.PoliticaCancelacion.class)));
+        configurarPublicacionYPermisos(publicacion, alojamiento);
+
+        when(politicaCancelacionQuery.existePoliticaActiva(idPolitica))
+                .thenReturn(true);
 
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.actualizarPublicacion(
-                        actor, idPublicacion, solicitud)
+                        idAnfitrion, idPublicacion, solicitud)
         );
 
-        verifyNoInteractions(servicioRepository);
+        verifyNoInteractions(servicioPublicacionQuery);
     }
 
     @Test
     void actualizarPublicacionCorrectamente() {
-        Usuario actor = crearAnfitrion();
+
         EditarPublicacionRequest solicitud = crearSolicitudValida();
 
         Publicacion publicacion = crearPublicacion();
-        Alojamiento alojamiento = crearAlojamiento();
 
-        prepararPublicacionYPermisos(actor, publicacion, alojamiento);
+        AlojamientoPublicacionInfo alojamiento = crearAlojamiento();
 
-        var politica = mock(
-                co.edu.unbosque.marketplace.cancelacion.domain.PoliticaCancelacion.class);
+        configurarPublicacionYPermisos(publicacion, alojamiento);
 
-        when(politicaRepository.findByIdPoliticaAndActivaTrue(idPolitica))
-                .thenReturn(Optional.of(politica));
+        when(politicaCancelacionQuery.existePoliticaActiva(idPolitica))
+                .thenReturn(true);
 
-        Servicio servicio = mock(Servicio.class);
+        ServicioInfo servicio = mock(ServicioInfo.class);
 
-        when(servicioRepository.findAllById(any()))
+        when(servicioPublicacionQuery.consultarPorIds(anySet()))
                 .thenReturn(List.of(servicio));
 
         PublicacionServicio relacionAnterior =
@@ -328,7 +367,8 @@ class PublicacionEdicionServiceTest {
         when(publicacionServicioRepository.findByIdPublicacion(idPublicacion))
                 .thenReturn(List.of(relacionAnterior));
 
-        ImagenPublicacion imagenAnterior = mock(ImagenPublicacion.class);
+        ImagenPublicacion imagenAnterior =
+                mock(ImagenPublicacion.class);
 
         when(imagenAnterior.getRutaImagen())
                 .thenReturn("imagenes/anterior.jpg");
@@ -338,11 +378,15 @@ class PublicacionEdicionServiceTest {
 
         PublicacionAlojamientoResponse respuesta =
                 service.actualizarPublicacion(
-                        actor, idPublicacion, solicitud);
+                        idAnfitrion, idPublicacion, solicitud);
 
         assertNotNull(respuesta);
 
-        verify(alojamientoRepository).save(alojamiento);
+        verify(alojamientoCommand).actualizarAlojamiento(
+                eq(idAlojamiento),
+                any(ActualizarAlojamientoParaPublicacion.class)
+        );
+
         verify(publicacionRepository).save(publicacion);
 
         verify(publicacionServicioRepository).deleteAll(anyList());

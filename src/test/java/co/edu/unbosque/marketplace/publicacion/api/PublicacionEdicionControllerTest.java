@@ -2,6 +2,7 @@ package co.edu.unbosque.marketplace.publicacion.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -25,7 +26,6 @@ import org.springframework.validation.FieldError;
 import co.edu.unbosque.marketplace.publicacion.api.request.EditarPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAlojamientoResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionEdicionService;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
 @ExtendWith(MockitoExtension.class)
 class PublicacionEdicionControllerTest {
@@ -39,103 +39,184 @@ class PublicacionEdicionControllerTest {
     @Mock
     private EditarPublicacionRequest solicitud;
 
-    @Mock
-    private Usuario usuario;
-
     @InjectMocks
     private PublicacionEdicionController controller;
 
+    private UUID idAnfitrion;
     private UUID idPublicacion;
 
     @BeforeEach
     void setUp() {
+        idAnfitrion = UUID.randomUUID();
         idPublicacion = UUID.randomUUID();
     }
 
     @Test
     void editarPublicacionSinUsuarioRetorna401() {
-        ResponseEntity<?> respuesta = controller.editarPublicacion(
-                null, idPublicacion, solicitud, resultadoValidacion);
+
+        ResponseEntity<?> respuesta =
+                controller.editarPublicacion(
+                        null,
+                        idPublicacion,
+                        solicitud,
+                        resultadoValidacion
+                );
 
         assertEquals(HttpStatus.UNAUTHORIZED, respuesta.getStatusCode());
+
         verifyNoInteractions(edicionService);
     }
 
     @Test
     void editarPublicacionConErroresDeValidacionRetorna400() {
-        when(resultadoValidacion.hasErrors()).thenReturn(true);
-        when(resultadoValidacion.getFieldErrors()).thenReturn(List.of(
-                new FieldError("solicitud", "titulo", "El título es obligatorio.")
-        ));
 
-        ResponseEntity<?> respuesta = controller.editarPublicacion(
-                usuario, idPublicacion, solicitud, resultadoValidacion);
+        when(resultadoValidacion.hasErrors()).thenReturn(true);
+
+        when(resultadoValidacion.getFieldErrors()).thenReturn(
+                List.of(new FieldError(
+                        "solicitud",
+                        "titulo",
+                        "El título es obligatorio."
+                ))
+        );
+
+        ResponseEntity<?> respuesta =
+                controller.editarPublicacion(
+                        idAnfitrion,
+                        idPublicacion,
+                        solicitud,
+                        resultadoValidacion
+                );
 
         assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
+
         verifyNoInteractions(edicionService);
     }
 
     @Test
     void editarPublicacionCorrectamenteRetorna200() {
+
         PublicacionAlojamientoResponse esperado =
-                org.mockito.Mockito.mock(PublicacionAlojamientoResponse.class);
+                mock(PublicacionAlojamientoResponse.class);
 
         when(resultadoValidacion.hasErrors()).thenReturn(false);
-        when(edicionService.actualizarPublicacion(usuario, idPublicacion, solicitud))
-                .thenReturn(esperado);
 
-        ResponseEntity<?> respuesta = controller.editarPublicacion(
-                usuario, idPublicacion, solicitud, resultadoValidacion);
+        when(edicionService.actualizarPublicacion(
+                idAnfitrion,
+                idPublicacion,
+                solicitud
+        )).thenReturn(esperado);
+
+        ResponseEntity<?> respuesta =
+                controller.editarPublicacion(
+                        idAnfitrion,
+                        idPublicacion,
+                        solicitud,
+                        resultadoValidacion
+                );
 
         assertEquals(HttpStatus.OK, respuesta.getStatusCode());
         assertSame(esperado, respuesta.getBody());
-        verify(edicionService).actualizarPublicacion(usuario, idPublicacion, solicitud);
+
+        verify(edicionService).actualizarPublicacion(
+                idAnfitrion,
+                idPublicacion,
+                solicitud
+        );
     }
 
     @Test
     void editarPublicacionSinPermisosRetorna403() {
-        when(resultadoValidacion.hasErrors()).thenReturn(false);
-        when(edicionService.actualizarPublicacion(usuario, idPublicacion, solicitud))
-                .thenThrow(new AccessDeniedException("No tienes permiso para editar esta publicación."));
 
-        ResponseEntity<?> respuesta = controller.editarPublicacion(
-                usuario, idPublicacion, solicitud, resultadoValidacion);
+        when(resultadoValidacion.hasErrors()).thenReturn(false);
+
+        when(edicionService.actualizarPublicacion(
+                idAnfitrion,
+                idPublicacion,
+                solicitud
+        )).thenThrow(new AccessDeniedException(
+                "No tienes permiso para editar esta publicación."
+        ));
+
+        ResponseEntity<?> respuesta =
+                controller.editarPublicacion(
+                        idAnfitrion,
+                        idPublicacion,
+                        solicitud,
+                        resultadoValidacion
+                );
 
         assertEquals(HttpStatus.FORBIDDEN, respuesta.getStatusCode());
     }
 
     @Test
     void editarPublicacionInexistenteRetorna404() {
-        when(resultadoValidacion.hasErrors()).thenReturn(false);
-        when(edicionService.actualizarPublicacion(usuario, idPublicacion, solicitud))
-                .thenThrow(new NoSuchElementException("Publicación no encontrada."));
 
-        ResponseEntity<?> respuesta = controller.editarPublicacion(
-                usuario, idPublicacion, solicitud, resultadoValidacion);
+        when(resultadoValidacion.hasErrors()).thenReturn(false);
+
+        when(edicionService.actualizarPublicacion(
+                idAnfitrion,
+                idPublicacion,
+                solicitud
+        )).thenThrow(new NoSuchElementException(
+                "Publicación no encontrada."
+        ));
+
+        ResponseEntity<?> respuesta =
+                controller.editarPublicacion(
+                        idAnfitrion,
+                        idPublicacion,
+                        solicitud,
+                        resultadoValidacion
+                );
 
         assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
     }
 
     @Test
     void editarPublicacionConArgumentosInvalidosRetorna400() {
-        when(resultadoValidacion.hasErrors()).thenReturn(false);
-        when(edicionService.actualizarPublicacion(usuario, idPublicacion, solicitud))
-                .thenThrow(new IllegalArgumentException("Los datos de la publicación no son válidos."));
 
-        ResponseEntity<?> respuesta = controller.editarPublicacion(
-                usuario, idPublicacion, solicitud, resultadoValidacion);
+        when(resultadoValidacion.hasErrors()).thenReturn(false);
+
+        when(edicionService.actualizarPublicacion(
+                idAnfitrion,
+                idPublicacion,
+                solicitud
+        )).thenThrow(new IllegalArgumentException(
+                "Los datos de la publicación no son válidos."
+        ));
+
+        ResponseEntity<?> respuesta =
+                controller.editarPublicacion(
+                        idAnfitrion,
+                        idPublicacion,
+                        solicitud,
+                        resultadoValidacion
+                );
 
         assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
     }
 
     @Test
     void editarPublicacionEnEstadoInvalidoRetorna409() {
-        when(resultadoValidacion.hasErrors()).thenReturn(false);
-        when(edicionService.actualizarPublicacion(usuario, idPublicacion, solicitud))
-                .thenThrow(new IllegalStateException("La publicación no puede modificarse en su estado actual."));
 
-        ResponseEntity<?> respuesta = controller.editarPublicacion(
-                usuario, idPublicacion, solicitud, resultadoValidacion);
+        when(resultadoValidacion.hasErrors()).thenReturn(false);
+
+        when(edicionService.actualizarPublicacion(
+                idAnfitrion,
+                idPublicacion,
+                solicitud
+        )).thenThrow(new IllegalStateException(
+                "La publicación no puede modificarse en su estado actual."
+        ));
+
+        ResponseEntity<?> respuesta =
+                controller.editarPublicacion(
+                        idAnfitrion,
+                        idPublicacion,
+                        solicitud,
+                        resultadoValidacion
+                );
 
         assertEquals(HttpStatus.CONFLICT, respuesta.getStatusCode());
     }
