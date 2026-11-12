@@ -12,11 +12,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
-import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
-import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.BandejaSalidaAuditoriaRepository;
-import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.PoliticaCancelacionRepository;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaPublicacionCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoPublicacion;
+import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.EnviarRevisionResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
@@ -24,62 +24,66 @@ import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
-import co.edu.unbosque.marketplace.servicio.infrastructure.persistence.ServicioRepository;
-import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
 @Service
 public class PublicacionRevisionService {
 
     private final PublicacionRepository publicacionRepository;
-    private final AlojamientoRepository alojamientoRepository;
     private final ImagenPublicacionRepository imagenRepository;
     private final PublicacionServicioRepository publicacionServicioRepository;
-    private final ServicioRepository servicioRepository;
-    private final PoliticaCancelacionRepository politicaRepository;
-    private final BandejaSalidaAuditoriaRepository auditoriaRepository;
+
+    private final UsuarioPublicacionQuery usuarioPublicacionQuery;
+    private final AlojamientoPublicacionQuery alojamientoPublicacionQuery;
+    private final ServicioPublicacionQuery servicioPublicacionQuery;
+    private final PoliticaCancelacionQuery politicaCancelacionQuery;
+    private final AuditoriaPublicacionCommand auditoriaPublicacionCommand;
 
     public PublicacionRevisionService(
             PublicacionRepository publicacionRepository,
-            AlojamientoRepository alojamientoRepository,
             ImagenPublicacionRepository imagenRepository,
             PublicacionServicioRepository publicacionServicioRepository,
-            ServicioRepository servicioRepository,
-            PoliticaCancelacionRepository politicaRepository,
-            BandejaSalidaAuditoriaRepository auditoriaRepository) {
+            UsuarioPublicacionQuery usuarioPublicacionQuery,
+            AlojamientoPublicacionQuery alojamientoPublicacionQuery,
+            ServicioPublicacionQuery servicioPublicacionQuery,
+            PoliticaCancelacionQuery politicaCancelacionQuery,
+            AuditoriaPublicacionCommand auditoriaPublicacionCommand) {
 
         this.publicacionRepository = publicacionRepository;
-        this.alojamientoRepository = alojamientoRepository;
         this.imagenRepository = imagenRepository;
         this.publicacionServicioRepository = publicacionServicioRepository;
-        this.servicioRepository = servicioRepository;
-        this.politicaRepository = politicaRepository;
-        this.auditoriaRepository = auditoriaRepository;
+        this.usuarioPublicacionQuery = usuarioPublicacionQuery;
+        this.alojamientoPublicacionQuery = alojamientoPublicacionQuery;
+        this.servicioPublicacionQuery = servicioPublicacionQuery;
+        this.politicaCancelacionQuery = politicaCancelacionQuery;
+        this.auditoriaPublicacionCommand = auditoriaPublicacionCommand;
     }
 
     @Transactional
     public EnviarRevisionResponse enviarRevision(
-            Usuario anfitrion,
+            UUID idAnfitrion,
             UUID idPublicacion) {
 
-        if (anfitrion == null || anfitrion.getIdUsuario() == null) {
+        if (idAnfitrion == null) {
             throw new AccessDeniedException(
                     "Debes iniciar sesión para realizar esta operación.");
         }
 
-        if (anfitrion.getRol() == null
-                || !"ANFITRION".equalsIgnoreCase(
-                        anfitrion.getRol().getNombre())) {
+        UsuarioPublicacionInfo anfitrion = usuarioPublicacionQuery
+                .consultarParaPublicacion(idAnfitrion)
+                .orElseThrow(() ->
+                        new AccessDeniedException(
+                                "Debes iniciar sesión para realizar esta operación."));
 
+        if (!anfitrion.esAnfitrion()) {
             throw new AccessDeniedException(
                     "Solo un anfitrión puede enviar publicaciones a revisión.");
         }
 
-        if (!anfitrion.isCorreoVerificado()
-                || anfitrion.getEstado() != EstadoUsuario.ACTIVA
-                || anfitrion.isRestringido()
-                || anfitrion.getIntentosFallidos() >= 5) {
-
+        if (!anfitrion.cuentaHabilitadaParaPublicar()) {
             throw new AccessDeniedException(
                     "Tu cuenta no está habilitada para enviar publicaciones a revisión.");
         }
@@ -90,15 +94,13 @@ public class PublicacionRevisionService {
                         new java.util.NoSuchElementException(
                                 "La publicación no existe."));
 
-        Alojamiento alojamiento = alojamientoRepository
-                .findById(publicacion.getIdAlojamiento())
+        AlojamientoPublicacionInfo alojamiento = alojamientoPublicacionQuery
+                .consultarDatosParaPublicacion(publicacion.getIdAlojamiento())
                 .orElseThrow(() ->
                         new IllegalStateException(
                                 "No se encontró el alojamiento asociado."));
 
-        if (!anfitrion.getIdUsuario().equals(
-                alojamiento.getIdAnfitrion())) {
-
+        if (!idAnfitrion.equals(alojamiento.idAnfitrion())) {
             throw new AccessDeniedException(
                     "No puedes enviar a revisión una publicación que no te pertenece.");
         }
@@ -124,10 +126,15 @@ public class PublicacionRevisionService {
 
         publicacionRepository.save(publicacion);
 
-        registrarEventoAuditoria(
-                anfitrion.getIdUsuario(),
-                publicacion.getIdPublicacion(),
-                ahora
+        auditoriaPublicacionCommand.registrarEvento(
+                new RegistrarEventoPublicacion(
+                        idAnfitrion,
+                        publicacion.getIdPublicacion(),
+                        ahora,
+                        "ENVIO_PUBLICACION_REVISION",
+                        "EXITOSO",
+                        null
+                )
         );
 
         return new EnviarRevisionResponse(
@@ -141,7 +148,7 @@ public class PublicacionRevisionService {
 
     private void validarInformacionMinima(
             Publicacion publicacion,
-            Alojamiento alojamiento) {
+            AlojamientoPublicacionInfo alojamiento) {
 
         List<String> faltantes = new ArrayList<>();
 
@@ -160,22 +167,22 @@ public class PublicacionRevisionService {
             faltantes.add("reglas");
         }
 
-        if (alojamiento.getUbicacion() == null
-                || alojamiento.getUbicacion().isBlank()) {
+        if (alojamiento.ubicacion() == null
+                || alojamiento.ubicacion().isBlank()) {
             faltantes.add("ubicación");
         }
 
-        if (alojamiento.getCiudad() == null
-                || alojamiento.getCiudad().isBlank()) {
+        if (alojamiento.ciudad() == null
+                || alojamiento.ciudad().isBlank()) {
             faltantes.add("ciudad");
         }
 
-        if (alojamiento.getTipoAlojamiento() == null
-                || alojamiento.getTipoAlojamiento().isBlank()) {
+        if (alojamiento.tipoAlojamiento() == null
+                || alojamiento.tipoAlojamiento().isBlank()) {
             faltantes.add("tipo de alojamiento");
         }
 
-        if (alojamiento.getCapacidad() <= 0) {
+        if (alojamiento.capacidad() <= 0) {
             faltantes.add("capacidad válida");
         }
 
@@ -200,8 +207,8 @@ public class PublicacionRevisionService {
         }
 
         if (publicacion.getIdPolitica() == null
-                || politicaRepository.findByIdPoliticaAndActivaTrue(
-                        publicacion.getIdPolitica()).isEmpty()) {
+                || !politicaCancelacionQuery.existePoliticaActiva(
+                        publicacion.getIdPolitica())) {
             faltantes.add("política de cancelación activa");
         }
 
@@ -217,8 +224,10 @@ public class PublicacionRevisionService {
                     .map(PublicacionServicio::getIdServicio)
                     .toList();
 
-            if (servicioRepository.findAllById(idsServicios).size()
-                    != idsServicios.size()) {
+            List<ServicioInfo> servicios =
+                    servicioPublicacionQuery.consultarPorIds(idsServicios);
+
+            if (servicios.size() != idsServicios.size()) {
                 faltantes.add("servicios válidos");
             }
         }
@@ -239,34 +248,7 @@ public class PublicacionRevisionService {
             throw new IllegalArgumentException(
                     "No puedes enviar la publicación a revisión. "
                     + "Información faltante o inválida: "
-                    + String.join(", ", faltantes) + "."
-            );
+                    + String.join(", ", faltantes) + ".");
         }
-    }
-
-    private void registrarEventoAuditoria(
-            UUID idUsuario,
-            UUID idPublicacion,
-            OffsetDateTime fecha) {
-
-        BandejaSalidaAuditoria evento =
-                new BandejaSalidaAuditoria();
-
-        evento.setIdEvento(UUID.randomUUID());
-        evento.setIdUsuario(idUsuario);
-        evento.setFechaEvento(fecha);
-        evento.setAccion("ENVIO_PUBLICACION_REVISION");
-        evento.setResultado("EXITOSO");
-        evento.setEntidadAfectada("PUBLICACION");
-        evento.setIdEntidadAfectada(idPublicacion);
-        evento.setDetalle(null);
-        evento.setIdCorrelacion(UUID.randomUUID().toString());
-        evento.setEstadoEnvio("PENDIENTE");
-        evento.setIntentosEnvio(0);
-        evento.setProximaEjecucion(fecha);
-        evento.setFechaEnvio(null);
-        evento.setUltimoError(null);
-
-        auditoriaRepository.save(evento);
     }
 }

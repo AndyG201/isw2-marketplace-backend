@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.publicacion.api;
 
 import java.util.Map;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplace.publicacion.api.response.EnviarRevisionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionRevisionService;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
@@ -34,10 +32,10 @@ public class PublicacionRevisionController {
 
     @PatchMapping("/{idPublicacion}/enviar-revision")
     public ResponseEntity<?> enviarRevision(
-            @AuthenticationPrincipal Usuario usuario,
+            @AuthenticationPrincipal(expression = "idUsuario") UUID idAnfitrion,
             @PathVariable UUID idPublicacion) {
 
-        if (usuario == null) {
+        if (idAnfitrion == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "mensaje",
@@ -49,7 +47,7 @@ public class PublicacionRevisionController {
 
             EnviarRevisionResponse respuesta =
                     revisionService.enviarRevision(
-                            usuario,
+                            idAnfitrion,
                             idPublicacion
                     );
 

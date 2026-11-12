@@ -5,11 +5,13 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.usuario.api.request.RestringirUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.api.response.AdministradorUsuarioResponse;
+import co.edu.unbosque.marketplace.usuario.contracts.CuentaRestringidaEvent;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.security.JwtUtil;
@@ -19,11 +21,14 @@ public class AdministradorService {
 
 	private final UsuarioRepository usuarioRepository;
 	private final JwtUtil jwtUtil;
+	private final ApplicationEventPublisher eventPublisher;
 
-	public AdministradorService(UsuarioRepository usuarioRepository, JwtUtil jwtUtil) {
+	public AdministradorService(UsuarioRepository usuarioRepository, JwtUtil jwtUtil,
+			ApplicationEventPublisher eventPublisher) {
 
 		this.usuarioRepository = usuarioRepository;
 		this.jwtUtil = jwtUtil;
+		this.eventPublisher = eventPublisher;
 	}
 
 	public void reactivarBloqueo(String correo) {
@@ -64,13 +69,17 @@ public class AdministradorService {
 			throw new IllegalStateException("La cuenta ya tiene una restricción administrativa.");
 		}
 
+		OffsetDateTime ahora = OffsetDateTime.now();
+
 		usuario.setRestringido(true);
 		usuario.setMotivoRestriccion(solicitud.getMotivo().trim());
-		usuario.setFechaActualizacion(OffsetDateTime.now());
+		usuario.setFechaActualizacion(ahora);
 
 		usuarioRepository.save(usuario);
 
 		jwtUtil.invalidarSesiones(idUsuario);
+
+		eventPublisher.publishEvent(new CuentaRestringidaEvent(idUsuario, ahora));
 	}
 
 	@Transactional

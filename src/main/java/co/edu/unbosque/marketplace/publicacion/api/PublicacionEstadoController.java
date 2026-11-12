@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.publicacion.api;
 
 import java.util.Map;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplace.publicacion.api.response.EstadoPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionEstadoService;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
@@ -35,10 +33,10 @@ public class PublicacionEstadoController {
 
     @PatchMapping("/{idPublicacion}/pausar")
     public ResponseEntity<?> pausarPublicacion(
-            @AuthenticationPrincipal Usuario usuario,
+            @AuthenticationPrincipal(expression = "idUsuario") UUID idAnfitrion,
             @PathVariable UUID idPublicacion) {
 
-        if (usuario == null) {
+        if (idAnfitrion == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "mensaje",
@@ -50,7 +48,7 @@ public class PublicacionEstadoController {
 
             EstadoPublicacionResponse respuesta =
                     estadoService.pausarPublicacion(
-                            usuario,
+                            idAnfitrion,
                             idPublicacion
                     );
 
@@ -80,10 +78,10 @@ public class PublicacionEstadoController {
 
     @PatchMapping("/{idPublicacion}/reactivar")
     public ResponseEntity<?> reactivarPublicacion(
-            @AuthenticationPrincipal Usuario usuario,
+            @AuthenticationPrincipal(expression = "idUsuario") UUID idAnfitrion,
             @PathVariable UUID idPublicacion) {
 
-        if (usuario == null) {
+        if (idAnfitrion == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "mensaje",
@@ -95,7 +93,7 @@ public class PublicacionEstadoController {
 
             EstadoPublicacionResponse respuesta =
                     estadoService.reactivarPublicacion(
-                            usuario,
+                            idAnfitrion,
                             idPublicacion
                     );
 

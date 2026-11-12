@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplace.usuario.infrastructure.persistence;
-
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.test.context.ActiveProfiles;
 import java.util.UUID;
 
 import co.edu.unbosque.marketplace.usuario.domain.Rol;
@@ -16,6 +17,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@ActiveProfiles("test")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class RolRepositoryTest {
 
     @Autowired
