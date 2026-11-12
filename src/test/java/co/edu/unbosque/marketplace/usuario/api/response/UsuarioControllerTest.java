@@ -4,7 +4,6 @@ import co.edu.unbosque.marketplace.usuario.api.UsuarioController;
 import co.edu.unbosque.marketplace.usuario.api.request.AutenticacionRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.RegistrarUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.ReactivarCuentaRequest;
-import co.edu.unbosque.marketplace.usuario.api.response.AutenticacionResponse;
 import co.edu.unbosque.marketplace.usuario.application.AutenticacionService;
 import co.edu.unbosque.marketplace.usuario.application.UsuarioService;
 
