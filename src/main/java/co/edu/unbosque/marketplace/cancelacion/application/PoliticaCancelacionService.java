@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.cancelacion.application;
 
 import java.util.List;
@@ -6,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.marketplace.cancelacion.api.response.PoliticaCancelacionResponse;
+import co.edu.unbosque.marketplace.cancelacion.domain.TipoPoliticaCancelacion;
 import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.PoliticaCancelacionRepository;
 
 @Service
@@ -24,6 +24,11 @@ public class PoliticaCancelacionService {
         return politicaRepository
                 .findByActivaTrueOrderByNombreAsc()
                 .stream()
+                .filter(politica ->
+                        TipoPoliticaCancelacion.esPermitida(
+                                politica.getNombre()
+                        )
+                )
                 .map(politica -> new PoliticaCancelacionResponse(
                         politica.getIdPolitica(),
                         politica.getNombre(),

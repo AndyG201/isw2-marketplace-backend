@@ -164,6 +164,18 @@ public class SecurityConfig {
                     HttpMethod.GET,
                     "/publicaciones/catalogo"
                 ).permitAll()
+             // Consulta de política de cancelación de la publicación.
+                .requestMatchers(
+                        HttpMethod.GET,
+                        "/publicaciones/*/politica-cancelacion"
+                ).hasAuthority("ROLE_ANFITRION")
+
+                // Selección de política de cancelación.
+
+                .requestMatchers(
+                        HttpMethod.PATCH,
+                        "/publicaciones/*/politica-cancelacion"
+                ).hasAuthority("ROLE_ANFITRION")
 
                 // Todo lo demás requiere autenticación.
 
