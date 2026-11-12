@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class CrearPublicacionRequest {
@@ -50,6 +51,10 @@ public class CrearPublicacionRequest {
     private BigDecimal tarifaLimpieza = BigDecimal.ZERO;
 
     @NotBlank(message = "El modo de aceptación es obligatorio.")
+    @Pattern(
+            regexp = "INMEDIATA|APROBACION",
+            message = "El modo debe ser INMEDIATA o APROBACION."
+    )
     @Size(max = 30)
     private String modoAceptacion;
 

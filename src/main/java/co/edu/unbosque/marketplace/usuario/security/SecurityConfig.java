@@ -164,7 +164,25 @@ public class SecurityConfig {
                     HttpMethod.GET,
                     "/publicaciones/catalogo"
                 ).permitAll()
+             // Consultar modo de aceptación.
 
+                .requestMatchers(
+                        HttpMethod.GET,
+                        "/publicaciones/*/modo-aceptacion"
+                ).hasAnyAuthority(
+                        "ROLE_ANFITRION",
+                        "ROLE_ADMINISTRADOR"
+                )
+
+                // Modificar modo de aceptación.
+
+                .requestMatchers(
+                        HttpMethod.PATCH,
+                        "/publicaciones/*/modo-aceptacion"
+                ).hasAnyAuthority(
+                        "ROLE_ANFITRION",
+                        "ROLE_ADMINISTRADOR"
+                )
                 // Todo lo demás requiere autenticación.
 
                 .anyRequest().authenticated()
