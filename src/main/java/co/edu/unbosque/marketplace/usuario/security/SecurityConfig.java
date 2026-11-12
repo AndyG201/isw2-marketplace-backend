@@ -164,20 +164,45 @@ public class SecurityConfig {
                     HttpMethod.GET,
                     "/publicaciones/catalogo"
                 ).permitAll()
-             // Consulta de política de cancelación de la publicación.
-                .requestMatchers(
-                        HttpMethod.GET,
-                        "/publicaciones/*/politica-cancelacion"
-                ).hasAuthority("ROLE_ANFITRION")
 
-                // Selección de política de cancelación.
+.requestMatchers(
+        HttpMethod.GET,
+        "/publicaciones/catalogo"
+).permitAll()
 
-                .requestMatchers(
-                        HttpMethod.PATCH,
-                        "/publicaciones/*/politica-cancelacion"
-                ).hasAuthority("ROLE_ANFITRION")
+// Consulta de política de cancelación de la publicación.
+.requestMatchers(
+        HttpMethod.GET,
+        "/publicaciones/*/politica-cancelacion"
+).hasAuthority("ROLE_ANFITRION")
 
-                // Todo lo demás requiere autenticación.
+// Selección de política de cancelación.
+.requestMatchers(
+        HttpMethod.PATCH,
+        "/publicaciones/*/politica-cancelacion"
+).hasAuthority("ROLE_ANFITRION")
+
+// Consultar modo de aceptación.
+.requestMatchers(
+        HttpMethod.GET,
+        "/publicaciones/*/modo-aceptacion"
+).hasAnyAuthority(
+        "ROLE_ANFITRION",
+        "ROLE_ADMINISTRADOR"
+)
+
+// Modificar modo de aceptación.
+.requestMatchers(
+        HttpMethod.PATCH,
+        "/publicaciones/*/modo-aceptacion"
+).hasAnyAuthority(
+        "ROLE_ANFITRION",
+        "ROLE_ADMINISTRADOR"
+)
+
+// Todo lo demás requiere autenticación.
+.anyRequest().authenticated()
+
 
                 .anyRequest().authenticated()
             )
