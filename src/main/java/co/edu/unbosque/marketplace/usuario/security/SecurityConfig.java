@@ -227,6 +227,17 @@ public class SecurityConfig {
         "ROLE_ANFITRION",
         "ROLE_ADMINISTRADOR"
 )
+//HU-023: consulta pública de disponibilidad por fechas.
+.requestMatchers(
+     HttpMethod.GET,
+     "/alojamientos/*/disponibilidad"
+).permitAll()
+
+//HU-023: calendario completo exclusivo del anfitrión.
+.requestMatchers(
+     HttpMethod.GET,
+     "/alojamientos/*/calendario"
+).hasAuthority("ROLE_ANFITRION")
 
 // Todo lo demás requiere autenticación.
 .anyRequest().authenticated()
