@@ -102,6 +102,34 @@ public class SecurityConfig {
                     "/alojamientos"
                 ).hasAuthority("ROLE_ANFITRION")
 
+             // Consultar periodos disponibles.
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/alojamientos/*/periodos-disponibles"
+                ).hasAuthority("ROLE_ANFITRION")
+
+                // Registrar periodos disponibles.
+
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/alojamientos/*/periodos-disponibles"
+                ).hasAuthority("ROLE_ANFITRION")
+
+                // Actualizar periodos disponibles.
+
+                .requestMatchers(
+                    HttpMethod.PUT,
+                    "/alojamientos/*/periodos-disponibles/*"
+                ).hasAuthority("ROLE_ANFITRION")
+
+                // Deshabilitar periodos disponibles.
+
+                .requestMatchers(
+                    HttpMethod.DELETE,
+                    "/alojamientos/*/periodos-disponibles/*"
+                ).hasAuthority("ROLE_ANFITRION")
+
                 // Consultas de servicios y políticas.
 
                 .requestMatchers(
