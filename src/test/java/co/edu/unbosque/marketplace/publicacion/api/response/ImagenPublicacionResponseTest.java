@@ -10,34 +10,23 @@ import org.junit.jupiter.api.Test;
 
 class ImagenPublicacionResponseTest {
 
-    @Test
-    void testConstructorYGetters() {
-        UUID idImagen = UUID.randomUUID();
+	@Test
+	void testConstructorYGetters() {
+		UUID idImagen = UUID.randomUUID();
 
-        ImagenPublicacionResponse response =
-            new ImagenPublicacionResponse(
-                idImagen,
-                "imagenes/publicacion1.jpg",
-                1,
-                true
-            );
-        
-        assertEquals(idImagen, response.getIdImagen());
-        assertEquals("imagenes/publicacion1.jpg", response.getRutaImagen());
-        assertEquals(1, response.getOrden());
-        assertTrue(response.isEsPortada());
-    }
+		ImagenPublicacionResponse response = new ImagenPublicacionResponse(idImagen, "imagenes/publicacion1.jpg", 1,
+				true);
+		assertEquals(idImagen, response.getIdImagen());
+		assertEquals("imagenes/publicacion1.jpg", response.getRutaImagen());
+		assertEquals(1, response.getOrden());
+		assertTrue(response.isEsPortada());
+	}
 
-    @Test
-    void testImagenNoEsPortada() {
-        ImagenPublicacionResponse response =
-            new ImagenPublicacionResponse(
-                UUID.randomUUID(),
-                "imagenes/publicacion2.jpg",
-                2,
-                false
-            );
+	@Test
+	void testImagenNoEsPortada() {
+		ImagenPublicacionResponse response = new ImagenPublicacionResponse(UUID.randomUUID(),
+				"imagenes/publicacion2.jpg", 2, false);
 
-        assertFalse(response.isEsPortada());
-    }
+		assertFalse(response.isEsPortada());
+	}
 }

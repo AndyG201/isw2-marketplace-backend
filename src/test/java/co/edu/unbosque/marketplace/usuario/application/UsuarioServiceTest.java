@@ -20,6 +20,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import org.springframework.context.ApplicationEventPublisher;
+import co.edu.unbosque.marketplace.usuario.contracts.CuentaDesactivadaEvent;
 
 @ExtendWith(MockitoExtension.class)
 class UsuarioServiceTest {
@@ -39,6 +41,7 @@ class UsuarioServiceTest {
     @Mock private VerificacionCorreoService verificacionCorreoService;
     @Mock private ExternalHTTPRequestMapping correoExterno;
     @Mock private JwtUtil jwtUtil;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private StringRedisTemplate redisTemplate;
     @InjectMocks private UsuarioService service;
@@ -246,8 +249,14 @@ class UsuarioServiceTest {
         service.desactivarCuenta(ID);
 
         assertEquals(EstadoUsuario.INACTIVA, u.getEstado());
+
         verify(usuarioRepository).save(u);
+
         verify(jwtUtil).invalidarSesiones(ID);
+
+        verify(eventPublisher).publishEvent(
+                any(CuentaDesactivadaEvent.class)
+        );
     }
 
     @Test

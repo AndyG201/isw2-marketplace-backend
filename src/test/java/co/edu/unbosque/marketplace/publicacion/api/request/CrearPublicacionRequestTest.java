@@ -1,6 +1,4 @@
 package co.edu.unbosque.marketplace.publicacion.api.request;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -48,7 +46,7 @@ class CrearPublicacionRequestTest {
         request.setCapacidad(4);
         request.setPrecioPorNoche(new BigDecimal("150000"));
         request.setTarifaLimpieza(new BigDecimal("20000"));
-        request.setModoAceptacion("AUTOMATICA");
+        request.setModoAceptacion("INMEDIATA");
         request.setIdPolitica(UUID.randomUUID());
         request.setIdsServicios(List.of(UUID.randomUUID()));
 

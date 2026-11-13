@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.publicacion.api;
 
 import java.util.Map;
@@ -22,7 +21,6 @@ import jakarta.validation.Valid;
 import co.edu.unbosque.marketplace.publicacion.api.request.RechazarPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.api.response.DecisionPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.RevisionAdministrativaService;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
@@ -41,10 +39,10 @@ public class PublicacionDecisionController {
 
     @PatchMapping("/{idPublicacion}/aprobar")
     public ResponseEntity<?> aprobarPublicacion(
-            @AuthenticationPrincipal Usuario administrador,
+            @AuthenticationPrincipal(expression = "idUsuario") UUID idUsuario,
             @PathVariable UUID idPublicacion) {
 
-        if (administrador == null) {
+        if (idUsuario == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "mensaje",
@@ -56,7 +54,7 @@ public class PublicacionDecisionController {
 
             DecisionPublicacionResponse respuesta =
                     revisionService.aprobarPublicacion(
-                            administrador,
+                            idUsuario,
                             idPublicacion
                     );
 
@@ -86,12 +84,12 @@ public class PublicacionDecisionController {
 
     @PatchMapping("/{idPublicacion}/rechazar")
     public ResponseEntity<?> rechazarPublicacion(
-            @AuthenticationPrincipal Usuario administrador,
+            @AuthenticationPrincipal(expression = "idUsuario") UUID idUsuario,
             @PathVariable UUID idPublicacion,
             @Valid @RequestBody RechazarPublicacionRequest solicitud,
             BindingResult resultadoValidacion) {
 
-        if (administrador == null) {
+        if (idUsuario == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "mensaje",
@@ -116,7 +114,7 @@ public class PublicacionDecisionController {
 
             DecisionPublicacionResponse respuesta =
                     revisionService.rechazarPublicacion(
-                            administrador,
+                            idUsuario,
                             idPublicacion,
                             solicitud.getMotivo()
                     );

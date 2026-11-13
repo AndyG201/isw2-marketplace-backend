@@ -1,3 +1,4 @@
+
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -21,27 +21,26 @@ import org.mockito.quality.Strictness;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
-import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
-import co.edu.unbosque.marketplace.cancelacion.domain.PoliticaCancelacion;
-import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.PoliticaCancelacionRepository;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
+import co.edu.unbosque.marketplace.alojamiento.contracts.CrearAlojamientoParaPublicacion;
+import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.request.CrearPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAlojamientoResponse;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.storage.AlmacenamientoImagenService;
-import co.edu.unbosque.marketplace.servicio.domain.Servicio;
-import co.edu.unbosque.marketplace.servicio.infrastructure.persistence.ServicioRepository;
-import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
+import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class PublicacionAlojamientoServiceTest {
 
     @Mock
-    private AlojamientoRepository alojamientoRepository;
+    private AlojamientoPublicacionCommand alojamientoCommand;
 
     @Mock
     private PublicacionRepository publicacionRepository;
@@ -53,36 +52,35 @@ class PublicacionAlojamientoServiceTest {
     private ImagenPublicacionRepository imagenPublicacionRepository;
 
     @Mock
-    private ServicioRepository servicioRepository;
+    private ServicioPublicacionQuery servicioPublicacionQuery;
 
     @Mock
-    private PoliticaCancelacionRepository politicaRepository;
+    private PoliticaCancelacionQuery politicaCancelacionQuery;
 
     @Mock
-    private UsuarioRepository usuarioRepository;
+    private UsuarioPublicacionQuery usuarioPublicacionQuery;
 
     @Mock
     private AlmacenamientoImagenService almacenamientoImagenService;
-
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private Usuario anfitrion;
 
     private PublicacionAlojamientoService service;
 
     private final UUID idAnfitrion = UUID.randomUUID();
     private final UUID idPolitica = UUID.randomUUID();
     private final UUID idServicio = UUID.randomUUID();
+    private final UUID idAlojamiento = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
+
         service = new PublicacionAlojamientoService(
-                alojamientoRepository,
+                alojamientoCommand,
                 publicacionRepository,
                 publicacionServicioRepository,
                 imagenPublicacionRepository,
-                servicioRepository,
-                politicaRepository,
-                usuarioRepository,
+                servicioPublicacionQuery,
+                politicaCancelacionQuery,
+                usuarioPublicacionQuery,
                 almacenamientoImagenService
         );
 
@@ -91,12 +89,14 @@ class PublicacionAlojamientoServiceTest {
 
     @AfterEach
     void tearDown() {
+
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.clearSynchronization();
         }
     }
 
     private CrearPublicacionRequest crearSolicitudValida() {
+
         CrearPublicacionRequest solicitud =
                 mock(CrearPublicacionRequest.class);
 
@@ -122,7 +122,7 @@ class PublicacionAlojamientoServiceTest {
         when(solicitud.getDescripcion())
                 .thenReturn(" Descripción de prueba ");
         when(solicitud.getReglas()).thenReturn(" No fumar ");
-        when(solicitud.getModoAceptacion()).thenReturn(" AUTOMATICA ");
+        when(solicitud.getModoAceptacion()).thenReturn(" INMEDIATA ");
 
         when(imagen.isEmpty()).thenReturn(false);
 
@@ -130,34 +130,35 @@ class PublicacionAlojamientoServiceTest {
     }
 
     private void configurarAnfitrionValido() {
-        when(usuarioRepository.findById(idAnfitrion))
+
+        UsuarioPublicacionInfo anfitrion =
+                mock(UsuarioPublicacionInfo.class);
+
+        when(usuarioPublicacionQuery.consultarParaPublicacion(idAnfitrion))
                 .thenReturn(Optional.of(anfitrion));
 
-        when(anfitrion.getRol().getNombre())
-                .thenReturn("ANFITRION");
+        when(anfitrion.esAnfitrion()).thenReturn(true);
+        when(anfitrion.cuentaHabilitadaParaPublicar()).thenReturn(true);
 
-        when(anfitrion.isCorreoVerificado()).thenReturn(true);
-        when(anfitrion.getEstado()).thenReturn(EstadoUsuario.ACTIVA);
-        when(anfitrion.isRestringido()).thenReturn(false);
-        when(anfitrion.getIntentosFallidos()).thenReturn(0);
+        when(alojamientoCommand.crearAlojamiento(
+                any(CrearAlojamientoParaPublicacion.class)))
+                .thenReturn(idAlojamiento);
     }
 
     @Test
     void crearPublicacionCorrectamente() {
+
         CrearPublicacionRequest solicitud = crearSolicitudValida();
 
         configurarAnfitrionValido();
 
-        PoliticaCancelacion politica = mock(PoliticaCancelacion.class);
-        Servicio servicio = mock(Servicio.class);
+        ServicioInfo servicio = mock(ServicioInfo.class);
 
-        when(politicaRepository.findByIdPoliticaAndActivaTrue(idPolitica))
-                .thenReturn(Optional.of(politica));
+        when(politicaCancelacionQuery.existePoliticaActiva(idPolitica))
+                .thenReturn(true);
 
-        when(politica.getIdPolitica()).thenReturn(idPolitica);
-
-        when(servicioRepository.findAllById(any()))
-                .thenReturn(new ArrayList<>(List.of(servicio)));
+        when(servicioPublicacionQuery.consultarPorIds(anySet()))
+                .thenReturn(List.of(servicio));
 
         when(almacenamientoImagenService.guardar(
                 solicitud.getImagenes().get(0)))
@@ -168,7 +169,9 @@ class PublicacionAlojamientoServiceTest {
 
         assertNotNull(respuesta);
 
-        verify(alojamientoRepository).save(any());
+        verify(alojamientoCommand).crearAlojamiento(
+                any(CrearAlojamientoParaPublicacion.class));
+
         verify(publicacionRepository).save(any());
         verify(publicacionServicioRepository).save(any());
         verify(imagenPublicacionRepository).save(any());
@@ -179,6 +182,7 @@ class PublicacionAlojamientoServiceTest {
 
     @Test
     void crearPublicacionConCapacidadInvalida() {
+
         CrearPublicacionRequest solicitud = crearSolicitudValida();
 
         when(solicitud.getCapacidad()).thenReturn(0);
@@ -188,14 +192,15 @@ class PublicacionAlojamientoServiceTest {
                 () -> service.crearPublicacion(idAnfitrion, solicitud)
         );
 
-        verifyNoInteractions(usuarioRepository);
+        verifyNoInteractions(usuarioPublicacionQuery);
     }
 
     @Test
     void crearPublicacionConAnfitrionInexistente() {
+
         CrearPublicacionRequest solicitud = crearSolicitudValida();
 
-        when(usuarioRepository.findById(idAnfitrion))
+        when(usuarioPublicacionQuery.consultarParaPublicacion(idAnfitrion))
                 .thenReturn(Optional.empty());
 
         assertThrows(
@@ -203,45 +208,51 @@ class PublicacionAlojamientoServiceTest {
                 () -> service.crearPublicacion(idAnfitrion, solicitud)
         );
 
-        verify(usuarioRepository).findById(idAnfitrion);
-        verifyNoInteractions(politicaRepository);
+        verify(usuarioPublicacionQuery)
+                .consultarParaPublicacion(idAnfitrion);
+
+        verifyNoInteractions(politicaCancelacionQuery);
     }
 
     @Test
     void crearPublicacionConRolIncorrecto() {
+
         CrearPublicacionRequest solicitud = crearSolicitudValida();
 
-        when(usuarioRepository.findById(idAnfitrion))
-                .thenReturn(Optional.of(anfitrion));
+        UsuarioPublicacionInfo usuario =
+                mock(UsuarioPublicacionInfo.class);
 
-        when(anfitrion.getRol().getNombre())
-                .thenReturn("CLIENTE");
+        when(usuarioPublicacionQuery.consultarParaPublicacion(idAnfitrion))
+                .thenReturn(Optional.of(usuario));
+
+        when(usuario.esAnfitrion()).thenReturn(false);
 
         assertThrows(
                 IllegalStateException.class,
                 () -> service.crearPublicacion(idAnfitrion, solicitud)
         );
 
-        verifyNoInteractions(politicaRepository);
+        verifyNoInteractions(politicaCancelacionQuery);
     }
 
     @Test
     void crearPublicacionConPoliticaInexistente() {
+
         CrearPublicacionRequest solicitud = crearSolicitudValida();
 
         configurarAnfitrionValido();
 
-        when(politicaRepository.findByIdPoliticaAndActivaTrue(idPolitica))
-                .thenReturn(Optional.empty());
+        when(politicaCancelacionQuery.existePoliticaActiva(idPolitica))
+                .thenReturn(false);
 
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.crearPublicacion(idAnfitrion, solicitud)
         );
 
-        verify(politicaRepository)
-                .findByIdPoliticaAndActivaTrue(idPolitica);
+        verify(politicaCancelacionQuery)
+                .existePoliticaActiva(idPolitica);
 
-        verifyNoInteractions(servicioRepository);
+        verifyNoInteractions(servicioPublicacionQuery);
     }
 }

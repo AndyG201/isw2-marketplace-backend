@@ -25,18 +25,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
+import org.springframework.context.ApplicationEventPublisher;
+import co.edu.unbosque.marketplace.usuario.contracts.CuentaRestringidaEvent;
 @ExtendWith(MockitoExtension.class)
 class AdministradorServiceTest {
 
-    @Mock
-    private UsuarioRepository usuarioRepository;
+	@Mock
+	private UsuarioRepository usuarioRepository;
 
-    @Mock
-    private JwtUtil jwtUtil;
+	@Mock
+	private JwtUtil jwtUtil;
 
-    @InjectMocks
-    private AdministradorService service;
+	@Mock
+	private ApplicationEventPublisher eventPublisher;
+
+	@InjectMocks
+	private AdministradorService service;
 
     private final UUID idUsuario = UUID.randomUUID();
 
@@ -270,6 +274,9 @@ class AdministradorServiceTest {
 
         verify(usuarioRepository).save(same(usuario));
         verify(jwtUtil).invalidarSesiones(idUsuario);
+        verify(eventPublisher).publishEvent(
+                any(CuentaRestringidaEvent.class)
+        );
     }
 
     // LEVANTAR RESTRICCIÓN

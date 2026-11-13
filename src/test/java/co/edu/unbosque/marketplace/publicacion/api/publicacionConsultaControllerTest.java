@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.publicacion.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -6,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -20,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import co.edu.unbosque.marketplace.publicacion.api.response.MisPublicacionesResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionConsultaService;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
 @ExtendWith(MockitoExtension.class)
 class PublicacionConsultaControllerTest {
@@ -28,21 +27,23 @@ class PublicacionConsultaControllerTest {
     @Mock
     private PublicacionConsultaService consultaService;
 
-    @Mock
-    private Usuario usuario;
-
     @InjectMocks
     private PublicacionConsultaController controller;
 
     @Test
     void testConsultarMisPublicacionesSinUsuario() {
-        ResponseEntity<?> respuesta =
-            controller.consultarMisPublicaciones(null);
 
-        assertEquals(HttpStatus.UNAUTHORIZED, respuesta.getStatusCode());
+        ResponseEntity<?> respuesta =
+                controller.consultarMisPublicaciones(null);
+
         assertEquals(
-            "Debes iniciar sesión para consultar tus publicaciones.",
-            ((Map<?, ?>) respuesta.getBody()).get("mensaje")
+                HttpStatus.UNAUTHORIZED,
+                respuesta.getStatusCode()
+        );
+
+        assertEquals(
+                "Debes iniciar sesión para consultar tus publicaciones.",
+                ((Map<?, ?>) respuesta.getBody()).get("mensaje")
         );
 
         verifyNoInteractions(consultaService);
@@ -50,38 +51,50 @@ class PublicacionConsultaControllerTest {
 
     @Test
     void testConsultarMisPublicacionesCorrectamente() {
+
         UUID idUsuario = UUID.randomUUID();
 
         MisPublicacionesResponse publicaciones =
-            new MisPublicacionesResponse(
-                "Publicaciones consultadas correctamente.",
-                java.util.List.of()
-            );
+                new MisPublicacionesResponse(
+                        "Publicaciones consultadas correctamente.",
+                        List.of()
+                );
 
-        when(usuario.getIdUsuario()).thenReturn(idUsuario);
         when(consultaService.consultarMisPublicaciones(idUsuario))
-            .thenReturn(publicaciones);
+                .thenReturn(publicaciones);
 
         ResponseEntity<?> respuesta =
-            controller.consultarMisPublicaciones(usuario);
+                controller.consultarMisPublicaciones(idUsuario);
 
-        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
-        assertEquals(publicaciones, respuesta.getBody());
+        assertEquals(
+                HttpStatus.OK,
+                respuesta.getStatusCode()
+        );
+
+        assertEquals(
+                publicaciones,
+                respuesta.getBody()
+        );
 
         verify(consultaService).consultarMisPublicaciones(idUsuario);
     }
 
     @Test
     void testConsultarDetalleSinUsuario() {
+
         UUID idPublicacion = UUID.randomUUID();
 
         ResponseEntity<?> respuesta =
-            controller.consultarDetalle(null, idPublicacion);
+                controller.consultarDetalle(null, idPublicacion);
 
-        assertEquals(HttpStatus.UNAUTHORIZED, respuesta.getStatusCode());
         assertEquals(
-            "Debes iniciar sesión para consultar esta publicación.",
-            ((Map<?, ?>) respuesta.getBody()).get("mensaje")
+                HttpStatus.UNAUTHORIZED,
+                respuesta.getStatusCode()
+        );
+
+        assertEquals(
+                "Debes iniciar sesión para consultar esta publicación.",
+                ((Map<?, ?>) respuesta.getBody()).get("mensaje")
         );
 
         verifyNoInteractions(consultaService);
@@ -89,42 +102,58 @@ class PublicacionConsultaControllerTest {
 
     @Test
     void testConsultarDetalleCorrectamente() {
+
         UUID idUsuario = UUID.randomUUID();
         UUID idPublicacion = UUID.randomUUID();
 
         PublicacionDetalleResponse detalle = null;
 
-        when(usuario.getIdUsuario()).thenReturn(idUsuario);
         when(consultaService.consultarDetalle(idUsuario, idPublicacion))
-            .thenReturn(detalle);
+                .thenReturn(detalle);
 
         ResponseEntity<?> respuesta =
-            controller.consultarDetalle(usuario, idPublicacion);
+                controller.consultarDetalle(idUsuario, idPublicacion);
 
-        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
-        assertEquals(detalle, respuesta.getBody());
+        assertEquals(
+                HttpStatus.OK,
+                respuesta.getStatusCode()
+        );
 
-        verify(consultaService).consultarDetalle(idUsuario, idPublicacion);
+        assertEquals(
+                detalle,
+                respuesta.getBody()
+        );
+
+        verify(consultaService).consultarDetalle(
+                idUsuario,
+                idPublicacion
+        );
     }
 
     @Test
     void testConsultarDetalleNoEncontrado() {
+
         UUID idUsuario = UUID.randomUUID();
         UUID idPublicacion = UUID.randomUUID();
 
-        when(usuario.getIdUsuario()).thenReturn(idUsuario);
         when(consultaService.consultarDetalle(idUsuario, idPublicacion))
-            .thenThrow(new IllegalArgumentException(
-                "La publicación no fue encontrada."
-            ));
+                .thenThrow(
+                        new IllegalArgumentException(
+                                "La publicación no fue encontrada."
+                        )
+                );
 
         ResponseEntity<?> respuesta =
-            controller.consultarDetalle(usuario, idPublicacion);
+                controller.consultarDetalle(idUsuario, idPublicacion);
 
-        assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
         assertEquals(
-            "La publicación no fue encontrada.",
-            ((Map<?, ?>) respuesta.getBody()).get("mensaje")
+                HttpStatus.NOT_FOUND,
+                respuesta.getStatusCode()
+        );
+
+        assertEquals(
+                "La publicación no fue encontrada.",
+                ((Map<?, ?>) respuesta.getBody()).get("mensaje")
         );
     }
 }

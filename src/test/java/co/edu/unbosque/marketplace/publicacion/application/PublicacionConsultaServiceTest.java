@@ -1,3 +1,4 @@
+
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,8 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
-import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.MisPublicacionesResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
@@ -25,14 +26,14 @@ import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
-import co.edu.unbosque.marketplace.servicio.domain.Servicio;
-import co.edu.unbosque.marketplace.servicio.infrastructure.persistence.ServicioRepository;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
+import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 
 @ExtendWith(MockitoExtension.class)
 class PublicacionConsultaServiceTest {
 
     @Mock
-    private AlojamientoRepository alojamientoRepository;
+    private AlojamientoPublicacionQuery alojamientoPublicacionQuery;
 
     @Mock
     private PublicacionRepository publicacionRepository;
@@ -44,7 +45,7 @@ class PublicacionConsultaServiceTest {
     private PublicacionServicioRepository publicacionServicioRepository;
 
     @Mock
-    private ServicioRepository servicioRepository;
+    private ServicioPublicacionQuery servicioPublicacionQuery;
 
     private PublicacionConsultaService service;
 
@@ -56,27 +57,39 @@ class PublicacionConsultaServiceTest {
     @BeforeEach
     void setUp() {
         service = new PublicacionConsultaService(
-                alojamientoRepository,
+                alojamientoPublicacionQuery,
                 publicacionRepository,
                 imagenRepository,
                 publicacionServicioRepository,
-                servicioRepository
+                servicioPublicacionQuery
         );
+    }
+
+    private AlojamientoPublicacionInfo crearAlojamientoInfo() {
+
+        AlojamientoPublicacionInfo alojamiento =
+                mock(AlojamientoPublicacionInfo.class);
+
+        when(alojamiento.idAlojamiento()).thenReturn(idAlojamiento);
+
+        return alojamiento;
     }
 
     @Test
     void consultarMisPublicacionesConAnfitrionNulo() {
+
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.consultarMisPublicaciones(null)
         );
 
-        verifyNoInteractions(alojamientoRepository);
+        verifyNoInteractions(alojamientoPublicacionQuery);
     }
 
     @Test
     void consultarMisPublicacionesSinAlojamientos() {
-        when(alojamientoRepository.findByIdAnfitrion(idAnfitrion))
+
+        when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
                 .thenReturn(List.of());
 
         MisPublicacionesResponse respuesta =
@@ -84,17 +97,19 @@ class PublicacionConsultaServiceTest {
 
         assertNotNull(respuesta);
 
-        verify(alojamientoRepository).findByIdAnfitrion(idAnfitrion);
+        verify(alojamientoPublicacionQuery)
+                .consultarPorAnfitrion(idAnfitrion);
+
         verifyNoInteractions(publicacionRepository);
     }
 
     @Test
     void consultarMisPublicacionesSinPublicaciones() {
-        Alojamiento alojamiento = mock(Alojamiento.class);
 
-        when(alojamiento.getIdAlojamiento()).thenReturn(idAlojamiento);
+        AlojamientoPublicacionInfo alojamiento =
+                crearAlojamientoInfo();
 
-        when(alojamientoRepository.findByIdAnfitrion(idAnfitrion))
+        when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
                 .thenReturn(List.of(alojamiento));
 
         when(publicacionRepository
@@ -112,22 +127,24 @@ class PublicacionConsultaServiceTest {
                         List.of(idAlojamiento));
 
         verifyNoInteractions(imagenRepository);
-        verifyNoInteractions(servicioRepository);
+        verifyNoInteractions(servicioPublicacionQuery);
     }
 
     @Test
     void consultarMisPublicacionesCorrectamente() {
-        Alojamiento alojamiento = mock(Alojamiento.class);
+
+        AlojamientoPublicacionInfo alojamiento =
+                crearAlojamientoInfo();
+
+        when(alojamiento.ciudad()).thenReturn("Bogotá");
+        when(alojamiento.tipoAlojamiento()).thenReturn("Apartamento");
+        when(alojamiento.capacidad()).thenReturn(3);
+
         Publicacion publicacion = mock(Publicacion.class);
 
         OffsetDateTime fecha = OffsetDateTime.now();
 
-        when(alojamiento.getIdAlojamiento()).thenReturn(idAlojamiento);
-        when(alojamiento.getCiudad()).thenReturn("Bogotá");
-        when(alojamiento.getTipoAlojamiento()).thenReturn("Apartamento");
-        when(alojamiento.getCapacidad()).thenReturn(3);
-
-        when(alojamientoRepository.findByIdAnfitrion(idAnfitrion))
+        when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
                 .thenReturn(List.of(alojamiento));
 
         when(publicacion.getIdPublicacion()).thenReturn(idPublicacion);
@@ -148,7 +165,9 @@ class PublicacionConsultaServiceTest {
 
         assertNotNull(respuesta);
 
-        verify(alojamientoRepository).findByIdAnfitrion(idAnfitrion);
+        verify(alojamientoPublicacionQuery)
+                .consultarPorAnfitrion(idAnfitrion);
+
         verify(publicacionRepository)
                 .findByIdAlojamientoInOrderByFechaCreacionDesc(
                         List.of(idAlojamiento));
@@ -156,6 +175,7 @@ class PublicacionConsultaServiceTest {
 
     @Test
     void consultarDetalleConIdentificadoresNulos() {
+
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.consultarDetalle(null, idPublicacion)
@@ -166,12 +186,13 @@ class PublicacionConsultaServiceTest {
                 () -> service.consultarDetalle(idAnfitrion, null)
         );
 
-        verifyNoInteractions(alojamientoRepository);
+        verifyNoInteractions(alojamientoPublicacionQuery);
     }
 
     @Test
     void consultarDetalleSinAlojamientos() {
-        when(alojamientoRepository.findByIdAnfitrion(idAnfitrion))
+
+        when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
                 .thenReturn(List.of());
 
         assertThrows(
@@ -184,11 +205,11 @@ class PublicacionConsultaServiceTest {
 
     @Test
     void consultarDetalleConPublicacionInexistente() {
-        Alojamiento alojamiento = mock(Alojamiento.class);
 
-        when(alojamiento.getIdAlojamiento()).thenReturn(idAlojamiento);
+        AlojamientoPublicacionInfo alojamiento =
+                crearAlojamientoInfo();
 
-        when(alojamientoRepository.findByIdAnfitrion(idAnfitrion))
+        when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
                 .thenReturn(List.of(alojamiento));
 
         when(publicacionRepository.findByIdPublicacionAndIdAlojamientoIn(
@@ -202,27 +223,29 @@ class PublicacionConsultaServiceTest {
 
         verifyNoInteractions(imagenRepository);
         verifyNoInteractions(publicacionServicioRepository);
-        verifyNoInteractions(servicioRepository);
+        verifyNoInteractions(servicioPublicacionQuery);
     }
 
     @Test
     void consultarDetalleCorrectamente() {
-        Alojamiento alojamiento = mock(Alojamiento.class);
+
+        AlojamientoPublicacionInfo alojamiento =
+                crearAlojamientoInfo();
+
+        when(alojamiento.ubicacion()).thenReturn("Calle 10");
+        when(alojamiento.ciudad()).thenReturn("Bogotá");
+        when(alojamiento.tipoAlojamiento()).thenReturn("Apartamento");
+        when(alojamiento.capacidad()).thenReturn(3);
+
         Publicacion publicacion = mock(Publicacion.class);
         ImagenPublicacion imagen = mock(ImagenPublicacion.class);
         PublicacionServicio relacion = mock(PublicacionServicio.class);
-        Servicio servicio = mock(Servicio.class);
+        ServicioInfo servicio = mock(ServicioInfo.class);
 
         OffsetDateTime fecha = OffsetDateTime.now();
         UUID idImagen = UUID.randomUUID();
 
-        when(alojamiento.getIdAlojamiento()).thenReturn(idAlojamiento);
-        when(alojamiento.getUbicacion()).thenReturn("Calle 10");
-        when(alojamiento.getCiudad()).thenReturn("Bogotá");
-        when(alojamiento.getTipoAlojamiento()).thenReturn("Apartamento");
-        when(alojamiento.getCapacidad()).thenReturn(3);
-
-        when(alojamientoRepository.findByIdAnfitrion(idAnfitrion))
+        when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
                 .thenReturn(List.of(alojamiento));
 
         when(publicacionRepository.findByIdPublicacionAndIdAlojamientoIn(
@@ -239,7 +262,7 @@ class PublicacionConsultaServiceTest {
                 .thenReturn(new BigDecimal("150000"));
         when(publicacion.getTarifaLimpieza())
                 .thenReturn(new BigDecimal("20000"));
-        when(publicacion.getModoAceptacion()).thenReturn("AUTOMATICA");
+        when(publicacion.getModoAceptacion()).thenReturn("INMEDIATA");
         when(publicacion.getEstado()).thenReturn("BORRADOR");
         when(publicacion.getFechaCreacion()).thenReturn(fecha);
         when(publicacion.getFechaActualizacion()).thenReturn(fecha);
@@ -257,11 +280,11 @@ class PublicacionConsultaServiceTest {
         when(publicacionServicioRepository.findByIdPublicacion(idPublicacion))
                 .thenReturn(List.of(relacion));
 
-        when(servicio.getIdServicio()).thenReturn(idServicio);
-        when(servicio.getNombre()).thenReturn("WiFi");
-        when(servicio.getDescripcion()).thenReturn("Internet inalámbrico");
+        when(servicio.idServicio()).thenReturn(idServicio);
+        when(servicio.nombre()).thenReturn("WiFi");
+        when(servicio.descripcion()).thenReturn("Internet inalámbrico");
 
-        when(servicioRepository.findAllById(List.of(idServicio)))
+        when(servicioPublicacionQuery.consultarPorIds(List.of(idServicio)))
                 .thenReturn(List.of(servicio));
 
         PublicacionDetalleResponse respuesta =
@@ -275,6 +298,7 @@ class PublicacionConsultaServiceTest {
         verify(publicacionServicioRepository)
                 .findByIdPublicacion(idPublicacion);
 
-        verify(servicioRepository).findAllById(List.of(idServicio));
+        verify(servicioPublicacionQuery)
+                .consultarPorIds(List.of(idServicio));
     }
 }

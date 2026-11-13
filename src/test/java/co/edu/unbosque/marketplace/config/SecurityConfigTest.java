@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collection;
 import java.util.List;
-
+import co.edu.unbosque.marketplace.usuario.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

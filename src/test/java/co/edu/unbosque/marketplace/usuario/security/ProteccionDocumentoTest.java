@@ -1,6 +1,5 @@
 package co.edu.unbosque.marketplace.usuario.security;
 
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
@@ -18,9 +17,10 @@ class ProteccionDocumentoTest {
                             .getBytes(StandardCharsets.UTF_8)
             );
 
+    // Clave HMAC de 32 bytes como mínimo.
     private static final String CLAVE_HMAC =
             Base64.getEncoder().encodeToString(
-                    "HmacClavePrueba1234567890123456"
+                    "HmacClavePrueba12345678901234567"
                             .getBytes(StandardCharsets.UTF_8)
             );
 
@@ -36,6 +36,7 @@ class ProteccionDocumentoTest {
 
     @Test
     void testProtegerDocumento() {
+
         ProteccionDocumento.DatosDocumento resultado =
                 proteccionDocumento.protegerDocumento(
                         "CC",
@@ -53,6 +54,7 @@ class ProteccionDocumentoTest {
 
     @Test
     void testDescifrarDocumento() {
+
         ProteccionDocumento.DatosDocumento resultado =
                 proteccionDocumento.protegerDocumento(
                         "CC",
@@ -70,6 +72,7 @@ class ProteccionDocumentoTest {
 
     @Test
     void testNormalizarDocumento() {
+
         ProteccionDocumento.DatosDocumento resultado =
                 proteccionDocumento.protegerDocumento(
                         "CC",
@@ -87,6 +90,7 @@ class ProteccionDocumentoTest {
 
     @Test
     void testCalcularHashDocumento() {
+
         byte[] hash = proteccionDocumento.calcularHashDocumento(
                 "CC",
                 "123456789"
@@ -98,6 +102,7 @@ class ProteccionDocumentoTest {
 
     @Test
     void testHashIgualParaDocumentosNormalizados() {
+
         byte[] hash1 = proteccionDocumento.calcularHashDocumento(
                 "CC",
                 "123-456-789"
@@ -113,6 +118,7 @@ class ProteccionDocumentoTest {
 
     @Test
     void testHashDiferenteParaTiposDeDocumentoDistintos() {
+
         byte[] hash1 = proteccionDocumento.calcularHashDocumento(
                 "CC",
                 "123456789"
@@ -128,6 +134,7 @@ class ProteccionDocumentoTest {
 
     @Test
     void testCifradoGeneraNonceDiferente() {
+
         ProteccionDocumento.DatosDocumento resultado1 =
                 proteccionDocumento.protegerDocumento(
                         "CC",
@@ -153,13 +160,16 @@ class ProteccionDocumentoTest {
 
     @Test
     void testDescifrarDocumentoConNonceIncorrecto() {
+
         ProteccionDocumento.DatosDocumento resultado =
                 proteccionDocumento.protegerDocumento(
                         "CC",
                         "123456789"
                 );
 
-        byte[] nonceIncorrecto = resultado.documentoNonce().clone();
+        byte[] nonceIncorrecto =
+                resultado.documentoNonce().clone();
+
         nonceIncorrecto[0] ^= 1;
 
         assertThrows(
@@ -173,6 +183,7 @@ class ProteccionDocumentoTest {
 
     @Test
     void testDescifrarDocumentoCifradoAlterado() {
+
         ProteccionDocumento.DatosDocumento resultado =
                 proteccionDocumento.protegerDocumento(
                         "CC",
@@ -195,8 +206,11 @@ class ProteccionDocumentoTest {
 
     @Test
     void testClaveCifradoInvalida() {
+
         String claveInvalida = Base64.getEncoder()
-                .encodeToString("claveCorta".getBytes(StandardCharsets.UTF_8));
+                .encodeToString(
+                        "claveCorta".getBytes(StandardCharsets.UTF_8)
+                );
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -209,8 +223,11 @@ class ProteccionDocumentoTest {
 
     @Test
     void testClaveHmacInvalida() {
+
         String claveInvalida = Base64.getEncoder()
-                .encodeToString("claveCorta".getBytes(StandardCharsets.UTF_8));
+                .encodeToString(
+                        "claveCorta".getBytes(StandardCharsets.UTF_8)
+                );
 
         assertThrows(
                 IllegalArgumentException.class,

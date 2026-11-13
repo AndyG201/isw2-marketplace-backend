@@ -1,12 +1,9 @@
-
 package co.edu.unbosque.marketplace.publicacion.api.response;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import co.edu.unbosque.marketplace.servicio.api.response.ServicioResponse;
 
 public class PublicacionDetalleResponse {
 
@@ -28,7 +25,7 @@ public class PublicacionDetalleResponse {
     private String tipoAlojamiento;
     private int capacidad;
 
-    private List<ServicioResponse> servicios;
+    private List<ServicioPublicacionResponse> servicios;
     private List<ImagenPublicacionResponse> imagenes;
 
     public PublicacionDetalleResponse(
@@ -48,7 +45,7 @@ public class PublicacionDetalleResponse {
             String ciudad,
             String tipoAlojamiento,
             int capacidad,
-            List<ServicioResponse> servicios,
+            List<ServicioPublicacionResponse> servicios,
             List<ImagenPublicacionResponse> imagenes) {
 
         this.idPublicacion = idPublicacion;
@@ -67,7 +64,7 @@ public class PublicacionDetalleResponse {
         this.ciudad = ciudad;
         this.tipoAlojamiento = tipoAlojamiento;
         this.capacidad = capacidad;
-        this.servicios = servicios;
+		this.servicios = servicios;
         this.imagenes = imagenes;
     }
 
@@ -87,6 +84,8 @@ public class PublicacionDetalleResponse {
     public String getCiudad() { return ciudad; }
     public String getTipoAlojamiento() { return tipoAlojamiento; }
     public int getCapacidad() { return capacidad; }
-    public List<ServicioResponse> getServicios() { return servicios; }
+    public List<ServicioPublicacionResponse> getServicios() {
+        return servicios;
+    }
     public List<ImagenPublicacionResponse> getImagenes() { return imagenes; }
 }

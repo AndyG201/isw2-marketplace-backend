@@ -23,16 +23,12 @@ import org.springframework.validation.FieldError;
 import co.edu.unbosque.marketplace.publicacion.api.request.CrearPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAlojamientoResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionAlojamientoService;
-import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
 @ExtendWith(MockitoExtension.class)
 class PublicacionAlojamientoControllerTest {
 
     @Mock
     private PublicacionAlojamientoService publicacionService;
-
-    @Mock
-    private Usuario usuario;
 
     @Mock
     private CrearPublicacionRequest solicitud;
@@ -45,14 +41,16 @@ class PublicacionAlojamientoControllerTest {
 
     @Test
     void testCrearPublicacionSinUsuario() {
+
         ResponseEntity<?> respuesta = controller.crearPublicacion(
-            null, solicitud, resultadoValidacion
+                null,
+                solicitud,
+                resultadoValidacion
         );
 
-        assertEquals(HttpStatus.UNAUTHORIZED, respuesta.getStatusCode());
         assertEquals(
-            "Debes iniciar sesión.",
-            ((Map<?, ?>) respuesta.getBody()).get("mensaje")
+                HttpStatus.UNAUTHORIZED,
+                respuesta.getStatusCode()
         );
 
         verifyNoInteractions(publicacionService);
@@ -60,23 +58,33 @@ class PublicacionAlojamientoControllerTest {
 
     @Test
     void testCrearPublicacionConErroresDeValidacion() {
+
+        UUID idUsuario = UUID.randomUUID();
+
         FieldError error = new FieldError(
-            "solicitud",
-            "titulo",
-            "El título es obligatorio."
+                "solicitud",
+                "titulo",
+                "El título es obligatorio."
         );
 
         when(resultadoValidacion.hasErrors()).thenReturn(true);
-        when(resultadoValidacion.getFieldErrors()).thenReturn(List.of(error));
+        when(resultadoValidacion.getFieldErrors())
+                .thenReturn(List.of(error));
 
         ResponseEntity<?> respuesta = controller.crearPublicacion(
-            usuario, solicitud, resultadoValidacion
+                idUsuario,
+                solicitud,
+                resultadoValidacion
         );
 
-        assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
         assertEquals(
-            "El título es obligatorio.",
-            ((Map<?, ?>) respuesta.getBody()).get("mensaje")
+                HttpStatus.BAD_REQUEST,
+                respuesta.getStatusCode()
+        );
+
+        assertEquals(
+                "El título es obligatorio.",
+                ((Map<?, ?>) respuesta.getBody()).get("mensaje")
         );
 
         verifyNoInteractions(publicacionService);
@@ -84,71 +92,105 @@ class PublicacionAlojamientoControllerTest {
 
     @Test
     void testCrearPublicacionCorrectamente() {
+
         UUID idUsuario = UUID.randomUUID();
 
         PublicacionAlojamientoResponse publicacion =
-            new PublicacionAlojamientoResponse(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                "Apartamento en Bogotá",
-                "BORRADOR",
-                List.of()
-            );
+                new PublicacionAlojamientoResponse(
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Apartamento en Bogotá",
+                        "BORRADOR",
+                        List.of()
+                );
 
-        when(usuario.getIdUsuario()).thenReturn(idUsuario);
         when(resultadoValidacion.hasErrors()).thenReturn(false);
+
         when(publicacionService.crearPublicacion(idUsuario, solicitud))
-            .thenReturn(publicacion);
+                .thenReturn(publicacion);
 
         ResponseEntity<?> respuesta = controller.crearPublicacion(
-            usuario, solicitud, resultadoValidacion
+                idUsuario,
+                solicitud,
+                resultadoValidacion
         );
 
         assertAll(
-            () -> assertEquals(HttpStatus.CREATED, respuesta.getStatusCode()),
-            () -> assertEquals(publicacion, respuesta.getBody())
+                () -> assertEquals(
+                        HttpStatus.CREATED,
+                        respuesta.getStatusCode()
+                ),
+                () -> assertEquals(
+                        publicacion,
+                        respuesta.getBody()
+                )
         );
 
-        verify(publicacionService).crearPublicacion(idUsuario, solicitud);
+        verify(publicacionService).crearPublicacion(
+                idUsuario,
+                solicitud
+        );
     }
 
     @Test
     void testCrearPublicacionConArgumentosInvalidos() {
+
         UUID idUsuario = UUID.randomUUID();
 
-        when(usuario.getIdUsuario()).thenReturn(idUsuario);
         when(resultadoValidacion.hasErrors()).thenReturn(false);
+
         when(publicacionService.crearPublicacion(idUsuario, solicitud))
-            .thenThrow(new IllegalArgumentException("Datos incorrectos."));
+                .thenThrow(
+                        new IllegalArgumentException(
+                                "Datos incorrectos."
+                        )
+                );
 
         ResponseEntity<?> respuesta = controller.crearPublicacion(
-            usuario, solicitud, resultadoValidacion
+                idUsuario,
+                solicitud,
+                resultadoValidacion
         );
 
-        assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
         assertEquals(
-            "Datos incorrectos.",
-            ((Map<?, ?>) respuesta.getBody()).get("mensaje")
+                HttpStatus.BAD_REQUEST,
+                respuesta.getStatusCode()
+        );
+
+        assertEquals(
+                "Datos incorrectos.",
+                ((Map<?, ?>) respuesta.getBody()).get("mensaje")
         );
     }
 
     @Test
     void testCrearPublicacionConConflicto() {
+
         UUID idUsuario = UUID.randomUUID();
 
-        when(usuario.getIdUsuario()).thenReturn(idUsuario);
         when(resultadoValidacion.hasErrors()).thenReturn(false);
+
         when(publicacionService.crearPublicacion(idUsuario, solicitud))
-            .thenThrow(new IllegalStateException("No es posible crear la publicación."));
+                .thenThrow(
+                        new IllegalStateException(
+                                "No es posible crear la publicación."
+                        )
+                );
 
         ResponseEntity<?> respuesta = controller.crearPublicacion(
-            usuario, solicitud, resultadoValidacion
+                idUsuario,
+                solicitud,
+                resultadoValidacion
         );
 
-        assertEquals(HttpStatus.CONFLICT, respuesta.getStatusCode());
         assertEquals(
-            "No es posible crear la publicación.",
-            ((Map<?, ?>) respuesta.getBody()).get("mensaje")
+                HttpStatus.CONFLICT,
+                respuesta.getStatusCode()
+        );
+
+        assertEquals(
+                "No es posible crear la publicación.",
+                ((Map<?, ?>) respuesta.getBody()).get("mensaje")
         );
     }
 }

@@ -24,214 +24,167 @@ import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
 
-    @Mock
-    private JwtUtil jwtUtil;
+	@Mock
+	private JwtUtil jwtUtil;
 
-    @Mock
-    private UserDetailsService userDetailsService;
+	@Mock
+	private UserDetailsService userDetailsService;
 
-    @Mock
-    private Usuario usuario;
+	@Mock
+	private Usuario usuario;
 
-    @Mock
-    private FilterChain filterChain;
+	@Mock
+	private FilterChain filterChain;
 
-    private JwtAuthenticationFilter jwtFilter;
+	private JwtAuthenticationFilter jwtFilter;
 
-    @BeforeEach
-    void setUp() {
-        jwtFilter = new JwtAuthenticationFilter(
-                jwtUtil,
-                userDetailsService
-        );
+	@BeforeEach
+	void setUp() {
+		jwtFilter = new JwtAuthenticationFilter(jwtUtil, userDetailsService);
 
-        SecurityContextHolder.clearContext();
-    }
+		SecurityContextHolder.clearContext();
+	}
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
+	@AfterEach
+	void tearDown() {
+		SecurityContextHolder.clearContext();
+	}
 
-    private MockHttpServletRequest crearPeticion(String token) {
-        MockHttpServletRequest request =
-                new MockHttpServletRequest("GET", "/api/test");
+	private MockHttpServletRequest crearPeticion(String token) {
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/test");
 
-        if (token != null) {
-            request.addHeader("Authorization", "Bearer " + token);
-        }
+		if (token != null) {
+			request.addHeader("Authorization", "Bearer " + token);
+		}
 
-        return request;
-    }
+		return request;
+	}
 
-    private void configurarUsuarioActivo() {
+	private void configurarUsuarioActivo() {
 
-        when(usuario.isCorreoVerificado()).thenReturn(true);
-        when(usuario.getEstado()).thenReturn(EstadoUsuario.ACTIVA);
-        when(usuario.isRestringido()).thenReturn(false);
-        when(usuario.getIntentosFallidos()).thenReturn(0);
+		when(usuario.isCorreoVerificado()).thenReturn(true);
+		when(usuario.getEstado()).thenReturn(EstadoUsuario.ACTIVA);
+		when(usuario.isRestringido()).thenReturn(false);
+		when(usuario.getIntentosFallidos()).thenReturn(0);
 
-        doReturn(List.of(
-            new SimpleGrantedAuthority("ROLE_USER")
-        )).when(usuario).getAuthorities();
-    }
-    
-    @Test
-    void testTokenValido() throws Exception {
+		doReturn(List.of(new SimpleGrantedAuthority("ROLE_USER"))).when(usuario).getAuthorities();
+	}
 
-        MockHttpServletRequest request =
-                crearPeticion("tokenValido");
+	@Test
+	void testTokenValido() throws Exception {
 
-        MockHttpServletResponse response =
-                new MockHttpServletResponse();
+		MockHttpServletRequest request = crearPeticion("tokenValido");
 
-        configurarUsuarioActivo();
+		MockHttpServletResponse response = new MockHttpServletResponse();
 
-        when(jwtUtil.extractUsername("tokenValido"))
-                .thenReturn("usuario");
+		configurarUsuarioActivo();
 
-        when(userDetailsService.loadUserByUsername("usuario"))
-                .thenReturn(usuario);
+		when(jwtUtil.extractUsername("tokenValido")).thenReturn("usuario");
 
-        when(jwtUtil.validateToken("tokenValido", usuario))
-                .thenReturn(true);
+		when(userDetailsService.loadUserByUsername("usuario")).thenReturn(usuario);
 
-        jwtFilter.doFilter(request, response, filterChain);
+		when(jwtUtil.validateToken("tokenValido", usuario)).thenReturn(true);
 
-        assertNotNull(
-                SecurityContextHolder.getContext().getAuthentication()
-        );
+		jwtFilter.doFilter(request, response, filterChain);
 
-        assertEquals(
-                usuario,
-                SecurityContextHolder.getContext()
-                        .getAuthentication().getPrincipal()
-        );
+		assertNotNull(SecurityContextHolder.getContext().getAuthentication());
 
-        verify(filterChain).doFilter(request, response);
-    }
+		assertEquals(usuario, SecurityContextHolder.getContext().getAuthentication().getPrincipal());
 
-    @Test
-    void testTokenInvalido() throws Exception {
+		verify(filterChain).doFilter(request, response);
+	}
 
-        MockHttpServletRequest request =
-                crearPeticion("tokenInvalido");
+	@Test
+	void testTokenInvalido() throws Exception {
 
-        MockHttpServletResponse response =
-                new MockHttpServletResponse();
+		MockHttpServletRequest request = crearPeticion("tokenInvalido");
 
-        configurarUsuarioActivo();
+		MockHttpServletResponse response = new MockHttpServletResponse();
 
-        when(jwtUtil.extractUsername("tokenInvalido"))
-                .thenReturn("usuario");
+		configurarUsuarioActivo();
 
-        when(userDetailsService.loadUserByUsername("usuario"))
-                .thenReturn(usuario);
+		when(jwtUtil.extractUsername("tokenInvalido")).thenReturn("usuario");
 
-        when(jwtUtil.validateToken("tokenInvalido", usuario))
-                .thenReturn(false);
+		when(userDetailsService.loadUserByUsername("usuario")).thenReturn(usuario);
 
-        jwtFilter.doFilter(request, response, filterChain);
+		when(jwtUtil.validateToken("tokenInvalido", usuario)).thenReturn(false);
 
-        assertNull(
-                SecurityContextHolder.getContext().getAuthentication()
-        );
+		jwtFilter.doFilter(request, response, filterChain);
 
-        verify(filterChain).doFilter(request, response);
-    }
+		assertNull(SecurityContextHolder.getContext().getAuthentication());
 
-    @Test
-    void testCuentaConCorreoNoVerificado() throws Exception {
-        MockHttpServletRequest request =
-                crearPeticion("tokenValido");
+		verify(filterChain).doFilter(request, response);
+	}
 
-        MockHttpServletResponse response =
-                new MockHttpServletResponse();
+	@Test
+	void testCuentaConCorreoNoVerificado() throws Exception {
+		MockHttpServletRequest request = crearPeticion("tokenValido");
 
-        when(usuario.isCorreoVerificado()).thenReturn(false);
+		MockHttpServletResponse response = new MockHttpServletResponse();
 
-        when(jwtUtil.extractUsername("tokenValido"))
-                .thenReturn("usuario");
+		when(usuario.isCorreoVerificado()).thenReturn(false);
 
-        when(userDetailsService.loadUserByUsername("usuario"))
-                .thenReturn(usuario);
+		when(jwtUtil.extractUsername("tokenValido")).thenReturn("usuario");
 
-        when(jwtUtil.validateToken("tokenValido", usuario))
-                .thenReturn(true);
+		when(userDetailsService.loadUserByUsername("usuario")).thenReturn(usuario);
 
-        jwtFilter.doFilter(request, response, filterChain);
+		when(jwtUtil.validateToken("tokenValido", usuario)).thenReturn(true);
 
-        assertNull(
-                SecurityContextHolder.getContext().getAuthentication()
-        );
-    }
+		jwtFilter.doFilter(request, response, filterChain);
 
-    @Test
-    void testCuentaRestringida() throws Exception {
-        MockHttpServletRequest request =
-                crearPeticion("tokenValido");
+		assertNull(SecurityContextHolder.getContext().getAuthentication());
+	}
 
-        MockHttpServletResponse response =
-                new MockHttpServletResponse();
+	@Test
+	void testCuentaRestringida() throws Exception {
+		MockHttpServletRequest request = crearPeticion("tokenValido");
 
-        when(usuario.isCorreoVerificado()).thenReturn(true);
-        when(usuario.getEstado()).thenReturn(EstadoUsuario.ACTIVA);
-        when(usuario.isRestringido()).thenReturn(true);
+		MockHttpServletResponse response = new MockHttpServletResponse();
 
-        when(jwtUtil.extractUsername("tokenValido"))
-                .thenReturn("usuario");
+		when(usuario.isCorreoVerificado()).thenReturn(true);
+		when(usuario.getEstado()).thenReturn(EstadoUsuario.ACTIVA);
+		when(usuario.isRestringido()).thenReturn(true);
 
-        when(userDetailsService.loadUserByUsername("usuario"))
-                .thenReturn(usuario);
+		when(jwtUtil.extractUsername("tokenValido")).thenReturn("usuario");
 
-        when(jwtUtil.validateToken("tokenValido", usuario))
-                .thenReturn(true);
+		when(userDetailsService.loadUserByUsername("usuario")).thenReturn(usuario);
 
-        jwtFilter.doFilter(request, response, filterChain);
+		when(jwtUtil.validateToken("tokenValido", usuario)).thenReturn(true);
 
-        assertNull(
-                SecurityContextHolder.getContext().getAuthentication()
-        );
+		jwtFilter.doFilter(request, response, filterChain);
 
-        verify(filterChain).doFilter(request, response);
-    }
+		assertNull(SecurityContextHolder.getContext().getAuthentication());
 
-    @Test
-    void testSinToken() throws Exception {
+		verify(filterChain).doFilter(request, response);
+	}
 
-        MockHttpServletRequest request =
-                crearPeticion(null);
+	@Test
+	void testSinToken() throws Exception {
 
-        MockHttpServletResponse response =
-                new MockHttpServletResponse();
+		MockHttpServletRequest request = crearPeticion(null);
 
-        jwtFilter.doFilter(request, response, filterChain);
+		MockHttpServletResponse response = new MockHttpServletResponse();
 
-        assertNull(
-                SecurityContextHolder.getContext().getAuthentication()
-        );
+		jwtFilter.doFilter(request, response, filterChain);
 
-        verify(filterChain).doFilter(request, response);
-    }
+		assertNull(SecurityContextHolder.getContext().getAuthentication());
 
-    @Test
-    void testErrorAlExtraerToken() throws Exception {
+		verify(filterChain).doFilter(request, response);
+	}
 
-        MockHttpServletRequest request =
-                crearPeticion("tokenError");
+	@Test
+	void testErrorAlExtraerToken() throws Exception {
 
-        MockHttpServletResponse response =
-                new MockHttpServletResponse();
+		MockHttpServletRequest request = crearPeticion("tokenError");
 
-        when(jwtUtil.extractUsername("tokenError"))
-                .thenThrow(new RuntimeException("Error de token"));
+		MockHttpServletResponse response = new MockHttpServletResponse();
 
-        jwtFilter.doFilter(request, response, filterChain);
+		when(jwtUtil.extractUsername("tokenError")).thenThrow(new RuntimeException("Error de token"));
 
-        assertNull(
-                SecurityContextHolder.getContext().getAuthentication()
-        );
+		jwtFilter.doFilter(request, response, filterChain);
 
-        verify(filterChain).doFilter(request, response);
-    }
+		assertNull(SecurityContextHolder.getContext().getAuthentication());
+
+		verify(filterChain).doFilter(request, response);
+	}
 }
