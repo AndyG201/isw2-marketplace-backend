@@ -1,62 +1,79 @@
-
 package co.edu.unbosque.marketplace.usuario.infrastructure.email;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
-import com.resend.Resend;
-import com.resend.core.exception.ResendException;
-import com.resend.services.emails.model.CreateEmailOptions;
-import com.resend.services.emails.model.CreateEmailResponse;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 
 @Component
 public class ExternalHTTPRequestMapping {
 
-	@Value("${resend.api-key}")
-	private String apiKey;
+    private final JavaMailSender mailSender;
 
-	public void enviarCodigoVerificacion(String correoDestino, String codigo) {
+    @Value("${spring.mail.username}")
+    private String remitente;
 
-		Resend resend = new Resend(apiKey);
+    public ExternalHTTPRequestMapping(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
-		CreateEmailOptions parametros = CreateEmailOptions.builder().from("onboarding@resend.dev").to(correoDestino)
-				.subject("Verificacion de correo - Marketplace")
-				.html("<h2>Verifica tu correo electronico</h2>" + "<p>Tu codigo de verificacion es:</p>" + "<h1>"
-						+ codigo + "</h1>" + "<p>Si no solicitaste este registro, "
-						+ "puedes ignorar este mensaje.</p>")
-				.build();
+    public void enviarCodigoVerificacion(String correoDestino, String codigo) {
 
-		try {
-			CreateEmailResponse respuesta = resend.emails().send(parametros);
+        String asunto = "Verificacion de correo - Marketplace";
 
-			System.out.println("Correo enviado. ID: " + respuesta.getId());
+        String contenido =
+                "<h2>Verifica tu correo electronico</h2>"
+                + "<p>Tu codigo de verificacion es:</p>"
+                + "<h1>" + codigo + "</h1>"
+                + "<p>Si no solicitaste este registro, "
+                + "puedes ignorar este mensaje.</p>";
 
-		} catch (ResendException e) {
-			throw new RuntimeException("No se pudo enviar el correo de verificacion", e);
-		}
-	}
+        enviarCorreo(correoDestino, asunto, contenido,
+                "No se pudo enviar el correo de verificacion");
+    }
 
-	public void enviarCodigoRecuperacion(String correoDestino, String codigo) {
+    public void enviarCodigoRecuperacion(String correoDestino, String codigo) {
 
-		Resend resend = new Resend(apiKey);
+        String asunto = "Recuperación de contraseña - Marketplace";
 
-		CreateEmailOptions parametros = CreateEmailOptions.builder().from("onboarding@resend.dev").to(correoDestino)
-				.subject("Recuperación de contraseña - Marketplace")
-				.html("<h2>Recuperación de contraseña</h2>"
-						+ "<p>Recibimos una solicitud para restablecer tu contraseña.</p>"
-						+ "<p>Tu código de recuperación es:</p>" + "<h1>" + codigo + "</h1>"
-						+ "<p>Este código vence en 5 minutos.</p>" + "<p>Si no solicitaste recuperar tu contraseña, "
-						+ "ignora este mensaje.</p>")
-				.build();
+        String contenido =
+                "<h2>Recuperación de contraseña</h2>"
+                + "<p>Recibimos una solicitud para restablecer tu contraseña.</p>"
+                + "<p>Tu código de recuperación es:</p>"
+                + "<h1>" + codigo + "</h1>"
+                + "<p>Este código vence en 5 minutos.</p>"
+                + "<p>Si no solicitaste recuperar tu contraseña, "
+                + "ignora este mensaje.</p>";
 
-		try {
-			CreateEmailResponse respuesta = resend.emails().send(parametros);
+        enviarCorreo(correoDestino, asunto, contenido,
+                "No se pudo enviar el correo de recuperación");
+    }
 
-			System.out.println("Correo de recuperación enviado. ID: " + respuesta.getId());
+    private void enviarCorreo(String correoDestino, String asunto,
+                              String contenido, String mensajeError) {
 
-		} catch (ResendException e) {
-			throw new RuntimeException("No se pudo enviar el correo de recuperación", e);
-		}
-	}
+        try {
+            MimeMessage mensaje = mailSender.createMimeMessage();
 
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(mensaje, "UTF-8");
+
+            helper.setFrom(remitente);
+            helper.setTo(correoDestino);
+            helper.setSubject(asunto);
+            helper.setText(contenido, true);
+
+            mailSender.send(mensaje);
+
+            System.out.println("Correo enviado correctamente a: "
+                    + correoDestino);
+
+        } catch (MessagingException | MailException e) {
+            throw new RuntimeException(mensajeError, e);
+        }
+    }
 }
