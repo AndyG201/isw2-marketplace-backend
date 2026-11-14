@@ -1,16 +1,20 @@
 package co.edu.unbosque.marketplace.usuario.infrastructure.email;
 
-import java.util.List;
+import java.util.Properties;
 
-import com.resend.Resend;
-import com.resend.core.exception.ResendException;
-import com.resend.services.emails.model.CreateEmailOptions;
-import com.resend.services.emails.model.CreateEmailResponse;
+import jakarta.mail.Message;
+import jakarta.mail.Session;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+
+import org.springframework.mail.MailSendException;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -18,175 +22,174 @@ import static org.mockito.Mockito.*;
 class ExternalHTTPRequestMappingTest {
 
     private ExternalHTTPRequestMapping servicio;
+    private JavaMailSender mailSender;
+    private MimeMessage mensaje;
 
     private static final String CORREO = "usuario@ejemplo.com";
     private static final String CODIGO = "012345";
-    private static final String API_KEY = "re_clave_de_prueba";
+    private static final String REMITENTE = "marketplace@gmail.com";
 
     @BeforeEach
-    void configurar() {
-        servicio = new ExternalHTTPRequestMapping();
+    void configurar() throws Exception {
 
-        ReflectionTestUtils.setField(servicio, "apiKey", API_KEY);
+        mailSender = mock(JavaMailSender.class);
+
+        mensaje = new MimeMessage(
+                Session.getInstance(new Properties())
+        );
+
+        when(mailSender.createMimeMessage()).thenReturn(mensaje);
+
+        servicio = new ExternalHTTPRequestMapping(mailSender);
+
+        ReflectionTestUtils.setField(
+                servicio,
+                "remitente",
+                REMITENTE
+        );
     }
 
     @Test
     void enviarCodigoVerificacionConstruyeYEnviaCorreo() throws Exception {
-        CreateEmailResponse respuesta = mock(CreateEmailResponse.class);
-        when(respuesta.getId()).thenReturn("correo-verificacion-123");
 
-        try (var construccion = mockConstruction(
-                Resend.class,
-                withSettings().defaultAnswer(RETURNS_DEEP_STUBS),
-                (resend, contexto) -> {
-                    assertEquals(List.of(API_KEY), contexto.arguments());
+        servicio.enviarCodigoVerificacion(CORREO, CODIGO);
 
-                    when(resend.emails().send(any(CreateEmailOptions.class)))
-                        .thenReturn(respuesta);
-                })) {
+        ArgumentCaptor<MimeMessage> captor =
+                ArgumentCaptor.forClass(MimeMessage.class);
 
-            servicio.enviarCodigoVerificacion(CORREO, CODIGO);
+        verify(mailSender).send(captor.capture());
 
-            assertEquals(1, construccion.constructed().size());
-            Resend resend = construccion.constructed().get(0);
+        MimeMessage enviado = captor.getValue();
 
-            ArgumentCaptor<CreateEmailOptions> captor =
-                    ArgumentCaptor.forClass(CreateEmailOptions.class);
+        String contenidoEsperado =
+                "<h2>Verifica tu correo electronico</h2>"
+                + "<p>Tu codigo de verificacion es:</p>"
+                + "<h1>" + CODIGO + "</h1>"
+                + "<p>Si no solicitaste este registro, "
+                + "puedes ignorar este mensaje.</p>";
 
-            verify(resend.emails()).send(captor.capture());
-
-            CreateEmailOptions parametros = captor.getValue();
-
-            assertAll(
-                () -> assertEquals(
-                    "onboarding@resend.dev", parametros.getFrom()
-                ),
-                () -> assertEquals(
-                    List.of(CORREO), parametros.getTo()
-                ),
-                () -> assertEquals(
+        assertAll(
+            () -> assertEquals(
+                    REMITENTE,
+                    ((InternetAddress) enviado.getFrom()[0]).getAddress()
+            ),
+            () -> assertEquals(
+                    CORREO,
+                    ((InternetAddress) enviado.getRecipients(
+                            Message.RecipientType.TO
+                    )[0]).getAddress()
+            ),
+            () -> assertEquals(
                     "Verificacion de correo - Marketplace",
-                    parametros.getSubject()
-                ),
-                () -> assertEquals(
-                    "<h2>Verifica tu correo electronico</h2>"
-                        + "<p>Tu codigo de verificacion es:</p>"
-                        + "<h1>" + CODIGO + "</h1>"
-                        + "<p>Si no solicitaste este registro, "
-                        + "puedes ignorar este mensaje.</p>",
-                    parametros.getHtml()
-                )
-            );
-        }
+                    enviado.getSubject()
+            ),
+            () -> assertEquals(
+                    contenidoEsperado,
+                    enviado.getContent()
+            ),
+            () -> assertTrue(enviado.isMimeType("text/html"))
+        );
     }
 
     @Test
-    void enviarCodigoVerificacionEnvuelveExcepcionDeResend() {
-        ResendException fallo = mock(ResendException.class);
+    void enviarCodigoVerificacionEnvuelveExcepcionDeGmail() {
 
-        try (var construccion = mockConstruction(
-                Resend.class,
-                withSettings().defaultAnswer(RETURNS_DEEP_STUBS),
-                (resend, contexto) -> {
-                    when(resend.emails().send(any(CreateEmailOptions.class)))
-                        .thenThrow(fallo);
-                })) {
+        MailSendException fallo =
+                new MailSendException("Fallo en el servidor SMTP");
 
-            RuntimeException error = assertThrows(
+        doThrow(fallo)
+                .when(mailSender)
+                .send(any(MimeMessage.class));
+
+        RuntimeException error = assertThrows(
                 RuntimeException.class,
                 () -> servicio.enviarCodigoVerificacion(CORREO, CODIGO)
-            );
+        );
 
-            assertAll(
-                () -> assertEquals(
+        assertAll(
+            () -> assertEquals(
                     "No se pudo enviar el correo de verificacion",
                     error.getMessage()
-                ),
-                () -> assertSame(fallo, error.getCause())
-            );
+            ),
+            () -> assertSame(
+                    fallo,
+                    error.getCause()
+            )
+        );
 
-            assertEquals(1, construccion.constructed().size());
-        }
+        verify(mailSender).send(any(MimeMessage.class));
     }
 
     @Test
     void enviarCodigoRecuperacionConstruyeYEnviaCorreo() throws Exception {
-        CreateEmailResponse respuesta = mock(CreateEmailResponse.class);
-        when(respuesta.getId()).thenReturn("correo-recuperacion-123");
 
-        try (var construccion = mockConstruction(
-                Resend.class,
-                withSettings().defaultAnswer(RETURNS_DEEP_STUBS),
-                (resend, contexto) -> {
-                    assertEquals(List.of(API_KEY), contexto.arguments());
+        servicio.enviarCodigoRecuperacion(CORREO, CODIGO);
 
-                    when(resend.emails().send(any(CreateEmailOptions.class)))
-                        .thenReturn(respuesta);
-                })) {
+        ArgumentCaptor<MimeMessage> captor =
+                ArgumentCaptor.forClass(MimeMessage.class);
 
-            servicio.enviarCodigoRecuperacion(CORREO, CODIGO);
+        verify(mailSender).send(captor.capture());
 
-            assertEquals(1, construccion.constructed().size());
-            Resend resend = construccion.constructed().get(0);
+        MimeMessage enviado = captor.getValue();
 
-            ArgumentCaptor<CreateEmailOptions> captor =
-                    ArgumentCaptor.forClass(CreateEmailOptions.class);
+        String contenidoEsperado =
+                "<h2>Recuperación de contraseña</h2>"
+                + "<p>Recibimos una solicitud para restablecer tu contraseña.</p>"
+                + "<p>Tu código de recuperación es:</p>"
+                + "<h1>" + CODIGO + "</h1>"
+                + "<p>Este código vence en 5 minutos.</p>"
+                + "<p>Si no solicitaste recuperar tu contraseña, "
+                + "ignora este mensaje.</p>";
 
-            verify(resend.emails()).send(captor.capture());
-
-            CreateEmailOptions parametros = captor.getValue();
-
-            assertAll(
-                () -> assertEquals(
-                    "onboarding@resend.dev", parametros.getFrom()
-                ),
-                () -> assertEquals(
-                    List.of(CORREO), parametros.getTo()
-                ),
-                () -> assertEquals(
+        assertAll(
+            () -> assertEquals(
+                    REMITENTE,
+                    ((InternetAddress) enviado.getFrom()[0]).getAddress()
+            ),
+            () -> assertEquals(
+                    CORREO,
+                    ((InternetAddress) enviado.getRecipients(
+                            Message.RecipientType.TO
+                    )[0]).getAddress()
+            ),
+            () -> assertEquals(
                     "Recuperación de contraseña - Marketplace",
-                    parametros.getSubject()
-                ),
-                () -> assertEquals(
-                    "<h2>Recuperación de contraseña</h2>"
-                        + "<p>Recibimos una solicitud para restablecer tu contraseña.</p>"
-                        + "<p>Tu código de recuperación es:</p>"
-                        + "<h1>" + CODIGO + "</h1>"
-                        + "<p>Este código vence en 5 minutos.</p>"
-                        + "<p>Si no solicitaste recuperar tu contraseña, "
-                        + "ignora este mensaje.</p>",
-                    parametros.getHtml()
-                )
-            );
-        }
+                    enviado.getSubject()
+            ),
+            () -> assertEquals(
+                    contenidoEsperado,
+                    enviado.getContent()
+            ),
+            () -> assertTrue(enviado.isMimeType("text/html"))
+        );
     }
 
     @Test
-    void enviarCodigoRecuperacionEnvuelveExcepcionDeResend() {
-        ResendException fallo = mock(ResendException.class);
+    void enviarCodigoRecuperacionEnvuelveExcepcionDeGmail() {
 
-        try (var construccion = mockConstruction(
-                Resend.class,
-                withSettings().defaultAnswer(RETURNS_DEEP_STUBS),
-                (resend, contexto) -> {
-                    when(resend.emails().send(any(CreateEmailOptions.class)))
-                        .thenThrow(fallo);
-                })) {
+        MailSendException fallo =
+                new MailSendException("Fallo en el servidor SMTP");
 
-            RuntimeException error = assertThrows(
+        doThrow(fallo)
+                .when(mailSender)
+                .send(any(MimeMessage.class));
+
+        RuntimeException error = assertThrows(
                 RuntimeException.class,
                 () -> servicio.enviarCodigoRecuperacion(CORREO, CODIGO)
-            );
+        );
 
-            assertAll(
-                () -> assertEquals(
+        assertAll(
+            () -> assertEquals(
                     "No se pudo enviar el correo de recuperación",
                     error.getMessage()
-                ),
-                () -> assertSame(fallo, error.getCause())
-            );
+            ),
+            () -> assertSame(
+                    fallo,
+                    error.getCause()
+            )
+        );
 
-            assertEquals(1, construccion.constructed().size());
-        }
+        verify(mailSender).send(any(MimeMessage.class));
     }
 }
