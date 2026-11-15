@@ -168,6 +168,16 @@ public class SecurityConfig {
 
 						.requestMatchers(HttpMethod.GET, "/publicaciones/catalogo", "/publicaciones/busqueda")
 						.permitAll()
+						
+						.requestMatchers(
+						        HttpMethod.GET,
+						        "/publicaciones/*/servicios-adicionales"
+						).permitAll()
+
+						.requestMatchers(
+						        HttpMethod.POST,
+						        "/publicaciones/*/servicios-adicionales/seleccion"
+						).permitAll()
 
 						// Todo lo demás requiere autenticación.
 						.anyRequest().authenticated())
