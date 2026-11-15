@@ -166,6 +166,9 @@ public class SecurityConfig {
 						// HU-023: calendario completo exclusivo del anfitrión.
 						.requestMatchers(HttpMethod.GET, "/alojamientos/*/calendario").hasAuthority("ROLE_ANFITRION")
 
+						.requestMatchers(HttpMethod.GET, "/publicaciones/catalogo", "/publicaciones/busqueda")
+						.permitAll()
+
 						// Todo lo demás requiere autenticación.
 						.anyRequest().authenticated())
 
