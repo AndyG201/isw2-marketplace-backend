@@ -178,6 +178,7 @@ public class SecurityConfig {
 						        HttpMethod.POST,
 						        "/publicaciones/*/servicios-adicionales/seleccion"
 						).permitAll()
+						.requestMatchers(HttpMethod.POST, "/cotizaciones").permitAll()
 
 						// Todo lo demás requiere autenticación.
 						.anyRequest().authenticated())
