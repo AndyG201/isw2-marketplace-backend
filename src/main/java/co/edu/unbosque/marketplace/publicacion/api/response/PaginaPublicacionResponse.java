@@ -2,7 +2,7 @@ package co.edu.unbosque.marketplace.publicacion.api.response;
 
 import java.util.List;
 
-public record PaginaPublicacionesResponse(
+public record PaginaPublicacionResponse(
         List<PublicacionResumenResponse> publicaciones,
         int pagina,
         int tamano,
@@ -10,7 +10,7 @@ public record PaginaPublicacionesResponse(
         int totalPaginas,
         String mensaje) {
 
-    public PaginaPublicacionesResponse {
+    public PaginaPublicacionResponse {
         publicaciones = List.copyOf(publicaciones);
     }
 }

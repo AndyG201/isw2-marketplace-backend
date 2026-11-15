@@ -169,6 +169,8 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/publicaciones/catalogo", "/publicaciones/busqueda")
 						.permitAll()
 
+						.requestMatchers("/administracion/tarifas/**").hasAuthority("ROLE_ADMINISTRADOR")
+
 						// Todo lo demás requiere autenticación.
 						.anyRequest().authenticated())
 
