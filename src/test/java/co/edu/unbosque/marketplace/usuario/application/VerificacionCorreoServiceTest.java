@@ -85,8 +85,6 @@ class VerificacionCorreoServiceTest {
         verifyNoInteractions(verificacionRepository, correoExterno);
     }
 
-    // Validaciones compartidas por los tres métodos públicos.
-
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {"   ", "\t"})
