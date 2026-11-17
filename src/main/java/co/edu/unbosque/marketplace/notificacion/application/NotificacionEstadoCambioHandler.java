@@ -6,8 +6,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -43,7 +41,6 @@ public class NotificacionEstadoCambioHandler {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
-    @Transactional(propagation = Propagation.MANDATORY)
     public void registrarCambio(EstadoMarketplaceCambioEvent evento) {
         if (!esEventoValido(evento) || yaLoNotificaUnListenerExistente(evento)) {
             return;
