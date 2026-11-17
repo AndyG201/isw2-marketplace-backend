@@ -8,6 +8,5 @@ public record ConfiguracionTarifaInfo(
         UUID idConfiguracion,
         BigDecimal porcentajeServicio,
         BigDecimal porcentajeDescuento,
-        OffsetDateTime vigenteDesde
-) {
+        OffsetDateTime vigenteDesde) {
 }

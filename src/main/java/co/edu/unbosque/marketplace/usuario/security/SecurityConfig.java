@@ -180,6 +180,8 @@ public class SecurityConfig {
 						).permitAll()
 						.requestMatchers(HttpMethod.POST, "/cotizaciones").permitAll()
 
+						.requestMatchers("/administracion/tarifas/**").hasAuthority("ROLE_ADMINISTRADOR")
+
 						// Todo lo demás requiere autenticación.
 						.anyRequest().authenticated())
 
