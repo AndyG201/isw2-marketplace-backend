@@ -2,7 +2,7 @@ package co.edu.unbosque.marketplace.notificacion.infrastructure.hibernate;
 
 import jakarta.persistence.EntityManagerFactory;
 
-import org.hibernate.SessionFactory;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventType;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -10,7 +10,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 @Component
-public class NotificacionHibernateStateConfiguration implements SmartInitializingSingleton {
+public class NotificacionHibernateStateConfiguration
+        implements SmartInitializingSingleton {
 
     private final EntityManagerFactory entityManagerFactory;
     private final ApplicationEventPublisher eventos;
@@ -24,10 +25,14 @@ public class NotificacionHibernateStateConfiguration implements SmartInitializin
 
     @Override
     public void afterSingletonsInstantiated() {
-        SessionFactory sessionFactory = entityManagerFactory.unwrap(SessionFactory.class);
-        EventListenerRegistry registry = sessionFactory.getSessionFactoryOptions()
-                .getServiceRegistry()
+        SessionFactoryImplementor sessionFactory =
+                entityManagerFactory.unwrap(SessionFactoryImplementor.class);
+
+        EventListenerRegistry registry = sessionFactory.getServiceRegistry()
                 .getService(EventListenerRegistry.class);
-        registry.appendListeners(EventType.POST_UPDATE, new NotificacionHibernateStateListener(eventos));
+
+        registry.appendListeners(
+                EventType.POST_UPDATE,
+                new NotificacionHibernateStateListener(eventos));
     }
 }
