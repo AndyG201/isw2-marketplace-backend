@@ -5,6 +5,7 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,13 +27,15 @@ public class ReservaConfirmacionService {
     private final PagoRepository pagos;
     private final NocheReservaJdbcRepository noches;
     private final PagoSandboxGateway pasarela;
+    private final JdbcTemplate jdbc;
 
     public ReservaConfirmacionService(ReservaConfirmacionRepository reservas, PagoRepository pagos,
-            NocheReservaJdbcRepository noches, PagoSandboxGateway pasarela) {
+            NocheReservaJdbcRepository noches, PagoSandboxGateway pasarela, JdbcTemplate jdbc) {
         this.reservas = reservas;
         this.pagos = pagos;
         this.noches = noches;
         this.pasarela = pasarela;
+        this.jdbc = jdbc;
     }
 
     @Transactional
@@ -65,6 +68,8 @@ public class ReservaConfirmacionService {
         }
         String idempotencia = clave.trim();
         Reserva reserva = bloquearYValidarPropietario(idUsuario, idReserva);
+        bloquearClaveIdempotencia(idempotencia);
+
         var pagoPrevio = pagos.findByClaveIdempotencia(idempotencia);
         if (pagoPrevio.isPresent()) {
             Pago existente = pagoPrevio.get();
@@ -114,6 +119,16 @@ public class ReservaConfirmacionService {
                 }
             });
         }
+    }
+
+    private void bloquearClaveIdempotencia(String clave) {
+        jdbc.query(
+                "SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
+                resultado -> {
+                    resultado.next();
+                    return null;
+                },
+                "pago:" + clave);
     }
 
     private Reserva bloquearYValidarPropietario(UUID usuario, UUID idReserva) {

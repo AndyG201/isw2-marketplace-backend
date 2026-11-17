@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,12 +30,15 @@ public class ReservaSolicitudService {
 
     private final ReservaSolicitudRepository reservaRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final JdbcTemplate jdbc;
 
     public ReservaSolicitudService(
             ReservaSolicitudRepository reservaRepository,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            JdbcTemplate jdbc) {
         this.reservaRepository = reservaRepository;
         this.eventPublisher = eventPublisher;
+        this.jdbc = jdbc;
     }
 
     @Transactional
@@ -51,8 +55,11 @@ public class ReservaSolicitudService {
 
         validarSolicitud(solicitud, claveIdempotencia);
 
+        String idempotencia = claveIdempotencia.trim();
+        bloquearClaveIdempotencia(idempotencia);
+
         Optional<Reserva> repetida = reservaRepository
-                .findByClaveIdempotencia(claveIdempotencia.trim());
+                .findByClaveIdempotencia(idempotencia);
 
         if (repetida.isPresent()) {
             Reserva reserva = repetida.get();
@@ -132,7 +139,7 @@ public class ReservaSolicitudService {
                         ? ESTADO_PENDIENTE_APROBACION
                         : ESTADO_PENDIENTE_PAGO,
                 null,
-                claveIdempotencia.trim(),
+                idempotencia,
                 requiereAprobacion,
                 ahora,
                 null);
@@ -149,6 +156,16 @@ public class ReservaSolicitudService {
         }
 
         return convertirRespuesta(guardada);
+    }
+
+    private void bloquearClaveIdempotencia(String clave) {
+        jdbc.query(
+                "SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
+                resultado -> {
+                    resultado.next();
+                    return null;
+                },
+                "reserva:" + clave);
     }
 
     private void validarSolicitud(
