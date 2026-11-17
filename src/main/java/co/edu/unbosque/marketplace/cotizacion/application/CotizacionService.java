@@ -25,14 +25,13 @@ import co.edu.unbosque.marketplace.cotizacion.domain.Cotizacion;
 import co.edu.unbosque.marketplace.cotizacion.domain.CotizacionAdicional;
 import co.edu.unbosque.marketplace.cotizacion.infrastructure.persistence.CotizacionAdicionalRepository;
 import co.edu.unbosque.marketplace.cotizacion.infrastructure.persistence.CotizacionRepository;
-import co.edu.unbosque.marketplace.disponibilidad.contracts.CotizacionDisponibilidadQuery;
-import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionCotizacionInfo;
-import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionCotizacionQuery;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalQuery;
 import co.edu.unbosque.marketplace.tarifa.contracts.ConfiguracionTarifaInfo;
 import co.edu.unbosque.marketplace.tarifa.contracts.ConfiguracionTarifaQuery;
-
+import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionDisponibilidadQuery;
+import co.edu.unbosque.marketplace.cotizacion.contracts.PublicacionCotizacionInfo;
+import co.edu.unbosque.marketplace.cotizacion.contracts.PublicacionCotizacionQuery;
 @Service
 public class CotizacionService {
 

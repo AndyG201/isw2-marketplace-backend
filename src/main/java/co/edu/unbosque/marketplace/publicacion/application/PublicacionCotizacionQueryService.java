@@ -7,10 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionCotizacionInfo;
-import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionCotizacionQuery;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
+
+import co.edu.unbosque.marketplace.cotizacion.contracts.PublicacionCotizacionInfo;
+import co.edu.unbosque.marketplace.cotizacion.contracts.PublicacionCotizacionQuery;
 
 @Service
 public class PublicacionCotizacionQueryService
