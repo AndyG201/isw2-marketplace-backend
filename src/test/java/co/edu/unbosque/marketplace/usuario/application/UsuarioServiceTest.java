@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import co.edu.unbosque.marketplace.usuario.api.request.*;
+import co.edu.unbosque.marketplace.ubicacion.contracts.UbicacionRegistroQuery;
 import co.edu.unbosque.marketplace.usuario.domain.*;
 import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.*;
@@ -28,6 +29,7 @@ class UsuarioServiceTest {
 
     private static final UUID ID = UUID.randomUUID();
     private static final String CORREO = "ana@ejemplo.com";
+    private static final UUID CIUDAD = UUID.randomUUID();
     private static final String PREFIJO = "perfil:cambio-correo:" + ID;
     private static final String CLAVE_CODIGO = "recuperacion:contrasena:" + CORREO;
     // SHA-256 del código 123456.
@@ -42,6 +44,7 @@ class UsuarioServiceTest {
     @Mock private ExternalHTTPRequestMapping correoExterno;
     @Mock private JwtUtil jwtUtil;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private UbicacionRegistroQuery ubicacionRegistroQuery;
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private StringRedisTemplate redisTemplate;
     @InjectMocks private UsuarioService service;
@@ -79,11 +82,13 @@ class UsuarioServiceTest {
         r.setDocumentoIdentidad("123456789");
         r.setTelefono("3001234567");
         r.setContrasena("Clave123");
+        r.setIdCiudad(CIUDAD);
         r.setRol(" huesped ");
 
         Rol rol = mock(Rol.class);
         var datos = mock(ProteccionDocumento.DatosDocumento.class);
         byte[] hash = {1, 2, 3};
+        when(ubicacionRegistroQuery.existeCiudad(CIUDAD)).thenReturn(true);
         when(rolRepository.findByNombreIgnoreCase("HUESPED")).thenReturn(Optional.of(rol));
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO)).thenReturn(Optional.empty());
         when(proteccionDocumento.protegerDocumento("CEDULA", "123456789")).thenReturn(datos);
@@ -300,7 +305,9 @@ class UsuarioServiceTest {
         r.setDocumentoIdentidad("123456789");
         r.setTelefono("3001234567");
         r.setContrasena("Clave123");
+        r.setIdCiudad(CIUDAD);
         r.setRol("HUESPED");
+        when(ubicacionRegistroQuery.existeCiudad(CIUDAD)).thenReturn(true);
         when(rolRepository.findByNombreIgnoreCase("HUESPED"))
                 .thenReturn(Optional.of(mock(Rol.class)));
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO))
