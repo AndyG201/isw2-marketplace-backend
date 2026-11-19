@@ -30,6 +30,8 @@ import co.edu.unbosque.marketplace.usuario.security.JwtUtil;
 import org.springframework.context.ApplicationEventPublisher;
 
 import co.edu.unbosque.marketplace.usuario.contracts.CuentaDesactivadaEvent;
+import co.edu.unbosque.marketplace.ubicacion.contracts.UbicacionRegistroQuery;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class UsuarioService {
@@ -43,12 +45,14 @@ public class UsuarioService {
 	private final StringRedisTemplate redisTemplate;
 	private final ExternalHTTPRequestMapping correoExterno;
 	private final ApplicationEventPublisher eventPublisher;
+    private final UbicacionRegistroQuery ubicacionRegistroQuery;
 
 	private final SecureRandom random = new SecureRandom();
 
 	private static final long VIGENCIA_CAMBIO_CORREO = 5;
 	private static final int MAX_INTENTOS_CAMBIO_CORREO = 5;
 
+	@Autowired
 	public UsuarioService(
 	        JwtUtil jwtUtil,
 	        UsuarioRepository usuarioRepository,
@@ -58,7 +62,8 @@ public class UsuarioService {
 	        VerificacionCorreoService verificacionCorreoService,
 	        StringRedisTemplate redisTemplate,
 	        ExternalHTTPRequestMapping correoExterno,
-	        ApplicationEventPublisher eventPublisher) {
+	        ApplicationEventPublisher eventPublisher,
+            UbicacionRegistroQuery ubicacionRegistroQuery) {
 
 	    this.jwtUtil = jwtUtil;
 	    this.usuarioRepository = usuarioRepository;
@@ -69,10 +74,20 @@ public class UsuarioService {
 	    this.redisTemplate = redisTemplate;
 	    this.correoExterno = correoExterno;
 	    this.eventPublisher = eventPublisher;
+        this.ubicacionRegistroQuery = ubicacionRegistroQuery;
 	}
+    public UsuarioService(JwtUtil jwtUtil, UsuarioRepository usuarioRepository, RolRepository rolRepository,
+            ProteccionDocumento proteccionDocumento, ProteccionContrasena proteccionContrasena,
+            VerificacionCorreoService verificacionCorreoService, StringRedisTemplate redisTemplate,
+            ExternalHTTPRequestMapping correoExterno, ApplicationEventPublisher eventPublisher) {
+        this(jwtUtil, usuarioRepository, rolRepository, proteccionDocumento, proteccionContrasena,
+                verificacionCorreoService, redisTemplate, correoExterno, eventPublisher, null);
+    }
+
 	public int registrar(RegistrarUsuarioRequest nuevoUsuario) {
 
-		if (datosInvalidos(nuevoUsuario)) {
+		if (datosInvalidos(nuevoUsuario) || ubicacionRegistroQuery == null
+                || !ubicacionRegistroQuery.existeCiudad(nuevoUsuario.getIdCiudad())) {
 			return 0;
 		}
 
@@ -128,7 +143,7 @@ public class UsuarioService {
 		return datos == null || textoVacio(datos.getNombre()) || textoVacio(datos.getApellido())
 				|| textoVacio(datos.getCorreo()) || textoVacio(datos.getTipoDocumento())
 				|| textoVacio(datos.getDocumentoIdentidad()) || textoVacio(datos.getTelefono())
-				|| textoVacio(datos.getContrasena()) || textoVacio(datos.getRol());
+				|| textoVacio(datos.getContrasena()) || textoVacio(datos.getRol()) || datos.getIdCiudad() == null;
 	}
 
 	private boolean textoVacio(String texto) {
@@ -160,6 +175,7 @@ public class UsuarioService {
 		usuario.setCorreo(datos.getCorreo().trim());
 		usuario.setTipoDocumento(datos.getTipoDocumento());
 		usuario.setTelefono(datos.getTelefono().trim());
+        usuario.setIdCiudad(datos.getIdCiudad());
 
 		usuario.setRol(rol);
 

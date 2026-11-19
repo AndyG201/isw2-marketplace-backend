@@ -53,6 +53,9 @@ public class Usuario implements UserDetails {
     @Column(name = "documento_hash", nullable = false, unique = true)
     private byte[] documentoHash;
 
+    @Column(name = "id_ciudad")
+    private UUID idCiudad;
+
     @Column(name = "telefono", nullable = false, length = 20)
     private String telefono;
 
@@ -158,6 +161,14 @@ public class Usuario implements UserDetails {
 
     public void setDocumentoHash(byte[] documentoHash) {
         this.documentoHash = documentoHash;
+    }
+
+    public UUID getIdCiudad() {
+        return idCiudad;
+    }
+
+    public void setIdCiudad(UUID idCiudad) {
+        this.idCiudad = idCiudad;
     }
 
     public String getTelefono() {
