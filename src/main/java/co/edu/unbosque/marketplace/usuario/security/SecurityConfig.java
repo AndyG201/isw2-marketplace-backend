@@ -168,6 +168,8 @@ public class SecurityConfig {
 
 						.requestMatchers(HttpMethod.GET, "/publicaciones/catalogo", "/publicaciones/busqueda")
 						.permitAll()
+
+						.requestMatchers(HttpMethod.GET, "/imagenes/publicaciones/**").permitAll()
 						
 						.requestMatchers(
 						        HttpMethod.GET,
