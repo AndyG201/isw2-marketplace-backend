@@ -1,7 +1,10 @@
 
 package co.edu.unbosque.marketplace.usuario.api.request;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -32,6 +35,9 @@ public class RegistrarUsuarioRequest {
 
     @NotBlank(message = "La contraseña es obligatoria.")
     private String contrasena;
+
+    @NotNull(message = "La ciudad es obligatoria.")
+    private UUID idCiudad;
 
     @NotBlank(message = "El rol es obligatorio.")
     @Pattern(
@@ -97,6 +103,14 @@ public class RegistrarUsuarioRequest {
 
     public void setContrasena(String contrasena) {
         this.contrasena = contrasena;
+    }
+
+    public UUID getIdCiudad() {
+        return idCiudad;
+    }
+
+    public void setIdCiudad(UUID idCiudad) {
+        this.idCiudad = idCiudad;
     }
 
     public String getRol() {
