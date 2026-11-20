@@ -14,6 +14,7 @@ import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.PoliticaCancelacionPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAdministracionResponse;
+import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionPublicaResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.ServicioAdicionalPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
@@ -65,7 +66,7 @@ public class PublicacionDetallePublicoService {
                 .orElseThrow(() -> new NoSuchElementException("La publicación no existe."));
 
         PublicacionPublicaResponse detalle =
-                armar(idPublicacion, publicacion, adicionalesService.consultarRegistrados(idPublicacion));
+                armar(idPublicacion, publicacion, adicionalesService.consultarRegistrados(idPublicacion), true);
 
         return new PublicacionAdministracionResponse(
                 detalle.publicacion(),
@@ -86,6 +87,15 @@ public class PublicacionDetallePublicoService {
             Publicacion publicacion,
             List<ServicioAdicionalPublicacionResponse> adicionales) {
 
+        return armar(idPublicacion, publicacion, adicionales, false);
+    }
+
+    private PublicacionPublicaResponse armar(
+            UUID idPublicacion,
+            Publicacion publicacion,
+            List<ServicioAdicionalPublicacionResponse> adicionales,
+            boolean incluirPropietario) {
+
         AlojamientoPublicacionInfo alojamiento = alojamientoQuery
                 .consultarDatosParaPublicacion(publicacion.getIdAlojamiento())
                 .orElseThrow(() -> new IllegalStateException(
@@ -96,10 +106,12 @@ public class PublicacionDetallePublicoService {
                 .map(info -> convertirPolitica(idPublicacion, info))
                 .orElse(null);
 
-        return new PublicacionPublicaResponse(
-                consultaService.armarDetalle(publicacion, alojamiento),
-                adicionales,
-                politica);
+        PublicacionDetalleResponse detalle = consultaService.armarDetalle(publicacion, alojamiento);
+        if (incluirPropietario && detalle != null) {
+            detalle.conPropietario(alojamiento.propietarioInmueble());
+        }
+
+        return new PublicacionPublicaResponse(detalle, adicionales, politica);
     }
 
     private static PoliticaCancelacionPublicacionResponse convertirPolitica(

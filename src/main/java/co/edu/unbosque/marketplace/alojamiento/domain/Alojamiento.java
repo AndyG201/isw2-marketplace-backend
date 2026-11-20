@@ -40,6 +40,9 @@ public class Alojamiento {
     @Column(name = "banos", nullable = false)
     private int banos = 1;
 
+    @Column(name = "propietario_inmueble", length = 120)
+    private String propietarioInmueble;
+
     @Column(name = "fecha_creacion", nullable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -136,5 +139,13 @@ public class Alojamiento {
 
     public void setBanos(int banos) {
         this.banos = banos;
+    }
+
+    public String getPropietarioInmueble() {
+        return propietarioInmueble;
+    }
+
+    public void setPropietarioInmueble(String propietarioInmueble) {
+        this.propietarioInmueble = propietarioInmueble;
     }
 }

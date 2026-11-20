@@ -7,6 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -94,6 +97,7 @@ class PublicacionDetallePublicoServiceTest {
         PublicacionPublicaResponse respuesta = servicio.consultar(PUBLICACION);
 
         assertSame(detalle, respuesta.publicacion());
+        verify(detalle, never()).conPropietario(any());
         assertEquals(adicionales, respuesta.serviciosAdicionales());
         assertEquals("Flexible", respuesta.politica().getNombre());
         assertEquals(PUBLICACION, respuesta.politica().getIdPublicacion());
@@ -141,7 +145,7 @@ class PublicacionDetallePublicoServiceTest {
         when(publicacion.getIdAlojamiento()).thenReturn(ALOJAMIENTO);
         when(publicacion.getIdPolitica()).thenReturn(POLITICA);
         AlojamientoPublicacionInfo alojamiento = new AlojamientoPublicacionInfo(
-                ALOJAMIENTO, UUID.randomUUID(), "Calle 1", "Bogotá", "Casa", 4);
+                ALOJAMIENTO, UUID.randomUUID(), "Calle 1", "Bogotá", "Casa", 4, 1, 1, 1, "Ana Gómez");
         PublicacionDetalleResponse detalle = mock(PublicacionDetalleResponse.class);
         List<ServicioAdicionalPublicacionResponse> adicionales = List.of(
                 new ServicioAdicionalPublicacionResponse(
@@ -160,6 +164,7 @@ class PublicacionDetallePublicoServiceTest {
         PublicacionAdministracionResponse respuesta = servicio.consultarParaAdministracion(PUBLICACION);
 
         assertSame(detalle, respuesta.publicacion());
+        verify(detalle).conPropietario("Ana Gómez");
         assertEquals(adicionales, respuesta.serviciosAdicionales());
         assertNull(respuesta.politica());
         assertSame(solicitud, respuesta.solicitudCambios());

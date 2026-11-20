@@ -17,6 +17,8 @@ import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.Alojam
 public class AlojamientoPublicacionCommandService
         implements AlojamientoPublicacionCommand {
 
+    private static final int MAXIMO_PROPIETARIO = 120;
+
     private static final int MINIMO = 1;
     private static final int MAXIMO = 50;
 
@@ -49,6 +51,7 @@ public class AlojamientoPublicacionCommandService
         alojamiento.setHabitaciones(valorOMinimo(solicitud.habitaciones()));
         alojamiento.setCamas(valorOMinimo(solicitud.camas()));
         alojamiento.setBanos(valorOMinimo(solicitud.banos()));
+        alojamiento.setPropietarioInmueble(textoOpcional(solicitud.propietarioInmueble()));
         alojamiento.setFechaCreacion(OffsetDateTime.now());
 
         alojamientoRepository.save(alojamiento);
@@ -100,6 +103,10 @@ public class AlojamientoPublicacionCommandService
             alojamiento.setBanos(solicitud.banos());
         }
 
+        if (solicitud.propietarioInmueble() != null) {
+            alojamiento.setPropietarioInmueble(textoOpcional(solicitud.propietarioInmueble()));
+        }
+
         alojamientoRepository.save(alojamiento);
     }
 
@@ -123,10 +130,24 @@ public class AlojamientoPublicacionCommandService
                 solicitud.camas(),
                 solicitud.banos()
         );
+        validarPropietario(solicitud.propietarioInmueble());
+    }
+
+    private void validarPropietario(String propietario) {
+        if (propietario != null && propietario.trim().length() > MAXIMO_PROPIETARIO) {
+            throw new IllegalArgumentException(
+                    "El nombre del propietario del inmueble no puede superar "
+                            + MAXIMO_PROPIETARIO + " caracteres.");
+        }
+    }
+
+    private static String textoOpcional(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
     }
 
     private void validarDistribucion(ActualizarAlojamientoParaPublicacion solicitud) {
         validarDistribucion(solicitud.habitaciones(), solicitud.camas(), solicitud.banos());
+        validarPropietario(solicitud.propietarioInmueble());
     }
 
     private void validarDistribucion(

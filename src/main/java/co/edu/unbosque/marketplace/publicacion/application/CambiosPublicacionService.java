@@ -73,6 +73,10 @@ public class CambiosPublicacionService {
         agregarSiCambia(campos, "Habitaciones", alojamiento.habitaciones(), solicitud.getHabitaciones());
         agregarSiCambia(campos, "Camas", alojamiento.camas(), solicitud.getCamas());
         agregarSiCambia(campos, "Baños", alojamiento.banos(), solicitud.getBanos());
+        if (solicitud.getPropietarioInmueble() != null) {
+            agregarSiCambia(campos, "Propietario del inmueble",
+                    alojamiento.propietarioInmueble(), solicitud.getPropietarioInmueble());
+        }
         return campos;
     }
 
