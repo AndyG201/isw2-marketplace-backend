@@ -43,6 +43,12 @@ public class Alojamiento {
     @Column(name = "propietario_inmueble", length = 120)
     private String propietarioInmueble;
 
+    @Column(name = "pais", length = 120)
+    private String pais;
+
+    @Column(name = "codigo_pais", length = 2)
+    private String codigoPais;
+
     @Column(name = "fecha_creacion", nullable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -147,5 +153,18 @@ public class Alojamiento {
 
     public void setPropietarioInmueble(String propietarioInmueble) {
         this.propietarioInmueble = propietarioInmueble;
+    }
+
+    public void asignarPais(String nombre, String codigo) {
+        this.pais = nombre;
+        this.codigoPais = codigo;
+    }
+
+    public String getPais() {
+        return pais;
+    }
+
+    public String getCodigoPais() {
+        return codigoPais;
     }
 }

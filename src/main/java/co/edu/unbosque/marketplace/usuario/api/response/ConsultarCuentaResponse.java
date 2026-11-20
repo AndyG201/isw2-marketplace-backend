@@ -9,6 +9,9 @@ public class ConsultarCuentaResponse {
     private String tipoDocumento;
     private String documentoIdentidad;
     private String rol;
+    private String ciudad;
+    private String pais;
+    private String codigoPais;
 
     public ConsultarCuentaResponse(
             String nombre,
@@ -48,5 +51,24 @@ public class ConsultarCuentaResponse {
 
     public String getRol() {
         return rol;
+    }
+
+    public ConsultarCuentaResponse conUbicacion(String ciudad, String pais, String codigoPais) {
+        this.ciudad = ciudad;
+        this.pais = pais;
+        this.codigoPais = codigoPais;
+        return this;
+    }
+
+    public String getCiudad() {
+        return ciudad;
+    }
+
+    public String getPais() {
+        return pais;
+    }
+
+    public String getCodigoPais() {
+        return codigoPais;
     }
 }
