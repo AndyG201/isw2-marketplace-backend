@@ -62,6 +62,8 @@ public class SecurityConfig {
 
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+						.requestMatchers("/error").permitAll()
+
 						// Autenticación y verificación de correo.
 
 						.requestMatchers("/autenticacion/**", "/verificacion-correo/**").permitAll()
