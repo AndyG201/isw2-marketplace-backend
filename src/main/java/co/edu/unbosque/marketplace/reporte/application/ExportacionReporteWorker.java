@@ -6,31 +6,46 @@ import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
-import co.edu.unbosque.marketplace.notificacion.infrastructure.persistence.NotificacionRepository;
 import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteInfo;
 import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteJdbcRepository;
+import co.edu.unbosque.marketplace.notificacion.contracts.CrearNotificacionUsuario;
+import co.edu.unbosque.marketplace.notificacion.contracts.NotificacionUsuarioCommand;
+import co.edu.unbosque.marketplace.trabajo.ProcesadorTrabajo;
+import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
 @Component
 @Profile("worker")
-public class ExportacionReporteWorker {
+public class ExportacionReporteWorker implements ProcesadorTrabajo {
 
     private final ExportacionReporteJdbcRepository exportaciones;
     private final ReporteArchivoGenerator generador;
     private final ExportacionReporteService servicio;
-    private final NotificacionRepository notificaciones;
+    private final NotificacionUsuarioCommand notificaciones;
 
     public ExportacionReporteWorker(
             ExportacionReporteJdbcRepository exportaciones,
             ReporteArchivoGenerator generador,
             ExportacionReporteService servicio,
-            NotificacionRepository notificaciones) {
+            NotificacionUsuarioCommand notificaciones) {
         this.exportaciones = exportaciones;
         this.generador = generador;
         this.servicio = servicio;
         this.notificaciones = notificaciones;
     }
 
+    @Override
+    public boolean soporta(TipoTrabajo tipo) {
+        return tipo == TipoTrabajo.EXPORTAR_REPORTE;
+    }
+
+    @Override
+    public void procesar(TipoTrabajo tipo, String identificador) {
+        if (!soporta(tipo)) {
+            throw new IllegalArgumentException(
+                    "El procesador de reportes no admite el trabajo " + tipo);
+        }
+        procesar(UUID.fromString(identificador));
+    }
     public void procesar(UUID idExportacion) {
         UUID idAdministrador = exportaciones
                 .buscarAdministrador(idExportacion)
@@ -88,16 +103,10 @@ public class ExportacionReporteWorker {
             OffsetDateTime fecha,
             String mensaje) {
 
-        Notificacion notificacion = new Notificacion();
-        notificacion.setIdNotificacion(UUID.randomUUID());
-        notificacion.setIdUsuario(idAdministrador);
-        notificacion.setIdReserva(null);
-        notificacion.setIdPublicacion(null);
-        notificacion.setTipo("EXPORTACION_REPORTE");
-        notificacion.setMensaje(mensaje + " Identificador: " + idExportacion);
-        notificacion.setFechaCreacion(fecha);
-        notificacion.setFechaLectura(null);
-
-        notificaciones.save(notificacion);
+        notificaciones.crearNotificacion(new CrearNotificacionUsuario(
+                idAdministrador,
+                "EXPORTACION_REPORTE",
+                mensaje + " Identificador: " + idExportacion,
+                fecha));
     }
 }

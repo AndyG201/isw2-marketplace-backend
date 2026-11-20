@@ -17,8 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.BandejaSalidaAuditoriaRepository;
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaAdministracionCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAdministracion;
 import co.edu.unbosque.marketplace.reporte.api.response.ExportacionReporteResponse;
 import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteInfo;
 import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteJdbcRepository;
@@ -29,13 +29,13 @@ import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 public class ExportacionReporteService {
 
     private final ExportacionReporteJdbcRepository repositorio;
-    private final BandejaSalidaAuditoriaRepository auditoria;
+    private final AuditoriaAdministracionCommand auditoria;
     private final ColaTrabajosRedis cola;
     private final ObjectMapper mapper;
 
     public ExportacionReporteService(
             ExportacionReporteJdbcRepository repositorio,
-            BandejaSalidaAuditoriaRepository auditoria,
+            AuditoriaAdministracionCommand auditoria,
             ColaTrabajosRedis cola,
             ObjectMapper mapper) {
         this.repositorio = repositorio;
@@ -236,23 +236,16 @@ public class ExportacionReporteService {
             OffsetDateTime fecha,
             Map<String, Object> datos) {
 
-        BandejaSalidaAuditoria evento = new BandejaSalidaAuditoria();
-        evento.setIdEvento(UUID.randomUUID());
-        evento.setIdUsuario(idUsuario);
-        evento.setFechaEvento(fecha);
-        evento.setAccion(accion);
-        evento.setResultado(resultado);
-        evento.setEntidadAfectada("EXPORTACION_REPORTE");
-        evento.setIdEntidadAfectada(idExportacion);
-        evento.setDetalle(serializar(datos));
-        evento.setIdCorrelacion(idExportacion.toString());
-        evento.setEstadoEnvio("PENDIENTE");
-        evento.setIntentosEnvio(0);
-        evento.setProximaEjecucion(fecha);
-
-        auditoria.save(evento);
+        auditoria.registrarEvento(new RegistrarEventoAdministracion(
+                idUsuario,
+                idExportacion,
+                "EXPORTACION_REPORTE",
+                fecha,
+                accion,
+                resultado,
+                serializar(datos),
+                idExportacion.toString()));
     }
-
     private String serializar(Map<String, Object> datos) {
         try {
             return mapper.writeValueAsString(datos);
