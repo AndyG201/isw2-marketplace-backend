@@ -122,6 +122,22 @@ class CambiosPublicacionServiceTest {
     }
 
     @Test
+    void cambiarElPropietarioDelInmueblePasaARevision() {
+        AlojamientoPublicacionInfo conPropietario = new AlojamientoPublicacionInfo(
+                UUID.randomUUID(), ANFITRION, "Calle 60", "Bogotá", "Apartamento", 4, 2, 3, 1, "Ana Gómez");
+
+        EditarPublicacionRequest igual = sinCambios();
+        igual.setPropietarioInmueble(" Ana Gómez ");
+        EditarPublicacionRequest otro = sinCambios();
+        otro.setPropietarioInmueble("Inversiones Rojas");
+
+        assertEquals(List.of(), servicio.camposSensiblesModificados(publicacion(), conPropietario, sinCambios()));
+        assertEquals(List.of(), servicio.camposSensiblesModificados(publicacion(), conPropietario, igual));
+        assertEquals(List.of("Propietario del inmueble"),
+                servicio.camposSensiblesModificados(publicacion(), conPropietario, otro));
+    }
+
+    @Test
     void exigeUnMensajeParaElAdministrador() {
         assertEquals("Cambié las fotos", servicio.validarMensaje("  Cambié las fotos "));
         assertThrows(IllegalArgumentException.class, () -> servicio.validarMensaje(" "));

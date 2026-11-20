@@ -174,7 +174,8 @@ public class PublicacionEdicionService {
                         solicitud.getCapacidad(),
                         solicitud.getHabitaciones(),
                         solicitud.getCamas(),
-                        solicitud.getBanos()
+                        solicitud.getBanos(),
+                        solicitud.getPropietarioInmueble()
                 )
         );
 

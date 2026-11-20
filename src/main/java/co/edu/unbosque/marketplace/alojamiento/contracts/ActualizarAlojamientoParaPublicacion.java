@@ -7,6 +7,17 @@ public record ActualizarAlojamientoParaPublicacion(
         int capacidad,
         Integer habitaciones,
         Integer camas,
-        Integer banos
+        Integer banos,
+        String propietarioInmueble
 ) {
+    public ActualizarAlojamientoParaPublicacion(
+            String ubicacion,
+            String ciudad,
+            String tipoAlojamiento,
+            int capacidad,
+            Integer habitaciones,
+            Integer camas,
+            Integer banos) {
+        this(ubicacion, ciudad, tipoAlojamiento, capacidad, habitaciones, camas, banos, null);
+    }
 }
