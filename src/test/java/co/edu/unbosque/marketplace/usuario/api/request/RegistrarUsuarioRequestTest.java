@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,6 +39,7 @@ class RegistrarUsuarioRequestTest {
         request.setDocumentoIdentidad("123456789");
         request.setTelefono("3001234567");
         request.setContrasena("Clave123");
+        request.setIdCiudad(UUID.randomUUID());
         request.setRol("HUESPED");
         return request;
     }
@@ -205,8 +207,16 @@ class RegistrarUsuarioRequestTest {
     void rechazaTodosLosCamposAusentes() {
         RegistrarUsuarioRequest request = new RegistrarUsuarioRequest();
 
-        // @Pattern y @Size aceptan null; cada @NotBlank genera un error.
-        assertEquals(8, validator.validate(request).size());
+        // @Pattern y @Size aceptan null; cada @NotBlank y @NotNull genera un error.
+        assertEquals(9, validator.validate(request).size());
+    }
+
+    @Test
+    void exigeLaCiudad() {
+        RegistrarUsuarioRequest request = solicitudValida();
+        request.setIdCiudad(null);
+
+        verificarError(request, "idCiudad", "La ciudad es obligatoria.");
     }
 
     private void verificarObligatorio(
