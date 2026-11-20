@@ -104,7 +104,9 @@ public class SecurityConfig {
 
 						// Consultas de servicios y políticas.
 
-						.requestMatchers(HttpMethod.GET, "/servicios", "/politicas-cancelacion/activas")
+						.requestMatchers(HttpMethod.GET, "/servicios").permitAll()
+
+						.requestMatchers(HttpMethod.GET, "/politicas-cancelacion/activas")
 						.hasAuthority("ROLE_ANFITRION")
 
 						// Publicaciones propias del anfitrión.
@@ -168,6 +170,8 @@ public class SecurityConfig {
 
 						.requestMatchers(HttpMethod.GET, "/publicaciones/catalogo", "/publicaciones/busqueda")
 						.permitAll()
+
+						.requestMatchers(HttpMethod.GET, "/publicaciones/*/detalle-publico").permitAll()
 
 						.requestMatchers(HttpMethod.GET, "/imagenes/publicaciones/**").permitAll()
 						

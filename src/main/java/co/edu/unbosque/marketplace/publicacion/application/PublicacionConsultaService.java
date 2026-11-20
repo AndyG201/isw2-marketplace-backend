@@ -159,6 +159,15 @@ public class PublicacionConsultaService {
                         new IllegalStateException(
                                 "No se encontró el alojamiento asociado."));
 
+        return armarDetalle(publicacion, alojamiento);
+    }
+
+    PublicacionDetalleResponse armarDetalle(
+            Publicacion publicacion,
+            AlojamientoPublicacionInfo alojamiento) {
+
+        UUID idPublicacion = publicacion.getIdPublicacion();
+
         List<ImagenPublicacionResponse> imagenes =
                 imagenRepository
                         .findByIdPublicacionOrderByOrdenAsc(idPublicacion)
