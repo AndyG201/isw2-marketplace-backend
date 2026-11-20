@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.config.PasswordConfig;
 import co.edu.unbosque.marketplace.resena.api.response.ResenasPublicacionResponse;
 import co.edu.unbosque.marketplace.resena.application.ResenaPublicaQueryService;
@@ -48,6 +49,9 @@ class ResenaPublicaAccesoTest {
 
     @MockitoBean
     private JwtUtil jwtUtil;
+
+    @MockitoBean
+    private AuditoriaEventoCommand auditoriaEventoCommand;
 
     @MockitoBean
     private UserDetailsService userDetailsService;
