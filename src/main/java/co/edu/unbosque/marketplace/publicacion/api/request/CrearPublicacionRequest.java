@@ -8,7 +8,6 @@ import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -16,7 +15,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class CrearPublicacionRequest {
+public class CrearPublicacionRequest extends DistribucionAlojamientoRequest {
 
     @NotBlank(message = "El título es obligatorio.")
     @Size(max = 200)
@@ -43,18 +42,6 @@ public class CrearPublicacionRequest {
     @NotNull(message = "La capacidad es obligatoria.")
     @Min(value = 1, message = "La capacidad debe ser mayor que cero.")
     private Integer capacidad;
-
-    @Min(value = 1, message = "Debe haber al menos una habitación.")
-    @Max(value = 50, message = "El número de habitaciones no puede superar 50.")
-    private Integer habitaciones;
-
-    @Min(value = 1, message = "Debe haber al menos una cama.")
-    @Max(value = 50, message = "El número de camas no puede superar 50.")
-    private Integer camas;
-
-    @Min(value = 1, message = "Debe haber al menos un baño.")
-    @Max(value = 50, message = "El número de baños no puede superar 50.")
-    private Integer banos;
 
     @NotNull(message = "El precio es obligatorio.")
     @DecimalMin(value = "0.01")
@@ -120,13 +107,4 @@ public class CrearPublicacionRequest {
 
     public List<MultipartFile> getImagenes() { return imagenes; }
     public void setImagenes(List<MultipartFile> imagenes) { this.imagenes = imagenes; }
-
-    public Integer getHabitaciones() { return habitaciones; }
-    public void setHabitaciones(Integer habitaciones) { this.habitaciones = habitaciones; }
-
-    public Integer getCamas() { return camas; }
-    public void setCamas(Integer camas) { this.camas = camas; }
-
-    public Integer getBanos() { return banos; }
-    public void setBanos(Integer banos) { this.banos = banos; }
 }

@@ -74,11 +74,7 @@ public class AlojamientoPublicacionCommandService
                 solicitud.capacidad()
         );
 
-        validarDistribucion(
-                solicitud.habitaciones(),
-                solicitud.camas(),
-                solicitud.banos()
-        );
+        validarDistribucion(solicitud);
 
         Alojamiento alojamiento = alojamientoRepository
                 .findById(idAlojamiento)
@@ -127,6 +123,10 @@ public class AlojamientoPublicacionCommandService
                 solicitud.camas(),
                 solicitud.banos()
         );
+    }
+
+    private void validarDistribucion(ActualizarAlojamientoParaPublicacion solicitud) {
+        validarDistribucion(solicitud.habitaciones(), solicitud.camas(), solicitud.banos());
     }
 
     private void validarDistribucion(

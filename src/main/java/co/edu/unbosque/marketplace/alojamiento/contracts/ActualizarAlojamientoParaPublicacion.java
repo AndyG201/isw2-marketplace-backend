@@ -9,12 +9,4 @@ public record ActualizarAlojamientoParaPublicacion(
         Integer camas,
         Integer banos
 ) {
-
-    public ActualizarAlojamientoParaPublicacion(
-            String ubicacion,
-            String ciudad,
-            String tipoAlojamiento,
-            int capacidad) {
-        this(ubicacion, ciudad, tipoAlojamiento, capacidad, null, null, null);
-    }
 }

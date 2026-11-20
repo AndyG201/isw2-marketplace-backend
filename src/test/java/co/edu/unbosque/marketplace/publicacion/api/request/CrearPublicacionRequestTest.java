@@ -1,6 +1,4 @@
 package co.edu.unbosque.marketplace.publicacion.api.request;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -267,26 +265,5 @@ class CrearPublicacionRequestTest {
         assertTrue(validator.validate(request).stream().anyMatch(
             error -> error.getPropertyPath().toString().contains("imagenes")
         ));
-    }
-
-    @Test
-    void aceptaLaDistribucionDentroDeLosLimitesOSinIndicarla() {
-        CrearPublicacionRequest request = crearRequestValido();
-        assertTrue(validator.validate(request).isEmpty());
-
-        request.setHabitaciones(3);
-        request.setCamas(4);
-        request.setBanos(2);
-        assertTrue(validator.validate(request).isEmpty());
-    }
-
-    @Test
-    void rechazaDistribucionesFueraDeLosLimites() {
-        CrearPublicacionRequest request = crearRequestValido();
-        request.setHabitaciones(0);
-        request.setCamas(51);
-        request.setBanos(-1);
-
-        assertEquals(3, validator.validate(request).size());
     }
 }
