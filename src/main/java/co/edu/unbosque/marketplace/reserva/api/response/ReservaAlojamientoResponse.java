@@ -2,6 +2,7 @@ package co.edu.unbosque.marketplace.reserva.api.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record ReservaAlojamientoResponse(
@@ -13,5 +14,6 @@ public record ReservaAlojamientoResponse(
         LocalDate fechaEntrada,
         LocalDate fechaSalida,
         String estado,
-        BigDecimal montoTotal) {
+        BigDecimal montoTotal,
+        OffsetDateTime retencionHasta) {
 }
