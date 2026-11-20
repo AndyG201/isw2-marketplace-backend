@@ -18,11 +18,14 @@ public class AlmacenamientoImagenService {
     private static final long TAMANO_MAXIMO = 5 * 1024 * 1024;
 
     private final Path directorioBase;
+    private final CloudinaryCliente cloudinary;
 
     public AlmacenamientoImagenService(
             @Value("${app.storage.upload-dir:uploads}")
-            String directorio) {
+            String directorio,
+            CloudinaryCliente cloudinary) {
 
+        this.cloudinary = cloudinary;
         this.directorioBase = Paths.get(directorio)
                 .toAbsolutePath()
                 .normalize()
@@ -48,8 +51,13 @@ public class AlmacenamientoImagenService {
 
             String extension = detectarExtension(contenido);
 
-            String nombreArchivo =
-                    UUID.randomUUID() + extension;
+            String nombre = UUID.randomUUID().toString();
+
+            if (cloudinary.configurado()) {
+                return cloudinary.subir(contenido, nombre, extension);
+            }
+
+            String nombreArchivo = nombre + extension;
 
             Files.createDirectories(directorioBase);
 
@@ -120,6 +128,15 @@ public class AlmacenamientoImagenService {
     public void eliminar(String rutaImagen) {
 
         if (rutaImagen == null || rutaImagen.isBlank()) {
+            return;
+        }
+
+        if (cloudinary.esUrlPropia(rutaImagen)) {
+            cloudinary.eliminar(rutaImagen);
+            return;
+        }
+
+        if (rutaImagen.startsWith("http://") || rutaImagen.startsWith("https://")) {
             return;
         }
 
