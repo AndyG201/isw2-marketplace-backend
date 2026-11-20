@@ -53,6 +53,9 @@ class PublicacionDetallePublicoAccesoTest {
     private JwtUtil jwtUtil;
 
     @MockitoBean
+    private AuditoriaEventoCommand auditoriaEventoCommand;
+
+    @MockitoBean
     private UserDetailsService userDetailsService;
 
     @Test
