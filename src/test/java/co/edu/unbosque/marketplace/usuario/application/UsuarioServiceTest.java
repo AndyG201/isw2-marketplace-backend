@@ -187,6 +187,27 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void consultarCuentaDevuelveLosDatosAunqueElDocumentoNoSePuedaDescifrar() {
+        Usuario u = usuario();
+        Rol rol = mock(Rol.class);
+        when(rol.getNombre()).thenReturn("AUDITOR_OPERACION");
+        u.setRol(rol);
+        u.setDocumentoCifrado(new byte[]{1});
+        u.setDocumentoNonce(new byte[]{2});
+        encontrar(u);
+        when(proteccionDocumento.descifrarDocumento(u.getDocumentoCifrado(), u.getDocumentoNonce()))
+                .thenThrow(new IllegalStateException("No fue posible descifrar el documento."));
+
+        var respuesta = service.consultarMiCuenta(ID);
+
+        assertAll(
+                () -> assertEquals("Ana", respuesta.getNombre()),
+                () -> assertEquals(CORREO, respuesta.getCorreo()),
+                () -> assertNull(respuesta.getDocumentoIdentidad()),
+                () -> assertEquals("AUDITOR_OPERACION", respuesta.getRol()));
+    }
+
+    @Test
     void actualizarPerfilSinCambiarCorreo() {
         Usuario u = usuario();
         encontrar(u);

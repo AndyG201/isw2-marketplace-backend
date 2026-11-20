@@ -2,7 +2,9 @@ package co.edu.unbosque.marketplace.publicacion.infrastructure.persistence;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.Normalizer;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.jdbc.core.RowMapper;
@@ -23,6 +25,9 @@ public class PublicacionBusquedaRepository {
                 ON a.id_alojamiento = p.id_alojamiento
             WHERE p.estado = 'ACTIVA'
             """;
+
+    private static final String CON_TILDE = "áàäâéèëêíìïîóòöôúùüûñç";
+    private static final String SIN_TILDE = "aaaaeeeeiiiioooouuuunc";
 
     private static final RowMapper<PublicacionResumenResponse> ROW_MAPPER =
             PublicacionBusquedaRepository::mapearPublicacion;
@@ -46,11 +51,11 @@ public class PublicacionBusquedaRepository {
                 );
 
         if (criteria.ciudad() != null) {
-            condiciones.append(" AND lower(a.ciudad) = :ciudad");
-            parametros.addValue(
-                    "ciudad",
-                    criteria.ciudad().toLowerCase(java.util.Locale.ROOT)
-            );
+            condiciones.append(" AND translate(lower(a.ciudad), :conTilde, :sinTilde)"
+                    + " LIKE :ciudad ESCAPE '\\'");
+            parametros.addValue("conTilde", CON_TILDE);
+            parametros.addValue("sinTilde", SIN_TILDE);
+            parametros.addValue("ciudad", "%" + patronCiudad(criteria.ciudad()) + "%");
         }
 
         if (criteria.tipoAlojamiento() != null) {
@@ -227,5 +232,12 @@ public class PublicacionBusquedaRepository {
                 ),
                 rs.getString("imagen_portada")
         );
+    }
+
+    static String patronCiudad(String ciudad) {
+        String sinTildes = Normalizer.normalize(ciudad.trim(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT);
+        return sinTildes.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 }

@@ -330,11 +330,18 @@ public class UsuarioService {
 			throw new IllegalStateException("El usuario no tiene un rol asignado.");
 		}
 
-		String documento = proteccionDocumento.descifrarDocumento(usuario.getDocumentoCifrado(),
-				usuario.getDocumentoNonce());
+		String documento = documentoLegible(usuario);
 
 		return new ConsultarCuentaResponse(usuario.getNombre(), usuario.getApellido(), usuario.getCorreo(),
 				usuario.getTipoDocumento(), documento, usuario.getRol().getNombre());
+	}
+
+	private String documentoLegible(Usuario usuario) {
+		try {
+			return proteccionDocumento.descifrarDocumento(usuario.getDocumentoCifrado(), usuario.getDocumentoNonce());
+		} catch (IllegalStateException e) {
+			return null;
+		}
 	}
 
 	public String actualizarPerfil(UUID idUsuario, ActualizarPerfilRequest solicitud) {
