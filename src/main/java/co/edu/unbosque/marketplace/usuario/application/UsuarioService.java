@@ -332,8 +332,13 @@ public class UsuarioService {
 
 		String documento = documentoLegible(usuario);
 
-		return new ConsultarCuentaResponse(usuario.getNombre(), usuario.getApellido(), usuario.getCorreo(),
+		ConsultarCuentaResponse respuesta = new ConsultarCuentaResponse(usuario.getNombre(), usuario.getApellido(), usuario.getCorreo(),
 				usuario.getTipoDocumento(), documento, usuario.getRol().getNombre());
+		if (ubicacionRegistroQuery != null) {
+			ubicacionRegistroQuery.consultarCiudad(usuario.getIdCiudad()).ifPresent(
+					ubicacion -> respuesta.conUbicacion(ubicacion.ciudad(), ubicacion.pais(), ubicacion.codigoPais()));
+		}
+		return respuesta;
 	}
 
 	private String documentoLegible(Usuario usuario) {

@@ -156,4 +156,33 @@ class AlojamientoPublicacionCommandServiceTest {
                 "Calle 2", "Cali", "Finca", 8, null, null, null, " Inversiones Rojas "));
         assertEquals("Inversiones Rojas", existente.getPropietarioInmueble());
     }
+
+    @Test
+    void guardaElPaisDelAlojamientoConSuCodigo() {
+        servicio.crearAlojamiento(new CrearAlojamientoParaPublicacion(
+                ANFITRION, "Calle 1", "Lima", "Casa", 2, 1, 1, 1, null, " Peru ", "pe"));
+
+        Alojamiento alojamiento = guardado();
+        assertEquals("Peru", alojamiento.getPais());
+        assertEquals("PE", alojamiento.getCodigoPais());
+    }
+
+    @Test
+    void ignoraUnCodigoDePaisInvalidoYConservaElPaisSiNoSeEnvia() {
+        UUID id = UUID.randomUUID();
+        Alojamiento existente = new Alojamiento();
+        existente.setIdAlojamiento(id);
+        existente.setPais("Colombia");
+        existente.setCodigoPais("CO");
+        when(repositorio.findById(id)).thenReturn(Optional.of(existente));
+
+        servicio.actualizarAlojamiento(id, new ActualizarAlojamientoParaPublicacion(
+                "Calle 2", "Cali", "Finca", 8, null, null, null));
+        assertEquals("CO", existente.getCodigoPais());
+
+        servicio.actualizarAlojamiento(id, new ActualizarAlojamientoParaPublicacion(
+                "Calle 2", "Quito", "Finca", 8, null, null, null, null, "Ecuador", "ECU"));
+        assertEquals("Ecuador", existente.getPais());
+        assertNull(existente.getCodigoPais());
+    }
 }

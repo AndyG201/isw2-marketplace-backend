@@ -21,6 +21,12 @@ public abstract class DistribucionAlojamientoRequest {
     @Size(max = 120, message = "El nombre del propietario del inmueble no puede superar 120 caracteres.")
     private String propietarioInmueble;
 
+    @Size(max = 120, message = "El país no puede superar 120 caracteres.")
+    private String pais;
+
+    @Size(max = 2, message = "El código del país debe tener 2 letras.")
+    private String codigoPais;
+
     public Integer getHabitaciones() {
         return habitaciones;
     }
@@ -51,5 +57,21 @@ public abstract class DistribucionAlojamientoRequest {
 
     public void setPropietarioInmueble(String propietarioInmueble) {
         this.propietarioInmueble = propietarioInmueble;
+    }
+
+    public String getPais() {
+        return pais;
+    }
+
+    public void setPais(String pais) {
+        this.pais = pais;
+    }
+
+    public String getCodigoPais() {
+        return codigoPais;
+    }
+
+    public void setCodigoPais(String codigoPais) {
+        this.codigoPais = codigoPais;
     }
 }

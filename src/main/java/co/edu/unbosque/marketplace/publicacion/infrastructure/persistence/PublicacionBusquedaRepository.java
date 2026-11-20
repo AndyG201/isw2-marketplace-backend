@@ -173,6 +173,8 @@ public class PublicacionBusquedaRepository {
                                a.id_alojamiento,
                                p.titulo,
                                a.ciudad,
+                               a.pais,
+                               a.codigo_pais,
                                a.tipo_alojamiento,
                                a.capacidad,
                                p.precio_por_noche,
@@ -231,7 +233,7 @@ public class PublicacionBusquedaRepository {
                         java.time.OffsetDateTime.class
                 ),
                 rs.getString("imagen_portada")
-        );
+        ).conPais(rs.getString("pais"), rs.getString("codigo_pais"));
     }
 
     static String patronCiudad(String ciudad) {

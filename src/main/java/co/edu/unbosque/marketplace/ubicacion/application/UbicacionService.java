@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.ubicacion.api.response.CiudadResponse;
 import co.edu.unbosque.marketplace.ubicacion.api.response.PaisResponse;
+import co.edu.unbosque.marketplace.ubicacion.contracts.CiudadUbicacionInfo;
 import co.edu.unbosque.marketplace.ubicacion.contracts.UbicacionRegistroQuery;
 import co.edu.unbosque.marketplace.ubicacion.domain.Ciudad;
 import co.edu.unbosque.marketplace.ubicacion.domain.Pais;
@@ -53,6 +55,16 @@ public class UbicacionService implements UbicacionRegistroQuery {
     @Transactional(readOnly = true)
     public boolean existeCiudad(UUID idCiudad) {
         return idCiudad != null && ciudadRepository.existsByIdCiudad(idCiudad);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<CiudadUbicacionInfo> consultarCiudad(UUID idCiudad) {
+        if (idCiudad == null) {
+            return Optional.empty();
+        }
+        return ciudadRepository.findById(idCiudad).map(ciudad -> new CiudadUbicacionInfo(
+                ciudad.getNombre(), ciudad.getPais().getNombre(), ciudad.getPais().getCodigoIso2()));
     }
 
     private void sincronizarPaises() {

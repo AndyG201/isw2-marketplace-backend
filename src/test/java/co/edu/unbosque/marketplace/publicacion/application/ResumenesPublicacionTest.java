@@ -12,7 +12,9 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
+import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
 
 class ResumenesPublicacionTest {
@@ -47,6 +49,23 @@ class ResumenesPublicacionTest {
 
         assertEquals("dos.jpg", portadas.get(conPortada));
         assertEquals("segunda.jpg", portadas.get(sinPortada));
+    }
+
+    @Test
+    void elResumenIncluyeElPaisDelAlojamiento() {
+        UUID idPublicacion = UUID.randomUUID();
+        UUID idAlojamiento = UUID.randomUUID();
+        Publicacion publicacion = new Publicacion();
+        publicacion.setIdPublicacion(idPublicacion);
+        publicacion.setTitulo("Casa en Miraflores");
+        AlojamientoPublicacionInfo alojamiento = new AlojamientoPublicacionInfo(
+                idAlojamiento, UUID.randomUUID(), "Calle 1", "Lima", "Casa", 4, 2, 2, 1, null, "Peru", "PE");
+
+        var resumen = ResumenesPublicacion.resumen(publicacion, alojamiento, Map.of());
+
+        assertEquals("Lima", resumen.getCiudad());
+        assertEquals("Peru", resumen.getPais());
+        assertEquals("PE", resumen.getCodigoPais());
     }
 
     private ImagenPublicacion imagen(UUID idPublicacion, String ruta, int orden, boolean portada) {

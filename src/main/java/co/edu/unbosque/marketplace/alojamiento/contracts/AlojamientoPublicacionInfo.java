@@ -12,8 +12,24 @@ public record AlojamientoPublicacionInfo(
         int habitaciones,
         int camas,
         int banos,
-        String propietarioInmueble
+        String propietarioInmueble,
+        String pais,
+        String codigoPais
 ) {
+    public AlojamientoPublicacionInfo(
+            UUID idAlojamiento,
+            UUID idAnfitrion,
+            String ubicacion,
+            String ciudad,
+            String tipoAlojamiento,
+            int capacidad,
+            int habitaciones,
+            int camas,
+            int banos,
+            String propietarioInmueble) {
+        this(idAlojamiento, idAnfitrion, ubicacion, ciudad, tipoAlojamiento, capacidad,
+                habitaciones, camas, banos, propietarioInmueble, null, null);
+    }
     public AlojamientoPublicacionInfo(
             UUID idAlojamiento,
             UUID idAnfitrion,
@@ -25,7 +41,7 @@ public record AlojamientoPublicacionInfo(
             int camas,
             int banos) {
         this(idAlojamiento, idAnfitrion, ubicacion, ciudad, tipoAlojamiento, capacidad,
-                habitaciones, camas, banos, null);
+                habitaciones, camas, banos, null, null, null);
     }
 
 
@@ -36,6 +52,6 @@ public record AlojamientoPublicacionInfo(
             String ciudad,
             String tipoAlojamiento,
             int capacidad) {
-        this(idAlojamiento, idAnfitrion, ubicacion, ciudad, tipoAlojamiento, capacidad, 1, 1, 1, null);
+        this(idAlojamiento, idAnfitrion, ubicacion, ciudad, tipoAlojamiento, capacidad, 1, 1, 1, null, null, null);
     }
 }

@@ -146,7 +146,9 @@ public class PublicacionAlojamientoService {
                         solicitud.getHabitaciones(),
                         solicitud.getCamas(),
                         solicitud.getBanos(),
-                        solicitud.getPropietarioInmueble()
+                        solicitud.getPropietarioInmueble(),
+                        solicitud.getPais(),
+                        solicitud.getCodigoPais()
                 )
         );
 

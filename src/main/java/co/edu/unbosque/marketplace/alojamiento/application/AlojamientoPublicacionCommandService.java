@@ -52,6 +52,8 @@ public class AlojamientoPublicacionCommandService
         alojamiento.setCamas(valorOMinimo(solicitud.camas()));
         alojamiento.setBanos(valorOMinimo(solicitud.banos()));
         alojamiento.setPropietarioInmueble(textoOpcional(solicitud.propietarioInmueble()));
+        alojamiento.setPais(textoOpcional(solicitud.pais()));
+        alojamiento.setCodigoPais(codigoPais(solicitud.codigoPais()));
         alojamiento.setFechaCreacion(OffsetDateTime.now());
 
         alojamientoRepository.save(alojamiento);
@@ -107,6 +109,11 @@ public class AlojamientoPublicacionCommandService
             alojamiento.setPropietarioInmueble(textoOpcional(solicitud.propietarioInmueble()));
         }
 
+        if (solicitud.pais() != null) {
+            alojamiento.setPais(textoOpcional(solicitud.pais()));
+            alojamiento.setCodigoPais(codigoPais(solicitud.codigoPais()));
+        }
+
         alojamientoRepository.save(alojamiento);
     }
 
@@ -139,6 +146,11 @@ public class AlojamientoPublicacionCommandService
                     "El nombre del propietario del inmueble no puede superar "
                             + MAXIMO_PROPIETARIO + " caracteres.");
         }
+    }
+
+    private static String codigoPais(String codigo) {
+        String texto = textoOpcional(codigo);
+        return texto != null && texto.matches("[A-Za-z]{2}") ? texto.toUpperCase(java.util.Locale.ROOT) : null;
     }
 
     private static String textoOpcional(String texto) {

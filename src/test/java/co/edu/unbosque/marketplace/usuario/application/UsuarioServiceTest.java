@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import co.edu.unbosque.marketplace.usuario.api.request.*;
+import co.edu.unbosque.marketplace.ubicacion.contracts.CiudadUbicacionInfo;
 import co.edu.unbosque.marketplace.ubicacion.contracts.UbicacionRegistroQuery;
 import co.edu.unbosque.marketplace.usuario.domain.*;
 import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
@@ -184,6 +185,25 @@ class UsuarioServiceTest {
                 () -> assertEquals(CORREO, respuesta.getCorreo()),
                 () -> assertEquals("123456789", respuesta.getDocumentoIdentidad()),
                 () -> assertEquals("HUESPED", respuesta.getRol()));
+    }
+
+    @Test
+    void consultarCuentaIncluyeLaCiudadYElPaisDelUsuario() {
+        Usuario u = usuario();
+        Rol rol = mock(Rol.class);
+        when(rol.getNombre()).thenReturn("HUESPED");
+        u.setRol(rol);
+        u.setIdCiudad(CIUDAD);
+        encontrar(u);
+        when(ubicacionRegistroQuery.consultarCiudad(CIUDAD))
+                .thenReturn(Optional.of(new CiudadUbicacionInfo("Lima", "Peru", "PE")));
+
+        var respuesta = service.consultarMiCuenta(ID);
+
+        assertAll(
+                () -> assertEquals("Lima", respuesta.getCiudad()),
+                () -> assertEquals("Peru", respuesta.getPais()),
+                () -> assertEquals("PE", respuesta.getCodigoPais()));
     }
 
     @Test

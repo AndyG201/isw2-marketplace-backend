@@ -19,6 +19,8 @@ public class PublicacionResumenResponse {
     private String estado;
     private OffsetDateTime fechaCreacion;
     private String imagenPortada;
+    private String pais;
+    private String codigoPais;
 
     public PublicacionResumenResponse(
             UUID idPublicacion,
@@ -96,5 +98,19 @@ public class PublicacionResumenResponse {
 
     public String getImagenPortada() {
         return imagenPortada;
+    }
+
+    public PublicacionResumenResponse conPais(String pais, String codigoPais) {
+        this.pais = pais;
+        this.codigoPais = codigoPais;
+        return this;
+    }
+
+    public String getPais() {
+        return pais;
+    }
+
+    public String getCodigoPais() {
+        return codigoPais;
     }
 }
