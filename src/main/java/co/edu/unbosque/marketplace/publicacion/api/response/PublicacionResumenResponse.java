@@ -18,6 +18,21 @@ public class PublicacionResumenResponse {
     private BigDecimal precioPorNoche;
     private String estado;
     private OffsetDateTime fechaCreacion;
+    private String imagenPortada;
+
+    public PublicacionResumenResponse(
+            UUID idPublicacion,
+            UUID idAlojamiento,
+            String titulo,
+            String ciudad,
+            String tipoAlojamiento,
+            int capacidad,
+            BigDecimal precioPorNoche,
+            String estado,
+            OffsetDateTime fechaCreacion) {
+        this(idPublicacion, idAlojamiento, titulo, ciudad, tipoAlojamiento,
+                capacidad, precioPorNoche, estado, fechaCreacion, null);
+    }
 
     @JsonCreator
     public PublicacionResumenResponse(
@@ -29,7 +44,8 @@ public class PublicacionResumenResponse {
             @JsonProperty("capacidad") int capacidad,
             @JsonProperty("precioPorNoche") BigDecimal precioPorNoche,
             @JsonProperty("estado") String estado,
-            @JsonProperty("fechaCreacion") OffsetDateTime fechaCreacion) {
+            @JsonProperty("fechaCreacion") OffsetDateTime fechaCreacion,
+            @JsonProperty("imagenPortada") String imagenPortada) {
         this.idPublicacion = idPublicacion;
         this.idAlojamiento = idAlojamiento;
         this.titulo = titulo;
@@ -39,6 +55,7 @@ public class PublicacionResumenResponse {
         this.precioPorNoche = precioPorNoche;
         this.estado = estado;
         this.fechaCreacion = fechaCreacion;
+        this.imagenPortada = imagenPortada;
     }
 
     public UUID getIdPublicacion() {
@@ -75,5 +92,9 @@ public class PublicacionResumenResponse {
 
     public OffsetDateTime getFechaCreacion() {
         return fechaCreacion;
+    }
+
+    public String getImagenPortada() {
+        return imagenPortada;
     }
 }

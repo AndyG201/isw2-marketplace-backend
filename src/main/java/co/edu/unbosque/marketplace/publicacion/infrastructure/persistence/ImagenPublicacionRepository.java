@@ -1,6 +1,7 @@
 
 package co.edu.unbosque.marketplace.publicacion.infrastructure.persistence;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,6 +16,10 @@ public interface ImagenPublicacionRepository
 
     List<ImagenPublicacion> findByIdPublicacionOrderByOrdenAsc(
             UUID idPublicacion
+    );
+
+    List<ImagenPublicacion> findByIdPublicacionInOrderByOrdenAsc(
+            Collection<UUID> idsPublicaciones
     );
 
     boolean existsByIdPublicacion(UUID idPublicacion);

@@ -171,6 +171,43 @@ class PublicacionConsultaServiceTest {
         verify(publicacionRepository)
                 .findByIdAlojamientoInOrderByFechaCreacionDesc(
                         List.of(idAlojamiento));
+
+        assertNull(respuesta.getPublicaciones().get(0).getImagenPortada());
+    }
+
+    @Test
+    void consultarMisPublicacionesIncluyeLaImagenDePortada() {
+
+        AlojamientoPublicacionInfo alojamiento =
+                crearAlojamientoInfo();
+
+        Publicacion publicacion = mock(Publicacion.class);
+
+        when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
+                .thenReturn(List.of(alojamiento));
+
+        when(publicacion.getIdPublicacion()).thenReturn(idPublicacion);
+        when(publicacion.getIdAlojamiento()).thenReturn(idAlojamiento);
+
+        when(publicacionRepository
+                .findByIdAlojamientoInOrderByFechaCreacionDesc(
+                        List.of(idAlojamiento)))
+                .thenReturn(List.of(publicacion));
+
+        when(imagenRepository.findByIdPublicacionInOrderByOrdenAsc(
+                List.of(idPublicacion)))
+                .thenReturn(List.of(
+                        new ImagenPublicacion(UUID.randomUUID(), idPublicacion,
+                                "/imagenes/publicaciones/b.jpg", 2, false),
+                        new ImagenPublicacion(UUID.randomUUID(), idPublicacion,
+                                "/imagenes/publicaciones/a.jpg", 1, false)
+                ));
+
+        MisPublicacionesResponse respuesta =
+                service.consultarMisPublicaciones(idAnfitrion);
+
+        assertEquals("/imagenes/publicaciones/a.jpg",
+                respuesta.getPublicaciones().get(0).getImagenPortada());
     }
 
     @Test
