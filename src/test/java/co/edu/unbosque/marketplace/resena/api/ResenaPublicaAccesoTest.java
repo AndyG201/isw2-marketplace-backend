@@ -48,9 +48,6 @@ class ResenaPublicaAccesoTest {
     private ResenaService resenaService;
 
     @MockitoBean
-    private AuditoriaEventoCommand auditoria;
-
-    @MockitoBean
     private JwtUtil jwtUtil;
 
     @MockitoBean

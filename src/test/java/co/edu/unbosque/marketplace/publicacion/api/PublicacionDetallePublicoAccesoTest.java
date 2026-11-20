@@ -47,9 +47,6 @@ class PublicacionDetallePublicoAccesoTest {
     private ServicioService servicioService;
 
     @MockitoBean
-    private AuditoriaEventoCommand auditoria;
-
-    @MockitoBean
     private JwtUtil jwtUtil;
 
     @MockitoBean
