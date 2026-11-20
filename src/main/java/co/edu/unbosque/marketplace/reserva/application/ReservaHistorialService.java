@@ -84,6 +84,7 @@ public class ReservaHistorialService {
                 datos.montoTotal(),
                 datos.estado(),
                 datos.fechaSolicitud(),
-                datos.retencionHasta());
+                datos.retencionHasta(),
+                datos.resenada());
     }
 }
