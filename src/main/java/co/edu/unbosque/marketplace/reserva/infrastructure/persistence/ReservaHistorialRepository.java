@@ -33,7 +33,10 @@ public class ReservaHistorialRepository {
                        AS "montoTotal",
                    r.estado AS "estado",
                    r.fecha_solicitud AS "fechaSolicitud",
-                   r.retencion_hasta AS "retencionHasta"
+                   r.retencion_hasta AS "retencionHasta",
+                   EXISTS (SELECT 1
+                           FROM public.resena rs
+                           WHERE rs.id_reserva = r.id_reserva) AS "resenada"
             FROM public.reserva r
             INNER JOIN public.cotizacion c
                 ON c.id_cotizacion = r.id_cotizacion
@@ -81,6 +84,7 @@ public class ReservaHistorialRepository {
                 resultado.getBigDecimal("montoTotal"),
                 resultado.getString("estado"),
                 resultado.getObject("fechaSolicitud", OffsetDateTime.class),
-                resultado.getObject("retencionHasta", OffsetDateTime.class));
+                resultado.getObject("retencionHasta", OffsetDateTime.class),
+                resultado.getBoolean("resenada"));
     }
 }

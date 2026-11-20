@@ -14,5 +14,6 @@ public record ReservaHistorialDatos(
         BigDecimal montoTotal,
         String estado,
         OffsetDateTime fechaSolicitud,
-        OffsetDateTime retencionHasta) {
+        OffsetDateTime retencionHasta,
+        boolean resenada) {
 }

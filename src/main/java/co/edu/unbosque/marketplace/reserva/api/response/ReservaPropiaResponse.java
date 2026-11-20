@@ -14,5 +14,6 @@ public record ReservaPropiaResponse(
         BigDecimal montoTotal,
         String estado,
         OffsetDateTime fechaSolicitud,
-        OffsetDateTime retencionHasta) {
+        OffsetDateTime retencionHasta,
+        boolean resenada) {
 }

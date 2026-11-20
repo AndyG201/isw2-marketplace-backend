@@ -175,6 +175,8 @@ public class SecurityConfig {
 
 						.requestMatchers(HttpMethod.GET, "/publicaciones/*/detalle-publico").permitAll()
 
+						.requestMatchers(HttpMethod.GET, "/publicaciones/*/resenas").permitAll()
+
 						.requestMatchers(HttpMethod.GET, "/imagenes/publicaciones/**").permitAll()
 						
 						.requestMatchers(
