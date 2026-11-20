@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import co.edu.unbosque.marketplace.usuario.api.request.ModificarDocumentoRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.RestringirUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.api.response.AdministradorUsuarioResponse;
 import co.edu.unbosque.marketplace.usuario.application.AdministradorService;
@@ -90,6 +91,25 @@ public class AdministradorUsuarioController {
 
             return ResponseEntity.ok(
                     "La restricción administrativa ha sido levantada correctamente.");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
+        }
+    }
+
+    @PatchMapping("/{idUsuario}/documento")
+    public ResponseEntity<String> modificarDocumento(
+            @PathVariable UUID idUsuario,
+            @Valid @RequestBody ModificarDocumentoRequest solicitud) {
+
+        try {
+            administradorService.modificarDocumento(idUsuario, solicitud);
+
+            return ResponseEntity.ok(
+                    "El documento de la cuenta se actualizó correctamente.");
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
