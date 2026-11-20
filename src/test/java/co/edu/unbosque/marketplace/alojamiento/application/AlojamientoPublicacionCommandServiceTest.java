@@ -172,8 +172,7 @@ class AlojamientoPublicacionCommandServiceTest {
         UUID id = UUID.randomUUID();
         Alojamiento existente = new Alojamiento();
         existente.setIdAlojamiento(id);
-        existente.setPais("Colombia");
-        existente.setCodigoPais("CO");
+        existente.asignarPais("Colombia", "CO");
         when(repositorio.findById(id)).thenReturn(Optional.of(existente));
 
         servicio.actualizarAlojamiento(id, new ActualizarAlojamientoParaPublicacion(

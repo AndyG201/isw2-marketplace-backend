@@ -52,8 +52,7 @@ public class AlojamientoPublicacionCommandService
         alojamiento.setCamas(valorOMinimo(solicitud.camas()));
         alojamiento.setBanos(valorOMinimo(solicitud.banos()));
         alojamiento.setPropietarioInmueble(textoOpcional(solicitud.propietarioInmueble()));
-        alojamiento.setPais(textoOpcional(solicitud.pais()));
-        alojamiento.setCodigoPais(codigoPais(solicitud.codigoPais()));
+        alojamiento.asignarPais(textoOpcional(solicitud.pais()), codigoPais(solicitud.codigoPais()));
         alojamiento.setFechaCreacion(OffsetDateTime.now());
 
         alojamientoRepository.save(alojamiento);
@@ -110,8 +109,7 @@ public class AlojamientoPublicacionCommandService
         }
 
         if (solicitud.pais() != null) {
-            alojamiento.setPais(textoOpcional(solicitud.pais()));
-            alojamiento.setCodigoPais(codigoPais(solicitud.codigoPais()));
+            alojamiento.asignarPais(textoOpcional(solicitud.pais()), codigoPais(solicitud.codigoPais()));
         }
 
         alojamientoRepository.save(alojamiento);

@@ -155,19 +155,16 @@ public class Alojamiento {
         this.propietarioInmueble = propietarioInmueble;
     }
 
+    public void asignarPais(String nombre, String codigo) {
+        this.pais = nombre;
+        this.codigoPais = codigo;
+    }
+
     public String getPais() {
         return pais;
     }
 
-    public void setPais(String pais) {
-        this.pais = pais;
-    }
-
     public String getCodigoPais() {
         return codigoPais;
-    }
-
-    public void setCodigoPais(String codigoPais) {
-        this.codigoPais = codigoPais;
     }
 }
