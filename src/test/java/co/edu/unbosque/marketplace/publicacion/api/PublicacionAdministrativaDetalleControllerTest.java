@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionPublicaResponse;
+import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAdministracionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionDetallePublicoService;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,8 +34,8 @@ class PublicacionAdministrativaDetalleControllerTest {
     @Test
     void devuelveElDetalleParaRevisarLaPublicacion() {
         UUID id = UUID.randomUUID();
-        PublicacionPublicaResponse detalle = new PublicacionPublicaResponse(
-                mock(PublicacionDetalleResponse.class), List.of(), null);
+        PublicacionAdministracionResponse detalle = new PublicacionAdministracionResponse(
+                mock(PublicacionDetalleResponse.class), List.of(), null, null);
         when(detalleService.consultarParaAdministracion(id)).thenReturn(detalle);
 
         ResponseEntity<?> respuesta = controller.consultar(id);

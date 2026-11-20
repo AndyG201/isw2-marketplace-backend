@@ -7,6 +7,7 @@ public record CotizacionReservaInfo(
         UUID idCotizacion,
         UUID idPublicacion,
         LocalDate fechaEntrada,
-        LocalDate fechaSalida
+        LocalDate fechaSalida,
+        int cantidadHuespedes
 ) {
 }

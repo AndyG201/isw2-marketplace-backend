@@ -24,6 +24,8 @@ public class NotificacionEstadoCambioHandler {
 
     private static final String RESERVA = "RESERVA";
     private static final String PUBLICACION = "PUBLICACION";
+    private static final String EN_REVISION = "PENDIENTE_REVISION";
+    private static final String BORRADOR = "BORRADOR";
     private static final List<String> DECISIONES_RESERVA_NOTIFICADAS = List.of("PENDIENTE_PAGO", "RECHAZADA");
 
     private final NotificacionRepository notificaciones;
@@ -104,6 +106,26 @@ public class NotificacionEstadoCambioHandler {
                         + " a " + evento.estadoNuevo() + ".",
                 evento.fechaEvento(),
                 null));
+        if (EN_REVISION.equals(evento.estadoNuevo())) {
+            avisarAdministradores(evento);
+        }
+    }
+
+    private void avisarAdministradores(EstadoMarketplaceCambioEvent evento) {
+        String mensaje = BORRADOR.equals(evento.estadoAnterior())
+                ? "Hay una publicación nueva esperando tu revisión."
+                : "Un anfitrión editó una publicación aprobada y espera tu revisión.";
+        for (UUID idAdministrador : destinatarios.buscarAdministradoresActivos()) {
+            notificaciones.save(new Notificacion(
+                    UUID.randomUUID(),
+                    idAdministrador,
+                    null,
+                    evento.idEntidad(),
+                    "PUBLICACION_POR_REVISAR",
+                    mensaje,
+                    evento.fechaEvento(),
+                    null));
+        }
     }
 
     private String mensajeReserva(UUID idUsuario, UUID idHuesped, EstadoMarketplaceCambioEvent evento) {

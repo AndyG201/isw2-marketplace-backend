@@ -25,11 +25,14 @@ import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 @Service
 public class RevisionAdministrativaService {
 
+    private static final String PAUSADA = "PAUSADA";
+
     private final PublicacionRepository publicacionRepository;
     private final AlojamientoPublicacionQuery alojamientoQuery;
     private final UsuarioAdministracionQuery usuarioAdministracionQuery;
     private final UsuarioPublicacionQuery usuarioPublicacionQuery;
     private final RevisionPublicacionRepository revisionRepository;
+    private final CambiosPublicacionService cambios;
     private AuditoriaEventoCommand auditoria;
 
     public RevisionAdministrativaService(
@@ -37,13 +40,15 @@ public class RevisionAdministrativaService {
             AlojamientoPublicacionQuery alojamientoQuery,
             UsuarioAdministracionQuery usuarioAdministracionQuery,
             UsuarioPublicacionQuery usuarioPublicacionQuery,
-            RevisionPublicacionRepository revisionRepository) {
+            RevisionPublicacionRepository revisionRepository,
+            CambiosPublicacionService cambios) {
 
         this.publicacionRepository = publicacionRepository;
         this.alojamientoQuery = alojamientoQuery;
         this.usuarioAdministracionQuery = usuarioAdministracionQuery;
         this.usuarioPublicacionQuery = usuarioPublicacionQuery;
         this.revisionRepository = revisionRepository;
+        this.cambios = cambios;
     }
 
     @Autowired
@@ -80,7 +85,11 @@ public class RevisionAdministrativaService {
 
         OffsetDateTime ahora = OffsetDateTime.now();
 
-        publicacion.setEstado("ACTIVA");
+        String estadoFinal = cambios.resolver(publicacion.getIdPublicacion(), ahora)
+                .filter(PAUSADA::equals)
+                .orElse("ACTIVA");
+
+        publicacion.setEstado(estadoFinal);
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);
@@ -93,7 +102,7 @@ public class RevisionAdministrativaService {
                 null,
                 ahora
         );
-        registrarEventoRevision(idAdministrador, publicacion, estadoAnterior, "ACTIVA", "APROBAR_PUBLICACION", ahora);
+        registrarEventoRevision(idAdministrador, publicacion, estadoAnterior, estadoFinal, "APROBAR_PUBLICACION", ahora);
 
         return new DecisionPublicacionResponse(
                 revision.getIdRevision(),
@@ -102,7 +111,9 @@ public class RevisionAdministrativaService {
                 estadoAnterior,
                 publicacion.getEstado(),
                 null,
-                "La publicación ha sido aprobada y activada correctamente.",
+                PAUSADA.equals(estadoFinal)
+                        ? "Los cambios fueron aprobados y la publicación sigue pausada, como la dejó el anfitrión."
+                        : "La publicación ha sido aprobada y activada correctamente.",
                 ahora
         );
     }
@@ -134,6 +145,8 @@ public class RevisionAdministrativaService {
         OffsetDateTime ahora = OffsetDateTime.now();
 
         String motivoFinal = motivo.trim();
+
+        cambios.resolver(publicacion.getIdPublicacion(), ahora);
 
         publicacion.setEstado("BORRADOR");
         publicacion.setFechaActualizacion(ahora);

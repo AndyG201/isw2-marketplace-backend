@@ -45,6 +45,17 @@ public class NotificacionDestinatarioRepository {
                 .findFirst();
     }
 
+    public List<UUID> buscarAdministradoresActivos() {
+        return jdbc.query("""
+                SELECT u.id_usuario
+                FROM public.usuario u
+                JOIN public.rol r ON r.id_rol = u.id_rol
+                WHERE r.nombre = 'ADMINISTRADOR'
+                  AND u.estado = 'ACTIVA'
+                  AND u.restringido = false
+                """, (rs, fila) -> rs.getObject("id_usuario", UUID.class));
+    }
+
     private DestinatariosReserva mapearReserva(ResultSet rs, int fila) throws SQLException {
         return new DestinatariosReserva(
                 rs.getObject("idHuesped", UUID.class),
