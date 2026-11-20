@@ -172,7 +172,14 @@ public class PublicacionBusquedaRepository {
                                a.capacidad,
                                p.precio_por_noche,
                                p.estado,
-                               p.fecha_creacion
+                               p.fecha_creacion,
+                               (
+                                   SELECT i.ruta_imagen
+                                   FROM public.imagen_publicacion i
+                                   WHERE i.id_publicacion = p.id_publicacion
+                                   ORDER BY i.es_portada DESC, i.orden ASC
+                                   LIMIT 1
+                               ) AS imagen_portada
                         """ + where
                                 + " ORDER BY p.fecha_creacion DESC,"
                                 + " p.id_publicacion ASC"
@@ -217,7 +224,8 @@ public class PublicacionBusquedaRepository {
                 rs.getObject(
                         "fecha_creacion",
                         java.time.OffsetDateTime.class
-                )
+                ),
+                rs.getString("imagen_portada")
         );
     }
 }

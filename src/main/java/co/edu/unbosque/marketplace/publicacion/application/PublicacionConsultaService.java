@@ -90,6 +90,9 @@ public class PublicacionConsultaService {
             );
         }
 
+        Map<UUID, String> portadas =
+                ResumenesPublicacion.portadas(imagenRepository, publicaciones);
+
         List<PublicacionResumenResponse> resultado =
                 publicaciones.stream()
                         .map(publicacion -> {
@@ -99,17 +102,7 @@ public class PublicacionConsultaService {
                                             publicacion.getIdAlojamiento()
                                     );
 
-                            return new PublicacionResumenResponse(
-                                    publicacion.getIdPublicacion(),
-                                    alojamiento.idAlojamiento(),
-                                    publicacion.getTitulo(),
-                                    alojamiento.ciudad(),
-                                    alojamiento.tipoAlojamiento(),
-                                    alojamiento.capacidad(),
-                                    publicacion.getPrecioPorNoche(),
-                                    publicacion.getEstado(),
-                                    publicacion.getFechaCreacion()
-                            );
+                            return ResumenesPublicacion.resumen(publicacion, alojamiento, portadas);
                         })
                         .toList();
 
