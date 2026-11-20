@@ -8,11 +8,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
 import co.edu.unbosque.marketplace.alojamiento.contracts.CrearAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
@@ -41,6 +45,7 @@ public class PublicacionAlojamientoService {
     private final PoliticaCancelacionQuery politicaCancelacionQuery;
     private final UsuarioPublicacionQuery usuarioPublicacionQuery;
     private final AlmacenamientoImagenService almacenamientoImagenService;
+    private AuditoriaEventoCommand auditoria;
 
     public PublicacionAlojamientoService(
             AlojamientoPublicacionCommand alojamientoCommand,
@@ -60,6 +65,11 @@ public class PublicacionAlojamientoService {
         this.politicaCancelacionQuery = politicaCancelacionQuery;
         this.usuarioPublicacionQuery = usuarioPublicacionQuery;
         this.almacenamientoImagenService = almacenamientoImagenService;
+    }
+
+    @Autowired
+    public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
+        this.auditoria = auditoria;
     }
 
     @Transactional
@@ -156,6 +166,13 @@ public class PublicacionAlojamientoService {
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);
+        if (auditoria != null) {
+            auditoria.registrarEvento(new RegistrarEventoAuditoria(
+                    idAnfitrion, ahora, "CREAR_PUBLICACION", "EXITOSO", "PUBLICACION",
+                    publicacion.getIdPublicacion(),
+                    "{\"estado\":\"BORRADOR\",\"idAlojamiento\":\""
+                            + idAlojamiento + "\"}", null));
+        }
 
         for (UUID idServicio : idsServicios) {
 

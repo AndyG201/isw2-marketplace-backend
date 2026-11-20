@@ -5,10 +5,14 @@ import java.time.OffsetDateTime;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.EstadoPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
@@ -22,6 +26,7 @@ public class PublicacionEstadoService {
     private final PublicacionRepository publicacionRepository;
     private final AlojamientoPublicacionQuery alojamientoPublicacionQuery;
     private final UsuarioPublicacionQuery usuarioPublicacionQuery;
+    private AuditoriaEventoCommand auditoria;
 
     public PublicacionEstadoService(
             PublicacionRepository publicacionRepository,
@@ -31,6 +36,11 @@ public class PublicacionEstadoService {
         this.publicacionRepository = publicacionRepository;
         this.alojamientoPublicacionQuery = alojamientoPublicacionQuery;
         this.usuarioPublicacionQuery = usuarioPublicacionQuery;
+    }
+
+    @Autowired
+    public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
+        this.auditoria = auditoria;
     }
 
     @Transactional
@@ -61,6 +71,7 @@ public class PublicacionEstadoService {
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);
+        registrarEventoEstado(idAnfitrion, publicacion, estadoAnterior, "PAUSAR_PUBLICACION", ahora);
 
         return new EstadoPublicacionResponse(
                 publicacion.getIdPublicacion(),
@@ -99,6 +110,7 @@ public class PublicacionEstadoService {
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);
+        registrarEventoEstado(idAnfitrion, publicacion, estadoAnterior, "REACTIVAR_PUBLICACION", ahora);
 
         return new EstadoPublicacionResponse(
                 publicacion.getIdPublicacion(),
@@ -107,6 +119,18 @@ public class PublicacionEstadoService {
                 "La publicación ha sido reactivada correctamente.",
                 ahora
         );
+    }
+
+    private void registrarEventoEstado(
+            UUID idAnfitrion, Publicacion publicacion, String estadoAnterior,
+            String accion, OffsetDateTime fecha) {
+        if (auditoria != null) {
+            auditoria.registrarEvento(new RegistrarEventoAuditoria(
+                    idAnfitrion, fecha, accion, "EXITOSO", "PUBLICACION",
+                    publicacion.getIdPublicacion(),
+                    "{\"estadoAnterior\":\"" + estadoAnterior
+                            + "\",\"estadoNuevo\":\"" + publicacion.getEstado() + "\"}", null));
+        }
     }
 
     private void validarAnfitrion(UUID idAnfitrion) {

@@ -4,6 +4,7 @@ public enum TipoTrabajo {
     CONCILIAR_PAGOS(10),
     LIBERAR_RETENCIONES_APROBACION(20),
     EXPIRAR_RETENCIONES(21),
+    COPIAR_AUDITORIA(30),
     EXPORTAR_REPORTE(100);
 
     private final int prioridad;
