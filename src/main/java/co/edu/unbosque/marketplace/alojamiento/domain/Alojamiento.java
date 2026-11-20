@@ -31,6 +31,15 @@ public class Alojamiento {
     @Column(name = "capacidad", nullable = false)
     private int capacidad;
 
+    @Column(name = "habitaciones", nullable = false)
+    private int habitaciones = 1;
+
+    @Column(name = "camas", nullable = false)
+    private int camas = 1;
+
+    @Column(name = "banos", nullable = false)
+    private int banos = 1;
+
     @Column(name = "fecha_creacion", nullable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -105,5 +114,27 @@ public class Alojamiento {
 		this.fechaCreacion = fechaCreacion;
 	}
 
-    
+    public int getHabitaciones() {
+        return habitaciones;
+    }
+
+    public void setHabitaciones(int habitaciones) {
+        this.habitaciones = habitaciones;
+    }
+
+    public int getCamas() {
+        return camas;
+    }
+
+    public void setCamas(int camas) {
+        this.camas = camas;
+    }
+
+    public int getBanos() {
+        return banos;
+    }
+
+    public void setBanos(int banos) {
+        this.banos = banos;
+    }
 }

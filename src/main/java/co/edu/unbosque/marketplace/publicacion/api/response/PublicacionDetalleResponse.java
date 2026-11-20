@@ -24,6 +24,9 @@ public class PublicacionDetalleResponse {
     private String ciudad;
     private String tipoAlojamiento;
     private int capacidad;
+    private int habitaciones = 1;
+    private int camas = 1;
+    private int banos = 1;
 
     private List<ServicioPublicacionResponse> servicios;
     private List<ImagenPublicacionResponse> imagenes;
@@ -88,4 +91,15 @@ public class PublicacionDetalleResponse {
         return servicios;
     }
     public List<ImagenPublicacionResponse> getImagenes() { return imagenes; }
+
+    public PublicacionDetalleResponse conDistribucion(int habitaciones, int camas, int banos) {
+        this.habitaciones = habitaciones;
+        this.camas = camas;
+        this.banos = banos;
+        return this;
+    }
+
+    public int getHabitaciones() { return habitaciones; }
+    public int getCamas() { return camas; }
+    public int getBanos() { return banos; }
 }

@@ -15,7 +15,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class EditarPublicacionRequest {
+public class EditarPublicacionRequest extends DistribucionAlojamientoRequest {
 
     @NotBlank(message = "El título es obligatorio.")
     @Size(max = 200)
