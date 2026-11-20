@@ -81,6 +81,21 @@ class CloudinaryClienteTest {
     }
 
     @Test
+    void limpiaLasBarrasDeLaCarpetaYPermiteNoUsarCarpeta() {
+        servidor.expect(requestTo("https://api.cloudinary.com/v1_1/demo/image/upload"))
+                .andExpect(content().multipartDataContains(Map.of("public_id", "sav/fotos/foto")))
+                .andRespond(withSuccess("{\"secure_url\":\"https://x\"}", MediaType.APPLICATION_JSON));
+        servidor.expect(requestTo("https://api.cloudinary.com/v1_1/demo/image/upload"))
+                .andExpect(content().multipartDataContains(Map.of("public_id", "foto")))
+                .andRespond(withSuccess("{\"secure_url\":\"https://y\"}", MediaType.APPLICATION_JSON));
+
+        new CloudinaryCliente(URL, " //sav/fotos/ ", constructor, RELOJ).subir(new byte[] {1}, "foto", ".jpg");
+        new CloudinaryCliente(URL, null, constructor, RELOJ).subir(new byte[] {1}, "foto", ".jpg");
+
+        servidor.verify();
+    }
+
+    @Test
     void fallaSiCloudinaryNoDevuelveLaDireccion() {
         servidor.expect(requestTo("https://api.cloudinary.com/v1_1/demo/image/upload"))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
@@ -128,6 +143,10 @@ class CloudinaryClienteTest {
         assertFalse(cliente.esUrlPropia("/imagenes/publicaciones/a.jpg"));
         assertEquals("sav/a", cliente.idPublico("https://res.cloudinary.com/demo/image/upload/sav/a.png"));
         assertNull(cliente.idPublico("https://otro.com/a.jpg"));
+        assertEquals("sav/sin-extension", cliente.idPublico("https://res.cloudinary.com/demo/image/upload/v9/sav/sin-extension"));
+        assertEquals("sav.v2/foto", cliente.idPublico("https://res.cloudinary.com/demo/image/upload/sav.v2/foto"));
+        assertNull(cliente.idPublico("https://res.cloudinary.com/demo/video/upload/a.mp4"));
+        assertNull(cliente.idPublico("https://res.cloudinary.com/demo/image/upload/v3/"));
 
         cliente.eliminar("https://otro.com/a.jpg");
         servidor.verify();

@@ -30,8 +30,9 @@ public class CloudinaryCliente {
     private static final Pattern URL_CONFIGURACION =
             Pattern.compile("^cloudinary://([^:]+):([^@]+)@([^/?#]+)$");
 
-    private static final Pattern RUTA_PUBLICA =
-            Pattern.compile("/image/upload/(?:v\\d+/)?(.+?)(?:\\.[a-zA-Z0-9]+)?$");
+    private static final String SEGMENTO_SUBIDA = "/image/upload/";
+
+    private static final Pattern VERSION = Pattern.compile("^v\\d+/");
 
     private final RestClient cliente;
     private final Clock reloj;
@@ -62,7 +63,7 @@ public class CloudinaryCliente {
         this.apiKey = valida ? datos.group(1) : null;
         this.apiSecret = valida ? datos.group(2) : null;
         this.nombreNube = valida ? datos.group(3) : null;
-        this.carpeta = carpeta == null ? "" : carpeta.trim().replaceAll("^/+|/+$", "");
+        this.carpeta = sinBarrasExternas(carpeta);
         this.reloj = reloj;
         this.cliente = constructor
                 .baseUrl("https://api.cloudinary.com/v1_1/" + (valida ? nombreNube : "sin-configurar"))
@@ -152,9 +153,39 @@ public class CloudinaryCliente {
             return null;
         }
 
-        Matcher datos = RUTA_PUBLICA.matcher(URI.create(url).getPath());
+        String ruta = URI.create(url).getPath();
+        int inicio = ruta.indexOf(SEGMENTO_SUBIDA);
 
-        return datos.find() ? datos.group(1) : null;
+        if (inicio < 0) {
+            return null;
+        }
+
+        String id = VERSION.matcher(ruta.substring(inicio + SEGMENTO_SUBIDA.length()))
+                .replaceFirst("");
+        int punto = id.lastIndexOf('.');
+
+        if (punto > id.lastIndexOf('/')) {
+            id = id.substring(0, punto);
+        }
+
+        return id.isEmpty() ? null : id;
+    }
+
+    private static String sinBarrasExternas(String texto) {
+
+        String limpio = texto == null ? "" : texto.trim();
+        int inicio = 0;
+        int fin = limpio.length();
+
+        while (inicio < fin && limpio.charAt(inicio) == '/') {
+            inicio++;
+        }
+
+        while (fin > inicio && limpio.charAt(fin - 1) == '/') {
+            fin--;
+        }
+
+        return limpio.substring(inicio, fin);
     }
 
     private Map<String, String> firmar(Map<String, String> parametros) {
