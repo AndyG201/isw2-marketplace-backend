@@ -43,6 +43,13 @@ public class PublicacionServiciosAdicionalesSeleccionService {
 
         validarPublicacionVisible(idPublicacion);
 
+        return consultarRegistrados(idPublicacion);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ServicioAdicionalPublicacionResponse> consultarRegistrados(
+            UUID idPublicacion) {
+
         return servicioAdicionalQuery
                 .consultarActivosPorPublicacion(idPublicacion)
                 .stream()
