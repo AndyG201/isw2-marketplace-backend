@@ -77,6 +77,7 @@ public class SecurityConfig {
 						// Administración de usuarios.
 
 						.requestMatchers("/administracion/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
+				.requestMatchers("/administracion/reportes/**").hasAuthority("ROLE_ADMINISTRADOR")
 
 						// Creación de alojamientos.
 
