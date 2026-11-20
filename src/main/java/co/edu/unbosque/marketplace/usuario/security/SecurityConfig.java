@@ -80,6 +80,8 @@ public class SecurityConfig {
 
 						.requestMatchers("/administracion/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
 				.requestMatchers("/administracion/reportes/**").hasAuthority("ROLE_ADMINISTRADOR")
+				.requestMatchers("/administracion/auditoria/**")
+				.hasAnyAuthority("ROLE_ADMINISTRADOR", "ROLE_AUDITOR_OPERACION")
 
 						// Creación de alojamientos.
 

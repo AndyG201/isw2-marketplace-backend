@@ -10,6 +10,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
@@ -18,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.ActualizarAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
@@ -56,6 +60,7 @@ public class PublicacionEdicionService {
     private final PoliticaCancelacionQuery politicaCancelacionQuery;
 
     private final AlmacenamientoImagenService almacenamientoImagenService;
+    private AuditoriaEventoCommand auditoria;
 
     public PublicacionEdicionService(
             PublicacionRepository publicacionRepository,
@@ -79,6 +84,11 @@ public class PublicacionEdicionService {
         this.servicioPublicacionQuery = servicioPublicacionQuery;
         this.politicaCancelacionQuery = politicaCancelacionQuery;
         this.almacenamientoImagenService = almacenamientoImagenService;
+    }
+
+    @Autowired
+    public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
+        this.auditoria = auditoria;
     }
 
     @Transactional
@@ -159,6 +169,12 @@ public class PublicacionEdicionService {
         publicacionRepository.save(publicacion);
 
         actualizarServicios(publicacion.getIdPublicacion(), idsServicios);
+        if (auditoria != null) {
+            auditoria.registrarEvento(new RegistrarEventoAuditoria(
+                    idActor, ahora, "MODIFICAR_PUBLICACION", "EXITOSO", "PUBLICACION",
+                    publicacion.getIdPublicacion(),
+                    "{\"estado\":\"" + publicacion.getEstado() + "\"}", null));
+        }
 
         List<ImagenPublicacion> imagenesActuales =
                 imagenRepository.findByIdPublicacionOrderByOrdenAsc(

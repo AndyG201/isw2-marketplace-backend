@@ -5,10 +5,16 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.usuario.api.request.RestringirUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.api.response.AdministradorUsuarioResponse;
 import co.edu.unbosque.marketplace.usuario.contracts.CuentaRestringidaEvent;
@@ -22,6 +28,7 @@ public class AdministradorService {
 	private final UsuarioRepository usuarioRepository;
 	private final JwtUtil jwtUtil;
 	private final ApplicationEventPublisher eventPublisher;
+	private AuditoriaEventoCommand auditoria;
 
 	public AdministradorService(UsuarioRepository usuarioRepository, JwtUtil jwtUtil,
 			ApplicationEventPublisher eventPublisher) {
@@ -31,6 +38,12 @@ public class AdministradorService {
 		this.eventPublisher = eventPublisher;
 	}
 
+	@Autowired
+	public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
+		this.auditoria = auditoria;
+	}
+
+	@Transactional
 	public void reactivarBloqueo(String correo) {
 
 		if (correo == null || correo.isBlank()) {
@@ -51,6 +64,7 @@ public class AdministradorService {
 		usuario.setFechaActualizacion(OffsetDateTime.now());
 
 		usuarioRepository.save(usuario);
+		registrarAuditoria(actorActual(), usuario.getIdUsuario(), "REACTIVAR_BLOQUEO_USUARIO", OffsetDateTime.now());
 	}
 
 	@Transactional
@@ -80,6 +94,7 @@ public class AdministradorService {
 		jwtUtil.invalidarSesiones(idUsuario);
 
 		eventPublisher.publishEvent(new CuentaRestringidaEvent(idUsuario, ahora));
+		registrarAuditoria(actorActual(), idUsuario, "RESTRINGIR_USUARIO", ahora);
 	}
 
 	@Transactional
@@ -101,6 +116,23 @@ public class AdministradorService {
 		usuario.setFechaActualizacion(OffsetDateTime.now());
 
 		usuarioRepository.save(usuario);
+		registrarAuditoria(actorActual(), idUsuario, "LEVANTAR_RESTRICCION_USUARIO", OffsetDateTime.now());
+	}
+
+	private UUID actorActual() {
+		Authentication autenticacion = SecurityContextHolder.getContext().getAuthentication();
+		if (autenticacion != null && autenticacion.getPrincipal() instanceof Usuario actor) {
+			return actor.getIdUsuario();
+		}
+		return null;
+	}
+
+	private void registrarAuditoria(UUID actor, UUID usuarioAfectado, String accion, OffsetDateTime fecha) {
+		if (auditoria != null) {
+			auditoria.registrarEvento(new RegistrarEventoAuditoria(
+					actor, fecha, accion, "EXITOSO", "USUARIO", usuarioAfectado,
+					"{\"resultado\":\"COMPLETADO\"}", null));
+		}
 	}
 
 	public List<AdministradorUsuarioResponse> consultarUsuarios() {

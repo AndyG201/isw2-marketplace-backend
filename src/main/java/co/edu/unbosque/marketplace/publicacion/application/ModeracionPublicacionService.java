@@ -6,11 +6,15 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.ModeracionPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAdministrativaResponse;
@@ -30,6 +34,7 @@ public class ModeracionPublicacionService {
     private final RevisionPublicacionRepository revisionRepository;
     private final AlojamientoPublicacionQuery alojamientoQuery;
     private final ApplicationEventPublisher eventPublisher;
+    private AuditoriaEventoCommand auditoria;
 
     public ModeracionPublicacionService(
             PublicacionRepository publicacionRepository,
@@ -41,6 +46,11 @@ public class ModeracionPublicacionService {
         this.revisionRepository = revisionRepository;
         this.alojamientoQuery = alojamientoQuery;
         this.eventPublisher = eventPublisher;
+    }
+
+    @Autowired
+    public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
+        this.auditoria = auditoria;
     }
 
     // CONSULTAR PUBLICACIONES
@@ -102,6 +112,8 @@ public class ModeracionPublicacionService {
                 ahora
         );
 
+        registrarEventoModeracion(idAdministrador, idPublicacion, estadoAnterior, BLOQUEADA, "BLOQUEAR_PUBLICACION", ahora);
+
         return new ModeracionPublicacionResponse(
                 revision.getIdRevision(),
                 idPublicacion,
@@ -160,6 +172,8 @@ public class ModeracionPublicacionService {
                 ahora
         );
 
+        registrarEventoModeracion(idAdministrador, idPublicacion, estadoAnterior, PAUSADA, "DESBLOQUEAR_PUBLICACION", ahora);
+
         // Notificar al módulo de notificaciones.
 
         eventPublisher.publishEvent(
@@ -182,6 +196,18 @@ public class ModeracionPublicacionService {
                 "La publicación ha sido desbloqueada y permanece PAUSADA.",
                 ahora
         );
+    }
+
+    private void registrarEventoModeracion(
+            UUID idAdministrador, UUID idPublicacion, String estadoAnterior,
+            String estadoNuevo, String accion, OffsetDateTime fecha) {
+        if (auditoria != null) {
+            auditoria.registrarEvento(new RegistrarEventoAuditoria(
+                    idAdministrador, fecha, accion, "EXITOSO", "PUBLICACION",
+                    idPublicacion,
+                    "{\"estadoAnterior\":\"" + estadoAnterior
+                            + "\",\"estadoNuevo\":\"" + estadoNuevo + "\"}", null));
+        }
     }
 
     // VALIDAR ADMINISTRADOR

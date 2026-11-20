@@ -4,12 +4,16 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.resena.api.request.CrearResenaRequest;
 import co.edu.unbosque.marketplace.resena.api.response.CrearResenaResponse;
 import co.edu.unbosque.marketplace.resena.domain.Resena;
@@ -24,10 +28,16 @@ public class ResenaService {
 
     private final ResenaRepository resenas;
     private final ReservaResenaQuery reservas;
+    private AuditoriaEventoCommand auditoria;
 
     public ResenaService(ResenaRepository resenas, ReservaResenaQuery reservas) {
         this.resenas = resenas;
         this.reservas = reservas;
+    }
+
+    @Autowired
+    public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
+        this.auditoria = auditoria;
     }
 
     @Transactional
@@ -67,6 +77,13 @@ public class ResenaService {
 
         try {
             Resena guardada = resenas.saveAndFlush(resena);
+            if (auditoria != null) {
+                auditoria.registrarEvento(new RegistrarEventoAuditoria(
+                        idHuesped, ahora, "CREAR_RESENA", "EXITOSO", "RESENA",
+                        guardada.getIdResena(),
+                        "{\"idReserva\":\"" + idReserva
+                                + "\",\"calificacion\":" + guardada.getCalificacion() + "}", null));
+            }
             return convertir(guardada, reserva, "La reseña y la calificación se registraron correctamente.");
         } catch (DataIntegrityViolationException error) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,

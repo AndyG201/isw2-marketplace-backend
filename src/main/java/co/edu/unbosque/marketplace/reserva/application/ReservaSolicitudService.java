@@ -5,6 +5,8 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.reserva.api.request.CrearReservaRequest;
 import co.edu.unbosque.marketplace.reserva.api.response.SolicitudReservaResponse;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaSolicitadaEvent;
@@ -31,6 +35,7 @@ public class ReservaSolicitudService {
     private final ReservaSolicitudRepository reservaRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final JdbcTemplate jdbc;
+    private AuditoriaEventoCommand auditoria;
 
     public ReservaSolicitudService(
             ReservaSolicitudRepository reservaRepository,
@@ -39,6 +44,11 @@ public class ReservaSolicitudService {
         this.reservaRepository = reservaRepository;
         this.eventPublisher = eventPublisher;
         this.jdbc = jdbc;
+    }
+
+    @Autowired
+    public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
+        this.auditoria = auditoria;
     }
 
     @Transactional
@@ -145,6 +155,14 @@ public class ReservaSolicitudService {
                 null);
 
         Reserva guardada = reservaRepository.saveAndFlush(reserva);
+        if (auditoria != null) {
+            auditoria.registrarEvento(new RegistrarEventoAuditoria(
+                    idHuesped, ahora, "SOLICITAR_RESERVA", "EXITOSO", "RESERVA",
+                    guardada.getIdReserva(),
+                    "{\"idCotizacion\":\"" + guardada.getIdCotizacion()
+                            + "\",\"estado\":\"" + guardada.getEstado() + "\"}",
+                    null));
+        }
 
         if (requiereAprobacion) {
             eventPublisher.publishEvent(new ReservaSolicitadaEvent(

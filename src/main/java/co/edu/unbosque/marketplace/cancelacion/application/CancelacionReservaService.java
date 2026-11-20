@@ -9,11 +9,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.cancelacion.api.response.CancelarReservaResponse;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
@@ -35,6 +39,7 @@ public class CancelacionReservaService {
     private final PoliticaCancelacionQuery politicas;
     private final CancelacionRepository cancelaciones;
     private final List<PoliticaDevolucionStrategy> estrategias;
+    private AuditoriaEventoCommand auditoria;
 
     public CancelacionReservaService(
             ReservaCancelacionGateway reservas,
@@ -45,6 +50,11 @@ public class CancelacionReservaService {
         this.politicas = politicas;
         this.cancelaciones = cancelaciones;
         this.estrategias = estrategias;
+    }
+
+    @Autowired
+    public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
+        this.auditoria = auditoria;
     }
 
     @Transactional
@@ -110,6 +120,14 @@ public class CancelacionReservaService {
                 ESTADO_CANCELADA);
         cancelaciones.saveAndFlush(cancelacion);
         reservas.cancelarYLiberar(idReserva);
+        if (auditoria != null) {
+            auditoria.registrarEvento(new RegistrarEventoAuditoria(
+                    idHuesped, ahora, "CANCELAR_RESERVA", "EXITOSO", "RESERVA",
+                    idReserva,
+                    "{\"estadoAnterior\":\"" + reserva.estado()
+                            + "\",\"estadoFinal\":\"CANCELADA\"}",
+                    null));
+        }
 
         return convertir(cancelacion, politica.porcentajeDevolucion(),
                 montoDevolucion.signum() > 0
