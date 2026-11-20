@@ -75,6 +75,7 @@ public class ReservaAnfitrionService {
                 datos.fechaEntrada(),
                 datos.fechaSalida(),
                 datos.estado(),
-                datos.montoTotal());
+                datos.montoTotal(),
+                datos.retencionHasta());
     }
 }

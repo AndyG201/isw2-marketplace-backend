@@ -3,6 +3,7 @@ package co.edu.unbosque.marketplace.reserva.infrastructure.persistence;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,7 +33,8 @@ public class ReservaAnfitrionRepository {
                                 FROM public.cotizacion_adicional ca
                                 WHERE ca.id_cotizacion = c.id_cotizacion), 0))
                        AS "montoTotal",
-                   r.estado AS "estado"
+                   r.estado AS "estado",
+                   r.retencion_hasta AS "retencionHasta"
             FROM public.reserva r
             INNER JOIN public.cotizacion c
                 ON c.id_cotizacion = r.id_cotizacion
@@ -85,6 +87,7 @@ public class ReservaAnfitrionRepository {
                 resultado.getObject("fechaEntrada", LocalDate.class),
                 resultado.getObject("fechaSalida", LocalDate.class),
                 resultado.getBigDecimal("montoTotal"),
-                resultado.getString("estado"));
+                resultado.getString("estado"),
+                resultado.getObject("retencionHasta", OffsetDateTime.class));
     }
 }

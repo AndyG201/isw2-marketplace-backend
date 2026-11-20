@@ -2,6 +2,7 @@ package co.edu.unbosque.marketplace.reserva.infrastructure.persistence;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record ReservaAnfitrionDatos(
@@ -13,5 +14,6 @@ public record ReservaAnfitrionDatos(
         LocalDate fechaEntrada,
         LocalDate fechaSalida,
         BigDecimal montoTotal,
-        String estado) {
+        String estado,
+        OffsetDateTime retencionHasta) {
 }
