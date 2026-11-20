@@ -210,6 +210,10 @@ public class PublicacionConsultaService {
                 alojamiento.capacidad(),
                 servicios,
                 imagenes
+        ).conDistribucion(
+                alojamiento.habitaciones(),
+                alojamiento.camas(),
+                alojamiento.banos()
         );
     }
 }

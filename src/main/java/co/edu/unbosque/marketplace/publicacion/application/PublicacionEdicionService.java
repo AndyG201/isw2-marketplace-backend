@@ -135,7 +135,10 @@ public class PublicacionEdicionService {
                         solicitud.getUbicacion(),
                         solicitud.getCiudad(),
                         solicitud.getTipoAlojamiento(),
-                        solicitud.getCapacidad()
+                        solicitud.getCapacidad(),
+                        solicitud.getHabitaciones(),
+                        solicitud.getCamas(),
+                        solicitud.getBanos()
                 )
         );
 

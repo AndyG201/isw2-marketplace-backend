@@ -17,6 +17,9 @@ import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.Alojam
 public class AlojamientoPublicacionCommandService
         implements AlojamientoPublicacionCommand {
 
+    private static final int MINIMO = 1;
+    private static final int MAXIMO = 50;
+
     private final AlojamientoRepository alojamientoRepository;
 
     public AlojamientoPublicacionCommandService(
@@ -43,6 +46,9 @@ public class AlojamientoPublicacionCommandService
         alojamiento.setTipoAlojamiento(
                 solicitud.tipoAlojamiento().trim());
         alojamiento.setCapacidad(solicitud.capacidad());
+        alojamiento.setHabitaciones(valorOMinimo(solicitud.habitaciones()));
+        alojamiento.setCamas(valorOMinimo(solicitud.camas()));
+        alojamiento.setBanos(valorOMinimo(solicitud.banos()));
         alojamiento.setFechaCreacion(OffsetDateTime.now());
 
         alojamientoRepository.save(alojamiento);
@@ -68,6 +74,12 @@ public class AlojamientoPublicacionCommandService
                 solicitud.capacidad()
         );
 
+        validarDistribucion(
+                solicitud.habitaciones(),
+                solicitud.camas(),
+                solicitud.banos()
+        );
+
         Alojamiento alojamiento = alojamientoRepository
                 .findById(idAlojamiento)
                 .orElseThrow(() ->
@@ -79,6 +91,18 @@ public class AlojamientoPublicacionCommandService
         alojamiento.setTipoAlojamiento(
                 solicitud.tipoAlojamiento().trim());
         alojamiento.setCapacidad(solicitud.capacidad());
+
+        if (solicitud.habitaciones() != null) {
+            alojamiento.setHabitaciones(solicitud.habitaciones());
+        }
+
+        if (solicitud.camas() != null) {
+            alojamiento.setCamas(solicitud.camas());
+        }
+
+        if (solicitud.banos() != null) {
+            alojamiento.setBanos(solicitud.banos());
+        }
 
         alojamientoRepository.save(alojamiento);
     }
@@ -97,6 +121,35 @@ public class AlojamientoPublicacionCommandService
                 solicitud.tipoAlojamiento(),
                 solicitud.capacidad()
         );
+
+        validarDistribucion(
+                solicitud.habitaciones(),
+                solicitud.camas(),
+                solicitud.banos()
+        );
+    }
+
+    private void validarDistribucion(
+            Integer habitaciones,
+            Integer camas,
+            Integer banos) {
+
+        validarCantidad(habitaciones, "habitaciones");
+        validarCantidad(camas, "camas");
+        validarCantidad(banos, "baños");
+    }
+
+    private void validarCantidad(Integer cantidad, String nombre) {
+
+        if (cantidad != null && (cantidad < MINIMO || cantidad > MAXIMO)) {
+            throw new IllegalArgumentException(
+                    "El número de " + nombre + " debe estar entre "
+                            + MINIMO + " y " + MAXIMO + ".");
+        }
+    }
+
+    private static int valorOMinimo(Integer cantidad) {
+        return cantidad == null ? MINIMO : cantidad;
     }
 
     private void validarDatosAlojamiento(

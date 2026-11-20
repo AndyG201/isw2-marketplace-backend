@@ -236,6 +236,9 @@ class PublicacionConsultaServiceTest {
         when(alojamiento.ciudad()).thenReturn("Bogotá");
         when(alojamiento.tipoAlojamiento()).thenReturn("Apartamento");
         when(alojamiento.capacidad()).thenReturn(3);
+        when(alojamiento.habitaciones()).thenReturn(2);
+        when(alojamiento.camas()).thenReturn(3);
+        when(alojamiento.banos()).thenReturn(1);
 
         Publicacion publicacion = mock(Publicacion.class);
         ImagenPublicacion imagen = mock(ImagenPublicacion.class);
@@ -291,6 +294,10 @@ class PublicacionConsultaServiceTest {
                 service.consultarDetalle(idAnfitrion, idPublicacion);
 
         assertNotNull(respuesta);
+
+        assertEquals(2, respuesta.getHabitaciones());
+        assertEquals(3, respuesta.getCamas());
+        assertEquals(1, respuesta.getBanos());
 
         verify(imagenRepository)
                 .findByIdPublicacionOrderByOrdenAsc(idPublicacion);

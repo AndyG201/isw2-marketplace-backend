@@ -132,7 +132,10 @@ public class PublicacionAlojamientoService {
                         solicitud.getUbicacion().trim(),
                         solicitud.getCiudad().trim(),
                         solicitud.getTipoAlojamiento().trim(),
-                        solicitud.getCapacidad()
+                        solicitud.getCapacidad(),
+                        solicitud.getHabitaciones(),
+                        solicitud.getCamas(),
+                        solicitud.getBanos()
                 )
         );
 
