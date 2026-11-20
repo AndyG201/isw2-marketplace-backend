@@ -31,6 +31,7 @@ import co.edu.unbosque.marketplace.usuario.security.SecurityConfig;
         PasswordConfig.class,
         JwtAuthenticationFilter.class,
         PublicacionDetallePublicoController.class,
+        PublicacionAdministrativaDetalleController.class,
         ServicioController.class
 })
 class PublicacionDetallePublicoAccesoTest {
@@ -67,6 +68,12 @@ class PublicacionDetallePublicoAccesoTest {
 
         mockMvc.perform(get("/servicios"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void elDetalleParaLaAdministracionPideSesion() throws Exception {
+        mockMvc.perform(get("/administracion/publicaciones/{id}", UUID.randomUUID()))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

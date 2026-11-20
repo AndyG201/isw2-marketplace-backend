@@ -1,6 +1,8 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.PoliticaCancelacionPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionPublicaResponse;
+import co.edu.unbosque.marketplace.publicacion.api.response.ServicioAdicionalPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 
@@ -43,14 +46,34 @@ public class PublicacionDetallePublicoService {
     @Transactional(readOnly = true)
     public PublicacionPublicaResponse consultar(UUID idPublicacion) {
 
-        if (idPublicacion == null) {
-            throw new NoSuchElementException("La publicación no existe o no está disponible.");
-        }
-
-        Publicacion publicacion = publicacionRepository.findById(idPublicacion)
+        Publicacion publicacion = buscar(idPublicacion)
                 .filter(encontrada -> ESTADO_ACTIVA.equals(encontrada.getEstado()))
                 .orElseThrow(() -> new NoSuchElementException(
                         "La publicación no existe o no está disponible."));
+
+        return armar(idPublicacion, publicacion, adicionalesService.consultarDisponibles(idPublicacion));
+    }
+
+    @Transactional(readOnly = true)
+    public PublicacionPublicaResponse consultarParaAdministracion(UUID idPublicacion) {
+
+        Publicacion publicacion = buscar(idPublicacion)
+                .orElseThrow(() -> new NoSuchElementException("La publicación no existe."));
+
+        return armar(idPublicacion, publicacion, adicionalesService.consultarRegistrados(idPublicacion));
+    }
+
+    private Optional<Publicacion> buscar(UUID idPublicacion) {
+
+        return idPublicacion == null
+                ? Optional.empty()
+                : publicacionRepository.findById(idPublicacion);
+    }
+
+    private PublicacionPublicaResponse armar(
+            UUID idPublicacion,
+            Publicacion publicacion,
+            List<ServicioAdicionalPublicacionResponse> adicionales) {
 
         AlojamientoPublicacionInfo alojamiento = alojamientoQuery
                 .consultarDatosParaPublicacion(publicacion.getIdAlojamiento())
@@ -64,7 +87,7 @@ public class PublicacionDetallePublicoService {
 
         return new PublicacionPublicaResponse(
                 consultaService.armarDetalle(publicacion, alojamiento),
-                adicionalesService.consultarDisponibles(idPublicacion),
+                adicionales,
                 politica);
     }
 

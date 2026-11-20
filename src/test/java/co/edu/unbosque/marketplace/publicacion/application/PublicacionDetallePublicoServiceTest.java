@@ -130,6 +130,43 @@ class PublicacionDetallePublicoServiceTest {
     }
 
     @Test
+    void laAdministracionVeLaPublicacionEnCualquierEstado() {
+        Publicacion publicacion = mock(Publicacion.class);
+        when(publicacion.getIdAlojamiento()).thenReturn(ALOJAMIENTO);
+        when(publicacion.getIdPolitica()).thenReturn(POLITICA);
+        AlojamientoPublicacionInfo alojamiento = new AlojamientoPublicacionInfo(
+                ALOJAMIENTO, UUID.randomUUID(), "Calle 1", "Bogotá", "Casa", 4);
+        PublicacionDetalleResponse detalle = mock(PublicacionDetalleResponse.class);
+        List<ServicioAdicionalPublicacionResponse> adicionales = List.of(
+                new ServicioAdicionalPublicacionResponse(
+                        UUID.randomUUID(), "Desayuno", null, new BigDecimal("20000"), true));
+
+        when(publicacionRepository.findById(PUBLICACION)).thenReturn(Optional.of(publicacion));
+        when(alojamientoQuery.consultarDatosParaPublicacion(ALOJAMIENTO)).thenReturn(Optional.of(alojamiento));
+        when(consultaService.armarDetalle(publicacion, alojamiento)).thenReturn(detalle);
+        when(adicionalesService.consultarRegistrados(PUBLICACION)).thenReturn(adicionales);
+        when(politicaQuery.consultarPorId(POLITICA)).thenReturn(Optional.empty());
+
+        PublicacionPublicaResponse respuesta = servicio.consultarParaAdministracion(PUBLICACION);
+
+        assertSame(detalle, respuesta.publicacion());
+        assertEquals(adicionales, respuesta.serviciosAdicionales());
+        assertNull(respuesta.politica());
+    }
+
+    @Test
+    void laAdministracionRecibeNoEncontradaSiLaPublicacionNoExiste() {
+        when(publicacionRepository.findById(PUBLICACION)).thenReturn(Optional.empty());
+
+        NoSuchElementException error = assertThrows(NoSuchElementException.class,
+                () -> servicio.consultarParaAdministracion(PUBLICACION));
+
+        assertEquals("La publicación no existe.", error.getMessage());
+        assertThrows(NoSuchElementException.class, () -> servicio.consultarParaAdministracion(null));
+        verifyNoInteractions(alojamientoQuery, consultaService, adicionalesService, politicaQuery);
+    }
+
+    @Test
     void fallaSiNoEncuentraElAlojamiento() {
         Publicacion publicacion = publicacion("ACTIVA");
         when(publicacion.getIdAlojamiento()).thenReturn(ALOJAMIENTO);
