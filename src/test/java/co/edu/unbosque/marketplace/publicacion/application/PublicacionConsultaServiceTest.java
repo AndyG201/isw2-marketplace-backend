@@ -277,6 +277,8 @@ class PublicacionConsultaServiceTest {
         when(alojamiento.camas()).thenReturn(3);
         when(alojamiento.banos()).thenReturn(1);
         when(alojamiento.propietarioInmueble()).thenReturn("Ana Gómez");
+        when(alojamiento.pais()).thenReturn("Perú");
+        when(alojamiento.codigoPais()).thenReturn("PE");
 
         Publicacion publicacion = mock(Publicacion.class);
         ImagenPublicacion imagen = mock(ImagenPublicacion.class);
@@ -337,6 +339,8 @@ class PublicacionConsultaServiceTest {
         assertEquals(3, respuesta.getCamas());
         assertEquals(1, respuesta.getBanos());
         assertEquals("Ana Gómez", respuesta.getPropietarioInmueble());
+        assertEquals("Perú", respuesta.getPais());
+        assertEquals("PE", respuesta.getCodigoPais());
 
         verify(imagenRepository)
                 .findByIdPublicacionOrderByOrdenAsc(idPublicacion);
