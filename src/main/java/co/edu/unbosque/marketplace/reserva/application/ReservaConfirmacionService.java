@@ -100,11 +100,22 @@ public class ReservaConfirmacionService {
         PagoInfo pago = pagos.registrarPago(idReserva, resultado.referencia(), idempotencia,
                 datos.getMontoTotal(), resultado.aprobado(), momento);
         if (resultado.aprobado()) {
-            reserva.setEstado("CONFIRMADA");
-            reserva.setFechaConfirmacion(momento);
+            if (reserva.getRetencionHasta() != null && reserva.getRetencionHasta().isAfter(momento)) {
+                reserva.setEstado("CONFIRMADA");
+                reserva.setFechaConfirmacion(momento);
+                reserva.setRetencionHasta(null);
+                reservas.save(reserva);
+                return respuesta(reserva, pago, datos.getMontoTotal(), resultado.mensaje());
+            }
+            // Stripe capturó el dinero después de vencer la retención: persistir la obligación
+            // de reembolso en la misma transacción que registra el pago aprobado.
+            pagos.programarReembolso(idempotencia, momento);
+            noches.liberar(idReserva);
+            reserva.setEstado("EXPIRADA");
             reserva.setRetencionHasta(null);
             reservas.save(reserva);
-            return respuesta(reserva, pago, datos.getMontoTotal(), resultado.mensaje());
+            return respuesta(reserva, pago, datos.getMontoTotal(),
+                    "Stripe aprobó el pago después del vencimiento. El reembolso quedó programado.");
         }
         noches.liberar(idReserva);
         reserva.setRetencionHasta(null);

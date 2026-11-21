@@ -1,0 +1,14 @@
+package co.edu.unbosque.marketplace.pago.application.port;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import co.edu.unbosque.marketplace.pago.domain.ReembolsoPago;
+
+@Repository
+public interface ReembolsoPagoRepository extends JpaRepository<ReembolsoPago, UUID> {
+    Optional<ReembolsoPago> findByIdPago(UUID idPago);
+}

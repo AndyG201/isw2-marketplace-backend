@@ -21,6 +21,7 @@ import co.edu.unbosque.marketplace.pago.contracts.RegistroPagos;
 import co.edu.unbosque.marketplace.reserva.application.dto.PagoSimuladoResponse;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 
 @Service
@@ -29,20 +30,24 @@ public class ReservaPagoIntentoService {
     private static final String PENDIENTE = "PENDIENTE";
     private static final String PAGO_PENDIENTE = "PENDIENTE";
     private static final String PAGO_PAGADO = "PAGADO";
+    private static final String PAGO_REEMBOLSADO = "REEMBOLSADO";
     private static final String RESERVA_PENDIENTE_PAGO = "PENDIENTE_PAGO";
     private static final String RESERVA_CONFIRMADA = "CONFIRMADA";
 
     private final ReservaConfirmacionRepository reservas;
     private final RegistroPagos pagos;
     private final JdbcTemplate jdbc;
+    private final NocheReservaRepository noches;
 
     public ReservaPagoIntentoService(
             ReservaConfirmacionRepository reservas,
             RegistroPagos pagos,
-            JdbcTemplate jdbc) {
+            JdbcTemplate jdbc,
+            NocheReservaRepository noches) {
         this.reservas = reservas;
         this.pagos = pagos;
         this.jdbc = jdbc;
+        this.noches = noches;
     }
 
     @Transactional
@@ -139,19 +144,34 @@ public class ReservaPagoIntentoService {
         if (PAGO_PAGADO.equals(registrado.estado())) {
             return respuesta(reserva, registrado, "El pago ya había sido aprobado.");
         }
+        if (PAGO_REEMBOLSADO.equals(registrado.estado())) {
+            return respuesta(reserva, registrado, "El pago ya fue reembolsado; se ignora el evento duplicado.");
+        }
 
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
         PagoInfo pago = pagos.registrarResultado(claveNormalizada, aprobado, referencia, mensaje, ahora);
 
         String mensajeFinal = mensaje;
-        if (aprobado && RESERVA_PENDIENTE_PAGO.equals(reserva.getEstado())) {
-            if (reserva.getRetencionHasta() != null && reserva.getRetencionHasta().isAfter(ahora)) {
+        if (aprobado) {
+            boolean reservaPagable = RESERVA_PENDIENTE_PAGO.equals(reserva.getEstado())
+                    && reserva.getRetencionHasta() != null
+                    && reserva.getRetencionHasta().isAfter(ahora);
+            if (reservaPagable) {
                 reserva.setEstado(RESERVA_CONFIRMADA);
                 reserva.setFechaConfirmacion(ahora);
                 reserva.setRetencionHasta(null);
                 reservas.save(reserva);
             } else {
-                mensajeFinal = "Stripe aprobó el pago, pero venció la retención de la reserva; requiere conciliación.";
+                // Webhook/reintento tardío: el pago está capturado, pero la reserva ya no
+                // puede confirmarse. La obligación de reembolso queda persistida aquí.
+                pagos.programarReembolso(claveNormalizada, ahora);
+                if (RESERVA_PENDIENTE_PAGO.equals(reserva.getEstado())) {
+                    noches.liberar(reserva.getIdReserva());
+                    reserva.setEstado("EXPIRADA");
+                    reserva.setRetencionHasta(null);
+                    reservas.save(reserva);
+                }
+                mensajeFinal = "Stripe aprobó el pago después del vencimiento. El reembolso quedó programado.";
             }
         }
         return respuesta(reserva, pago, mensajeFinal);

@@ -20,10 +20,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
+import co.edu.unbosque.marketplace.pago.contracts.ResultadoReembolsoSandbox;
 
 @Component
 public class PagoSandboxAdapter implements PagoSandboxGateway {
     private static final URI PAYMENT_INTENTS_URI = URI.create("https://api.stripe.com/v1/payment_intents");
+    private static final URI REFUNDS_URI = URI.create("https://api.stripe.com/v1/refunds");
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String secretKey;
@@ -92,6 +94,76 @@ public class PagoSandboxAdapter implements PagoSandboxGateway {
         } catch (IOException ex) {
             throw new IllegalStateException("No fue posible comunicarse con Stripe.", ex);
         }
+    }
+
+
+    @Override
+    public ResultadoReembolsoSandbox reembolsar(
+            String paymentIntentId, BigDecimal monto, String claveIdempotencia) {
+        validarConfiguracionReembolso(paymentIntentId, monto, claveIdempotencia);
+        long montoMenor = monto.movePointRight(2).setScale(0, RoundingMode.UNNECESSARY).longValueExact();
+        String body = "payment_intent=" + codificar(paymentIntentId)
+                + "&amount=" + montoMenor;
+        HttpRequest request = HttpRequest.newBuilder(REFUNDS_URI)
+                .timeout(Duration.ofSeconds(30))
+                .header("Authorization", autorizacion())
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header("Idempotency-Key", claveIdempotencia)
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        return enviarReembolso(request);
+    }
+
+    @Override
+    public ResultadoReembolsoSandbox consultarReembolso(String referenciaReembolso) {
+        if (referenciaReembolso == null || !referenciaReembolso.matches("re_[A-Za-z0-9]+")) {
+            throw new IllegalArgumentException("La referencia del reembolso Stripe no es válida.");
+        }
+        URI uri = URI.create(REFUNDS_URI + "/" + codificar(referenciaReembolso));
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .timeout(Duration.ofSeconds(30))
+                .header("Authorization", autorizacion())
+                .GET()
+                .build();
+        return enviarReembolso(request);
+    }
+
+    private ResultadoReembolsoSandbox enviarReembolso(HttpRequest request) {
+        try {
+            HttpResponse<String> response = httpClient.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            JsonNode json = objectMapper.readTree(response.body());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                return new ResultadoReembolsoSandbox(
+                        texto(json, "id"), texto(json, "status"),
+                        json.path("failure_reason").asText("Stripe procesó la solicitud de reembolso."));
+            }
+            String mensaje = json.path("error").path("message")
+                    .asText("Stripe rechazó la solicitud de reembolso.");
+            throw new IllegalStateException("Stripe respondió HTTP " + response.statusCode() + ": " + mensaje);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("La solicitud de reembolso a Stripe fue interrumpida.", ex);
+        } catch (IOException ex) {
+            throw new IllegalStateException("No fue posible consultar o solicitar el reembolso en Stripe.", ex);
+        }
+    }
+
+    private void validarConfiguracionReembolso(String paymentIntentId, BigDecimal monto, String clave) {
+        if (!secretKey.startsWith("sk_test_")) {
+            throw new IllegalStateException("Configura STRIPE_SECRET_KEY con una clave de prueba sk_test_.");
+        }
+        if (paymentIntentId == null || !paymentIntentId.matches("pi_[A-Za-z0-9]+")) {
+            throw new IllegalArgumentException("La referencia PaymentIntent no es válida.");
+        }
+        if (monto == null || monto.signum() <= 0 || clave == null || clave.isBlank()) {
+            throw new IllegalArgumentException("El monto y la clave de idempotencia del reembolso son obligatorios.");
+        }
+    }
+
+    private String autorizacion() {
+        return "Basic " + Base64.getEncoder().encodeToString(
+                (secretKey + ":").getBytes(StandardCharsets.UTF_8));
     }
 
     private void validarConfiguracion(BigDecimal monto, String claveIdempotencia) {
