@@ -32,4 +32,6 @@ public interface RegistroPagos {
             OffsetDateTime fecha);
 
     List<String> clavesPorConciliar(OffsetDateTime fecha);
+
+    void programarReembolso(String claveIdempotenciaPago, OffsetDateTime fecha);
 }

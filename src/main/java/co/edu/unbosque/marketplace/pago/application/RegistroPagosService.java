@@ -11,10 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.pago.application.port.OperacionPendienteRepository;
 import co.edu.unbosque.marketplace.pago.application.port.PagoRepository;
+import co.edu.unbosque.marketplace.pago.application.port.ReembolsoPagoRepository;
 import co.edu.unbosque.marketplace.pago.contracts.PagoInfo;
 import co.edu.unbosque.marketplace.pago.contracts.RegistroPagos;
 import co.edu.unbosque.marketplace.pago.domain.OperacionPendiente;
 import co.edu.unbosque.marketplace.pago.domain.Pago;
+import co.edu.unbosque.marketplace.pago.domain.ReembolsoPago;
 
 @Service
 public class RegistroPagosService implements RegistroPagos {
@@ -29,10 +31,13 @@ public class RegistroPagosService implements RegistroPagos {
 
     private final PagoRepository pagos;
     private final OperacionPendienteRepository operaciones;
+    private final ReembolsoPagoRepository reembolsos;
 
-    public RegistroPagosService(PagoRepository pagos, OperacionPendienteRepository operaciones) {
+    public RegistroPagosService(PagoRepository pagos, OperacionPendienteRepository operaciones,
+            ReembolsoPagoRepository reembolsos) {
         this.pagos = pagos;
         this.operaciones = operaciones;
+        this.reembolsos = reembolsos;
     }
 
     @Override
@@ -77,6 +82,10 @@ public class RegistroPagosService implements RegistroPagos {
             String claveIdempotencia, boolean aprobado, String referencia, String mensaje, OffsetDateTime fecha) {
         Pago pago = pagos.findByClaveIdempotencia(claveIdempotencia)
                 .orElseThrow(() -> new IllegalStateException("No existe el intento de pago."));
+        if ("REEMBOLSADO".equals(pago.getEstado())
+                || (PAGADO.equals(pago.getEstado()) && !aprobado)) {
+            return convertir(pago);
+        }
         if (referencia != null && !referencia.isBlank()) {
             pago.setReferenciaStripe(referencia);
         }
@@ -139,6 +148,24 @@ public class RegistroPagosService implements RegistroPagos {
                 .stream()
                 .map(OperacionPendiente::getClaveIdempotencia)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public void programarReembolso(String claveIdempotenciaPago, OffsetDateTime fecha) {
+        Pago pago = pagos.findByClaveIdempotencia(claveIdempotenciaPago)
+                .orElseThrow(() -> new IllegalStateException("No existe el pago que requiere reembolso."));
+        if (!PAGADO.equals(pago.getEstado())) {
+            throw new IllegalStateException("Solo se puede reembolsar un pago capturado y aprobado.");
+        }
+        if (pago.getReferenciaStripe() == null || pago.getReferenciaStripe().isBlank()) {
+            throw new IllegalStateException("El pago aprobado no tiene referencia de PaymentIntent de Stripe.");
+        }
+        if (reembolsos.findByIdPago(pago.getIdPago()).isPresent()) return;
+        String claveReembolso = "refund-" + pago.getIdPago();
+        reembolsos.saveAndFlush(new ReembolsoPago(
+                UUID.randomUUID(), pago.getIdPago(), pago.getIdReserva(),
+                pago.getReferenciaStripe(), claveReembolso, fecha));
     }
 
     private static PagoInfo convertir(Pago pago) {

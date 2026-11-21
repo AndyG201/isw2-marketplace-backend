@@ -103,17 +103,28 @@ public class ReservaPagoAprobadoService {
                 momento);
 
         if (resultado.aprobado()) {
-            reserva.setEstado(CONFIRMADA);
-            reserva.setFechaConfirmacion(momento);
-            reserva.setRetencionHasta(null);
-            reservas.saveAndFlush(reserva);
+            if (reserva.getRetencionHasta() != null && reserva.getRetencionHasta().isAfter(momento)) {
+                reserva.setEstado(CONFIRMADA);
+                reserva.setFechaConfirmacion(momento);
+                reserva.setRetencionHasta(null);
+                reservas.saveAndFlush(reserva);
+            } else {
+                pagos.programarReembolso(claveNormalizada, momento);
+                noches.liberar(idReserva);
+                reserva.setEstado("EXPIRADA");
+                reserva.setRetencionHasta(null);
+                reservas.saveAndFlush(reserva);
+            }
         } else {
             noches.liberar(idReserva);
             reserva.setRetencionHasta(null);
             reservas.saveAndFlush(reserva);
         }
 
-        return respuesta(reserva, pago, datos.getMontoTotal(), resultado.mensaje());
+        String mensajeFinal = resultado.aprobado() && "EXPIRADA".equals(reserva.getEstado())
+                ? "Stripe aprobó el pago después del vencimiento. El reembolso quedó programado."
+                : resultado.mensaje();
+        return respuesta(reserva, pago, datos.getMontoTotal(), mensajeFinal);
     }
 
     private void validarReservaAprobada(Reserva reserva) {
