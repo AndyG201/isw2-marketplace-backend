@@ -291,13 +291,3 @@ public class AdministradorUsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 }
-
-    @GetMapping
-    public ResponseEntity<List<AdministradorUsuarioResponse>> consultarUsuarios() {
-
-        List<AdministradorUsuarioResponse> usuarios =
-                administradorService.consultarUsuarios();
-
-        return ResponseEntity.ok(usuarios);
-    }
-}
