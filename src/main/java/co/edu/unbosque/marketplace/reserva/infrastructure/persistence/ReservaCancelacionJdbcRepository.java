@@ -32,19 +32,10 @@ public class ReservaCancelacionJdbcRepository implements ReservaCancelacionRepos
                        * ct.porcentaje_descuento / 100)
                     + COALESCE((SELECT SUM(ca.cantidad * ca.precio_aplicado)
                                 FROM public.cotizacion_adicional ca
-                                WHERE ca.id_cotizacion = c.id_cotizacion), 0)) AS "montoTotal",
-                   pago.monto AS "montoPagado",
-                   pago.estado AS "estadoPago"
+                                WHERE ca.id_cotizacion = c.id_cotizacion), 0)) AS "montoTotal"
             FROM public.reserva r
             JOIN public.cotizacion c ON c.id_cotizacion = r.id_cotizacion
             JOIN public.configuracion_tarifa ct ON ct.id_configuracion = c.id_configuracion
-            LEFT JOIN LATERAL (
-                SELECT p.monto, p.estado
-                FROM public.pago p
-                WHERE p.id_reserva = r.id_reserva
-                ORDER BY p.fecha_creacion DESC
-                LIMIT 1
-            ) pago ON TRUE
             WHERE r.id_reserva = ?
             FOR UPDATE OF r
             """;
@@ -83,7 +74,7 @@ public class ReservaCancelacionJdbcRepository implements ReservaCancelacionRepos
                 rs.getObject("idPoliticaAplicada", UUID.class),
                 rs.getObject("fechaEntrada", LocalDate.class),
                 rs.getBigDecimal("montoTotal"),
-                rs.getBigDecimal("montoPagado"),
-                rs.getString("estadoPago"));
+                null,
+                null);
     }
 }

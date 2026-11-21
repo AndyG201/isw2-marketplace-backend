@@ -13,4 +13,9 @@ public record ReservaCancelacionInfo(
         BigDecimal montoTotal,
         BigDecimal montoPagado,
         String estadoPago) {
+
+    public ReservaCancelacionInfo conPago(BigDecimal montoDelPago, String estadoDelPago) {
+        return new ReservaCancelacionInfo(idReserva, idHuesped, estado, idPoliticaAplicada, fechaEntrada,
+                montoTotal, montoDelPago, estadoDelPago);
+    }
 }
