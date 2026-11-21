@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.ubicacion.application.dto.CiudadResponse;
 import co.edu.unbosque.marketplace.ubicacion.application.dto.PaisResponse;
+import co.edu.unbosque.marketplace.ubicacion.application.port.CatalogoUbicacionesExterno;
+import co.edu.unbosque.marketplace.ubicacion.application.port.CatalogoUbicacionesExterno.PaisExterno;
 import co.edu.unbosque.marketplace.ubicacion.application.port.CiudadRepository;
 import co.edu.unbosque.marketplace.ubicacion.application.port.PaisRepository;
 import co.edu.unbosque.marketplace.ubicacion.contracts.CiudadUbicacionInfo;
@@ -26,13 +28,13 @@ import co.edu.unbosque.marketplace.ubicacion.domain.Pais;
 public class UbicacionService implements UbicacionRegistroQuery {
     private final PaisRepository paisRepository;
     private final CiudadRepository ciudadRepository;
-    private final CountriesNowClient countriesNowClient;
+    private final CatalogoUbicacionesExterno catalogoExterno;
 
     public UbicacionService(PaisRepository paisRepository, CiudadRepository ciudadRepository,
-            CountriesNowClient countriesNowClient) {
+            CatalogoUbicacionesExterno catalogoExterno) {
         this.paisRepository = paisRepository;
         this.ciudadRepository = ciudadRepository;
-        this.countriesNowClient = countriesNowClient;
+        this.catalogoExterno = catalogoExterno;
     }
 
     @Transactional
@@ -68,12 +70,13 @@ public class UbicacionService implements UbicacionRegistroQuery {
     }
 
     private void sincronizarPaises() {
-        List<CountriesNowClient.CountryData> datos = countriesNowClient.countries();
+        List<PaisExterno> datos = catalogoExterno.paises();
         List<Pais> paises = new ArrayList<>();
-        for (CountriesNowClient.CountryData dato : datos) {
-            if (paisRepository.findByCodigoIso2IgnoreCase(dato.iso2()).isEmpty()) {
-                paises.add(new Pais(UUID.nameUUIDFromBytes(("iso:" + dato.iso2()).getBytes(StandardCharsets.UTF_8)),
-                        dato.iso2(), dato.name()));
+        for (PaisExterno dato : datos) {
+            if (paisRepository.findByCodigoIso2IgnoreCase(dato.codigoIso2()).isEmpty()) {
+                UUID idPais = UUID.nameUUIDFromBytes(
+                        ("iso:" + dato.codigoIso2()).getBytes(StandardCharsets.UTF_8));
+                paises.add(new Pais(idPais, dato.codigoIso2(), dato.nombre()));
             }
         }
         paisRepository.saveAll(paises);
@@ -81,7 +84,7 @@ public class UbicacionService implements UbicacionRegistroQuery {
 
     private void sincronizarCiudades(Pais pais) {
         Map<String, String> nombres = new LinkedHashMap<>();
-        for (String nombre : countriesNowClient.cities(pais.getNombre())) {
+        for (String nombre : catalogoExterno.ciudades(pais.getNombre())) {
             nombres.putIfAbsent(clave(nombre), nombre);
         }
         List<Ciudad> ciudades = nombres.values().stream()

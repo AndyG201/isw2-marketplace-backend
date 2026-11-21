@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadRequest;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadResponse;
-import co.edu.unbosque.marketplace.disponibilidad.application.port.NocheReservadaRepository;
 import co.edu.unbosque.marketplace.disponibilidad.application.port.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplace.disponibilidad.domain.PeriodoDisponibilidad;
+import co.edu.unbosque.marketplace.reserva.contracts.NochesOcupadasQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
@@ -22,18 +22,18 @@ import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 public class PeriodoDisponibilidadService {
 
     private final PeriodoDisponibilidadRepository periodoRepository;
-    private final NocheReservadaRepository nocheReservadaRepository;
+    private final NochesOcupadasQuery noches;
     private final AlojamientoPublicacionQuery alojamientoQuery;
     private final UsuarioPublicacionQuery usuarioQuery;
 
     public PeriodoDisponibilidadService(
             PeriodoDisponibilidadRepository periodoRepository,
-            NocheReservadaRepository nocheReservadaRepository,
+            NochesOcupadasQuery noches,
             AlojamientoPublicacionQuery alojamientoQuery,
             UsuarioPublicacionQuery usuarioQuery) {
 
         this.periodoRepository = periodoRepository;
-        this.nocheReservadaRepository = nocheReservadaRepository;
+        this.noches = noches;
         this.alojamientoQuery = alojamientoQuery;
         this.usuarioQuery = usuarioQuery;
     }
@@ -290,7 +290,7 @@ public class PeriodoDisponibilidadService {
             java.time.LocalDate fechaFin) {
 
         boolean ocupado =
-                nocheReservadaRepository.existeNocheOcupadaEnRango(
+                noches.hayNochesOcupadas(
                         idAlojamiento,
                         fechaInicio,
                         fechaFin

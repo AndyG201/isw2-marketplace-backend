@@ -13,15 +13,16 @@ import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaReservaCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoReserva;
 import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaRetencionRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.PeriodosHabilitadosQuery;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaRetencionVencidaEvent;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaRetenidaEvent;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaSolicitadaEvent;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 
 @Service
 public class ReservaRetencionService {
@@ -33,16 +34,18 @@ public class ReservaRetencionService {
     private final ReservaRetencionRepository retenciones;
     private final ReservaSolicitudRepository solicitudes;
     private final NocheReservaRepository noches;
+    private final PeriodosHabilitadosQuery periodos;
     private final AuditoriaReservaCommand auditoria;
     private final ApplicationEventPublisher eventPublisher;
 
     public ReservaRetencionService(ReservaRepository reservas, ReservaRetencionRepository retenciones,
-            ReservaSolicitudRepository solicitudes, NocheReservaRepository noches,
+            ReservaSolicitudRepository solicitudes, NocheReservaRepository noches, PeriodosHabilitadosQuery periodos,
             AuditoriaReservaCommand auditoria, ApplicationEventPublisher eventPublisher) {
         this.reservas = reservas;
         this.retenciones = retenciones;
         this.solicitudes = solicitudes;
         this.noches = noches;
+        this.periodos = periodos;
         this.auditoria = auditoria;
         this.eventPublisher = eventPublisher;
     }
@@ -72,8 +75,9 @@ public class ReservaRetencionService {
                     "La publicación dejó de estar disponible para recibir reservas.");
         }
         OffsetDateTime fechaVencimiento = reserva.getFechaSolicitud().plusHours(24);
-        if (!noches.reservarRango(datos.getIdAlojamiento(), reserva.getIdReserva(),
-                datos.getFechaEntrada(), datos.getFechaSalida())) {
+        if (!periodos.rangoHabilitado(datos.getIdAlojamiento(), datos.getFechaEntrada(), datos.getFechaSalida())
+                || !noches.reservarRango(datos.getIdAlojamiento(), reserva.getIdReserva(),
+                        datos.getFechaEntrada(), datos.getFechaSalida())) {
             throw new ConflictoNegocioException(
                     "El periodo ya fue ocupado por otra reserva o no está disponible.");
         }

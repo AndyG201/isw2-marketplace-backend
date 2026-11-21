@@ -4,16 +4,16 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import co.edu.unbosque.marketplace.trabajo.ColaTrabajosRedis;
+import co.edu.unbosque.marketplace.trabajo.ColaTrabajos;
 import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
 @Component
 @Profile("worker")
 public class ProgramadorTrabajos {
 
-    private final ColaTrabajosRedis cola;
+    private final ColaTrabajos cola;
 
-    public ProgramadorTrabajos(ColaTrabajosRedis cola) {
+    public ProgramadorTrabajos(ColaTrabajos cola) {
         this.cola = cola;
     }
 

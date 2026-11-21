@@ -20,8 +20,10 @@ import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoExceptio
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.reserva.application.dto.CrearReservaRequest;
 import co.edu.unbosque.marketplace.reserva.application.dto.SolicitudReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.PeriodosHabilitadosQuery;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaSolicitadaEvent;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 
@@ -35,15 +37,21 @@ public class ReservaSolicitudService {
             "PENDIENTE_APROBACION";
 
     private final ReservaSolicitudRepository reservaRepository;
+    private final NocheReservaRepository noches;
+    private final PeriodosHabilitadosQuery periodos;
     private final ApplicationEventPublisher eventPublisher;
     private final JdbcTemplate jdbc;
     private AuditoriaEventoCommand auditoria;
 
     public ReservaSolicitudService(
             ReservaSolicitudRepository reservaRepository,
+            NocheReservaRepository noches,
+            PeriodosHabilitadosQuery periodos,
             ApplicationEventPublisher eventPublisher,
             JdbcTemplate jdbc) {
         this.reservaRepository = reservaRepository;
+        this.noches = noches;
+        this.periodos = periodos;
         this.eventPublisher = eventPublisher;
         this.jdbc = jdbc;
     }
@@ -115,10 +123,14 @@ public class ReservaSolicitudService {
                     "La publicación no tiene un modo de aceptación válido.");
         }
 
-        if (!reservaRepository.rangoDisponible(
+        if (!periodos.rangoHabilitado(
                 datos.getIdAlojamiento(),
                 datos.getFechaEntrada(),
-                datos.getFechaSalida())) {
+                datos.getFechaSalida())
+                || noches.hayNochesOcupadas(
+                        datos.getIdAlojamiento(),
+                        datos.getFechaEntrada(),
+                        datos.getFechaSalida())) {
             throw new ConflictoNegocioException(
                     "El alojamiento no está disponible para las fechas indicadas.");
         }

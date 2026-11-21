@@ -7,14 +7,16 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import co.edu.unbosque.marketplace.publicacion.application.port.CacheBusquedaPublicaciones;
+
 @Component
 public class PublicacionBusquedaCacheInvalidationInterceptor
         implements HandlerInterceptor {
 
-    private final PublicacionBusquedaCache cache;
+    private final CacheBusquedaPublicaciones cache;
 
     public PublicacionBusquedaCacheInvalidationInterceptor(
-            PublicacionBusquedaCache cache) {
+            CacheBusquedaPublicaciones cache) {
         this.cache = cache;
     }
 

@@ -19,10 +19,11 @@ import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
 import co.edu.unbosque.marketplace.pago.domain.Pago;
 import co.edu.unbosque.marketplace.reserva.application.dto.ConfirmacionReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.PeriodosHabilitadosQuery;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 
 @Service
 public class ReservaConfirmacionService {
@@ -30,14 +31,17 @@ public class ReservaConfirmacionService {
     private final ReservaConfirmacionRepository reservas;
     private final PagoRepository pagos;
     private final NocheReservaRepository noches;
+    private final PeriodosHabilitadosQuery periodos;
     private final PagoSandboxGateway pasarela;
     private final JdbcTemplate jdbc;
 
     public ReservaConfirmacionService(ReservaConfirmacionRepository reservas, PagoRepository pagos,
-            NocheReservaRepository noches, PagoSandboxGateway pasarela, JdbcTemplate jdbc) {
+            NocheReservaRepository noches, PeriodosHabilitadosQuery periodos, PagoSandboxGateway pasarela,
+            JdbcTemplate jdbc) {
         this.reservas = reservas;
         this.pagos = pagos;
         this.noches = noches;
+        this.periodos = periodos;
         this.pasarela = pasarela;
         this.jdbc = jdbc;
     }
@@ -54,8 +58,9 @@ public class ReservaConfirmacionService {
         if (reserva.getRetencionHasta() != null) {
             noches.liberar(idReserva);
         }
-        if (!noches.reservarRango(datos.getIdAlojamiento(), idReserva,
-                datos.getFechaEntrada(), datos.getFechaSalida())) {
+        if (!periodos.rangoHabilitado(datos.getIdAlojamiento(), datos.getFechaEntrada(), datos.getFechaSalida())
+                || !noches.reservarRango(datos.getIdAlojamiento(), idReserva,
+                        datos.getFechaEntrada(), datos.getFechaSalida())) {
             throw new ConflictoNegocioException(
                     "El alojamiento dejó de estar disponible para las fechas indicadas.");
         }

@@ -8,18 +8,18 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteRepository;
-import co.edu.unbosque.marketplace.trabajo.ColaTrabajosRedis;
+import co.edu.unbosque.marketplace.trabajo.ColaTrabajos;
 import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
 @Component
 @Profile("worker")
 public class ProgramadorExportaciones {
 
-    private final ColaTrabajosRedis cola;
+    private final ColaTrabajos cola;
     private final ExportacionReporteRepository exportaciones;
 
     public ProgramadorExportaciones(
-            ColaTrabajosRedis cola,
+            ColaTrabajos cola,
             ExportacionReporteRepository exportaciones) {
         this.cola = cola;
         this.exportaciones = exportaciones;
