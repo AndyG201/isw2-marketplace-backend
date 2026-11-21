@@ -27,6 +27,7 @@ public class VerificacionCorreoService {
     private final UsuarioRepository usuarioRepository;
     private final ServicioCorreo servicioCorreo;
     private final StringRedisTemplate redisTemplate;
+    private final CorreoOutboxService correoOutboxService;
 
     private final SecureRandom random = new SecureRandom();
 
@@ -39,12 +40,14 @@ public class VerificacionCorreoService {
             VerificacionCorreoRepository verificacionRepository,
             UsuarioRepository usuarioRepository,
             ServicioCorreo servicioCorreo,
-            StringRedisTemplate redisTemplate) {
+            StringRedisTemplate redisTemplate,
+            CorreoOutboxService correoOutboxService) {
 
         this.verificacionRepository = verificacionRepository;
         this.usuarioRepository = usuarioRepository;
         this.servicioCorreo = servicioCorreo;
         this.redisTemplate = redisTemplate;
+        this.correoOutboxService = correoOutboxService;
     }
 
     // =====================================================
@@ -71,7 +74,7 @@ public class VerificacionCorreoService {
 
         try {
 
-            generarYEnviarCodigo(usuario);
+            generarYEnviarCodigo(usuario, true);
 
         } catch (RuntimeException e) {
 
@@ -156,7 +159,7 @@ public class VerificacionCorreoService {
 
         try {
 
-            generarYEnviarCodigo(usuario);
+            generarYEnviarCodigo(usuario, false);
 
         } catch (RuntimeException e) {
 
@@ -179,7 +182,7 @@ public class VerificacionCorreoService {
     // GENERAR E INVALIDAR CÓDIGOS ANTERIORES
     // =====================================================
 
-    private void generarYEnviarCodigo(Usuario usuario) {
+    private void generarYEnviarCodigo(Usuario usuario, boolean usarOutbox) {
 
         String codigo = String.format(
                 "%06d",
@@ -213,10 +216,11 @@ public class VerificacionCorreoService {
 
         verificacionRepository.save(verificacion);
 
-        servicioCorreo.enviarCodigoVerificacion(
-                usuario.getCorreo(),
-                codigo
-        );
+        if (usarOutbox) {
+            correoOutboxService.encolarCodigoVerificacion(usuario.getCorreo(), codigo);
+        } else {
+            servicioCorreo.enviarCodigoVerificacion(usuario.getCorreo(), codigo);
+        }
     }
 
     // =====================================================
