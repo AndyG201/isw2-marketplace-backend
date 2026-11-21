@@ -26,13 +26,13 @@ import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQ
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.EditarPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAlojamientoResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoImagenes;
 import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.storage.AlmacenamientoImagenService;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioAdministracionQuery;
@@ -74,7 +74,7 @@ class PublicacionEdicionServiceTest {
     private PoliticaCancelacionQuery politicaCancelacionQuery;
 
     @Mock
-    private AlmacenamientoImagenService almacenamientoImagenService;
+    private AlmacenamientoImagenes almacenamientoImagenService;
 
     private PublicacionEdicionService service;
 

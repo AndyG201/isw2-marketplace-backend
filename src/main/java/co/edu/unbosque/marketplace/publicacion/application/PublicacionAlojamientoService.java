@@ -15,20 +15,20 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
-import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
 import co.edu.unbosque.marketplace.alojamiento.contracts.CrearAlojamientoParaPublicacion;
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.CrearPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAlojamientoResponse;
-import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
-import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
-import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
+import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoImagenes;
 import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.storage.AlmacenamientoImagenService;
+import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
+import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
+import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
@@ -44,7 +44,7 @@ public class PublicacionAlojamientoService {
     private final ServicioPublicacionQuery servicioPublicacionQuery;
     private final PoliticaCancelacionQuery politicaCancelacionQuery;
     private final UsuarioPublicacionQuery usuarioPublicacionQuery;
-    private final AlmacenamientoImagenService almacenamientoImagenService;
+    private final AlmacenamientoImagenes almacenamientoImagenes;
     private AuditoriaEventoCommand auditoria;
 
     public PublicacionAlojamientoService(
@@ -55,7 +55,7 @@ public class PublicacionAlojamientoService {
             ServicioPublicacionQuery servicioPublicacionQuery,
             PoliticaCancelacionQuery politicaCancelacionQuery,
             UsuarioPublicacionQuery usuarioPublicacionQuery,
-            AlmacenamientoImagenService almacenamientoImagenService) {
+            AlmacenamientoImagenes almacenamientoImagenes) {
 
         this.alojamientoCommand = alojamientoCommand;
         this.publicacionRepository = publicacionRepository;
@@ -64,7 +64,7 @@ public class PublicacionAlojamientoService {
         this.servicioPublicacionQuery = servicioPublicacionQuery;
         this.politicaCancelacionQuery = politicaCancelacionQuery;
         this.usuarioPublicacionQuery = usuarioPublicacionQuery;
-        this.almacenamientoImagenService = almacenamientoImagenService;
+        this.almacenamientoImagenes = almacenamientoImagenes;
     }
 
     @Autowired
@@ -128,7 +128,7 @@ public class PublicacionAlojamientoService {
 
                         if (status == STATUS_ROLLED_BACK) {
                             rutasGuardadas.forEach(
-                                    almacenamientoImagenService::eliminar);
+                                    almacenamientoImagenes::eliminar);
                         }
                     }
                 }
@@ -195,7 +195,7 @@ public class PublicacionAlojamientoService {
 
         for (int i = 0; i < solicitud.getImagenes().size(); i++) {
 
-            String ruta = almacenamientoImagenService.guardar(
+            String ruta = almacenamientoImagenes.guardar(
                     solicitud.getImagenes().get(i));
 
             rutasGuardadas.add(ruta);

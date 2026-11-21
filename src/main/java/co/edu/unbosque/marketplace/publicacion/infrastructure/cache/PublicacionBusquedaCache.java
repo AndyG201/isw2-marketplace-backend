@@ -15,10 +15,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.edu.unbosque.marketplace.publicacion.application.dto.PaginaPublicacionesResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.CacheBusquedaPublicaciones;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionBusquedaCriteria;
 
 @Component
-public class PublicacionBusquedaCache {
+public class PublicacionBusquedaCache implements CacheBusquedaPublicaciones {
 
     private static final Logger LOGGER =
             Logger.getLogger(PublicacionBusquedaCache.class.getName());
@@ -41,6 +42,7 @@ public class PublicacionBusquedaCache {
         this.objectMapper = objectMapper;
     }
 
+    @Override
     public String versionActual() {
         try {
             String version =
@@ -63,6 +65,7 @@ public class PublicacionBusquedaCache {
         }
     }
 
+    @Override
     public String clave(
             String version,
             PublicacionBusquedaCriteria criteria) {
@@ -86,6 +89,7 @@ public class PublicacionBusquedaCache {
         return CACHE_PREFIX + version + ":" + sha256(canonico);
     }
 
+    @Override
     public PaginaPublicacionesResponse leer(String key) {
         try {
             String json = redisTemplate.opsForValue().get(key);
@@ -119,6 +123,7 @@ public class PublicacionBusquedaCache {
         }
     }
 
+    @Override
     public void guardar(
             String key,
             PaginaPublicacionesResponse resultado) {
@@ -137,6 +142,7 @@ public class PublicacionBusquedaCache {
         }
     }
 
+    @Override
     public void invalidar() {
         try {
             redisTemplate.opsForValue().increment(VERSION_KEY);

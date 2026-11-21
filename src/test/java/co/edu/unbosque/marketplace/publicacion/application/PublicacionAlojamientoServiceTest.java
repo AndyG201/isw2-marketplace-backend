@@ -27,10 +27,10 @@ import co.edu.unbosque.marketplace.alojamiento.contracts.CrearAlojamientoParaPub
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.CrearPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAlojamientoResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoImagenes;
 import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.storage.AlmacenamientoImagenService;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
@@ -62,7 +62,7 @@ class PublicacionAlojamientoServiceTest {
     private UsuarioPublicacionQuery usuarioPublicacionQuery;
 
     @Mock
-    private AlmacenamientoImagenService almacenamientoImagenService;
+    private AlmacenamientoImagenes almacenamientoImagenService;
 
     private PublicacionAlojamientoService service;
 

@@ -25,7 +25,7 @@ import co.edu.unbosque.marketplace.compartido.domain.PlazoVencidoException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteInfo;
 import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteRepository;
-import co.edu.unbosque.marketplace.trabajo.ColaTrabajosRedis;
+import co.edu.unbosque.marketplace.trabajo.ColaTrabajos;
 
 class ExportacionReporteDescargaTest {
 
@@ -44,7 +44,7 @@ class ExportacionReporteDescargaTest {
         servicio = new ExportacionReporteService(
                 repositorio,
                 mock(AuditoriaAdministracionCommand.class),
-                mock(ColaTrabajosRedis.class),
+                mock(ColaTrabajos.class),
                 new ObjectMapper());
     }
 

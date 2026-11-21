@@ -9,9 +9,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.marketplace.publicacion.application.dto.PaginaPublicacionesResponse;
-import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionBusquedaCriteria;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.cache.PublicacionBusquedaCache;
+import co.edu.unbosque.marketplace.publicacion.application.port.CacheBusquedaPublicaciones;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionBusquedaRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionBusquedaCriteria;
 
 @Service
 public class PublicacionBusquedaService {
@@ -19,11 +19,11 @@ public class PublicacionBusquedaService {
     private static final int TAMANO_MAXIMO = 100;
 
     private final PublicacionBusquedaRepository repository;
-    private final PublicacionBusquedaCache cache;
+    private final CacheBusquedaPublicaciones cache;
 
     public PublicacionBusquedaService(
             PublicacionBusquedaRepository repository,
-            PublicacionBusquedaCache cache) {
+            CacheBusquedaPublicaciones cache) {
         this.repository = repository;
         this.cache = cache;
     }
