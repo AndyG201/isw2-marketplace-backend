@@ -1,4 +1,4 @@
-package co.edu.unbosque.marketplace.pago.application;
+package co.edu.unbosque.marketplace.pago.infrastructure.gateway;
 
 import java.io.IOException;
 import java.math.BigDecimal;

@@ -1,4 +1,4 @@
-package co.edu.unbosque.marketplace.pago.application;
+package co.edu.unbosque.marketplace.pago.infrastructure.gateway;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
