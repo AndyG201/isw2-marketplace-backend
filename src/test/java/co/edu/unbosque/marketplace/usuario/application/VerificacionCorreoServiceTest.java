@@ -46,6 +46,7 @@ class VerificacionCorreoServiceTest {
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private ServicioCorreo servicioCorreo;
     @Mock private StringRedisTemplate redisTemplate;
+    @Mock private CorreoOutboxService correoOutboxService;
     @Mock private ValueOperations<String, String> valores;
     @InjectMocks private VerificacionCorreoService service;
 
@@ -82,7 +83,7 @@ class VerificacionCorreoServiceTest {
     }
 
     private void verificarSinEnvio() {
-        verifyNoInteractions(verificacionRepository, servicioCorreo);
+        verifyNoInteractions(verificacionRepository, servicioCorreo, correoOutboxService);
     }
 
     @ParameterizedTest
@@ -149,10 +150,10 @@ class VerificacionCorreoServiceTest {
         var guardado = ArgumentCaptor.forClass(VerificacionCorreo.class);
         var fecha = ArgumentCaptor.forClass(OffsetDateTime.class);
         var codigo = ArgumentCaptor.forClass(String.class);
-        var orden = inOrder(verificacionRepository, servicioCorreo);
+        var orden = inOrder(verificacionRepository, correoOutboxService);
         orden.verify(verificacionRepository).invalidarCodigosPendientes(eq(u), fecha.capture());
         orden.verify(verificacionRepository).save(guardado.capture());
-        orden.verify(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), codigo.capture());
+        orden.verify(correoOutboxService).encolarCodigoVerificacion(eq(CORREO), codigo.capture());
 
         String hashEsperado = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
                 .digest(codigo.getValue().getBytes(StandardCharsets.UTF_8)));
@@ -180,7 +181,7 @@ class VerificacionCorreoServiceTest {
         service.enviarCodigo("  ANA@EJEMPLO.COM  ");
 
         verify(valores).set(ULTIMO, "1", 60L, TimeUnit.SECONDS);
-        verify(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), anyString());
+        verify(correoOutboxService).encolarCodigoVerificacion(eq(CORREO), anyString());
     }
 
     @Test
@@ -188,7 +189,7 @@ class VerificacionCorreoServiceTest {
         encontrarUsuario();
         usarRedis();
         RuntimeException fallo = new RuntimeException("Error de correo");
-        doThrow(fallo).when(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), anyString());
+        doThrow(fallo).when(correoOutboxService).encolarCodigoVerificacion(eq(CORREO), anyString());
 
         assertSame(fallo, assertThrows(RuntimeException.class, () -> service.enviarCodigo(CORREO)));
 

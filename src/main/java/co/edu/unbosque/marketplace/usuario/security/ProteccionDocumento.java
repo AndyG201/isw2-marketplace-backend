@@ -139,6 +139,30 @@ public class ProteccionDocumento {
         }
     }
 
+    public TextoCifrado cifrarTexto(String texto) {
+        try {
+            byte[] nonce = new byte[12];
+            random.nextBytes(nonce);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, claveCifrado, new GCMParameterSpec(128, nonce));
+            return new TextoCifrado(cipher.doFinal(texto.getBytes(StandardCharsets.UTF_8)), nonce);
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("No fue posible cifrar el contenido del correo.", e);
+        }
+    }
+
+    public String descifrarTexto(byte[] contenido, byte[] nonce) {
+        try {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, claveCifrado, new GCMParameterSpec(128, nonce));
+            return new String(cipher.doFinal(contenido), StandardCharsets.UTF_8);
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("No fue posible descifrar el contenido del correo.", e);
+        }
+    }
+
+    public record TextoCifrado(byte[] contenido, byte[] nonce) { }
+
     public record DatosDocumento(
             byte[] documentoCifrado,
             byte[] documentoNonce,

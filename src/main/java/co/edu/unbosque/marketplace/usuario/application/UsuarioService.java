@@ -84,6 +84,7 @@ public class UsuarioService {
                 verificacionCorreoService, redisTemplate, servicioCorreo, eventPublisher, null);
     }
 
+	@Transactional
 	public int registrar(RegistrarUsuarioRequest nuevoUsuario) {
 
 		if (datosInvalidos(nuevoUsuario) || ubicacionRegistroQuery == null
