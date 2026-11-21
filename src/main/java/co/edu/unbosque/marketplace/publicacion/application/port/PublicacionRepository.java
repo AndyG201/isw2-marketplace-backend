@@ -8,20 +8,10 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Sort;
 
+import co.edu.unbosque.marketplace.compartido.domain.RepositorioBasico;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 
-public interface PublicacionRepository {
-
-    <S extends Publicacion> S save(S entidad);
-    <S extends Publicacion> List<S> saveAll(Iterable<S> entidades);
-    <S extends Publicacion> S saveAndFlush(S entidad);
-    Optional<Publicacion> findById(UUID id);
-    List<Publicacion> findAll();
-    boolean existsById(UUID id);
-    long count();
-    void delete(Publicacion entidad);
-    void deleteById(UUID id);
-    void flush();
+public interface PublicacionRepository extends RepositorioBasico<Publicacion, UUID> {
     List<Publicacion> findAll(Sort sort);
 
     Optional<Publicacion> findByIdAlojamiento(UUID idAlojamiento);

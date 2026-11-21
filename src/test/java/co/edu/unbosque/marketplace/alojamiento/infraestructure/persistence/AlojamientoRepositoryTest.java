@@ -17,6 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import co.edu.unbosque.marketplace.alojamiento.application.port.AlojamientoRepository;
 import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
 
+
+
 @ExtendWith(MockitoExtension.class)
 class AlojamientoRepositoryTest {
 
