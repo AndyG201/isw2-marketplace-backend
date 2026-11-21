@@ -115,13 +115,6 @@
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
 
-		<!-- Resend -->
-		<dependency>
-			<groupId>com.resend</groupId>
-			<artifactId>resend-java</artifactId>
-			<version>4.28.0</version>
-		</dependency>
-
 		<!-- Seguridad -->
 		<dependency>
 			<groupId>org.springframework.security</groupId>
