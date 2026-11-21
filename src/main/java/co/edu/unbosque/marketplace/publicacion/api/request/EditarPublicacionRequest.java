@@ -15,7 +15,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class EditarPublicacionRequest {
+public class EditarPublicacionRequest extends DistribucionAlojamientoRequest {
 
     @NotBlank(message = "El título es obligatorio.")
     @Size(max = 200)
@@ -67,6 +67,9 @@ public class EditarPublicacionRequest {
     @Size(max = 10, message = "No puedes cargar más de 10 imágenes.")
     private List<@NotNull MultipartFile> imagenes;
 
+    @Size(max = 1000, message = "El mensaje para el administrador no puede superar 1000 caracteres.")
+    private String mensajeCambios;
+
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
 
@@ -104,5 +107,9 @@ public class EditarPublicacionRequest {
     public void setIdsServicios(List<UUID> idsServicios) { this.idsServicios = idsServicios; }
 
     public List<MultipartFile> getImagenes() { return imagenes; }
+
+    public String getMensajeCambios() { return mensajeCambios; }
+
+    public void setMensajeCambios(String mensajeCambios) { this.mensajeCambios = mensajeCambios; }
     public void setImagenes(List<MultipartFile> imagenes) { this.imagenes = imagenes; }
 }

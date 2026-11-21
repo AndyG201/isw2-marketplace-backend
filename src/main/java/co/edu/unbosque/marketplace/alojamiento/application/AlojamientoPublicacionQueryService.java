@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
+import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
 import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
 
 @Service
@@ -40,9 +41,7 @@ public class AlojamientoPublicacionQueryService implements AlojamientoPublicacio
 		}
 
 		return alojamientoRepository.findById(idAlojamiento)
-				.map(alojamiento -> new AlojamientoPublicacionInfo(alojamiento.getIdAlojamiento(),
-						alojamiento.getIdAnfitrion(), alojamiento.getUbicacion(), alojamiento.getCiudad(),
-						alojamiento.getTipoAlojamiento(), alojamiento.getCapacidad()));
+				.map(AlojamientoPublicacionQueryService::aInformacion);
 	}
 
 	@Override
@@ -53,9 +52,7 @@ public class AlojamientoPublicacionQueryService implements AlojamientoPublicacio
 		}
 
 		return alojamientoRepository.findByIdAnfitrion(idAnfitrion).stream()
-				.map(alojamiento -> new AlojamientoPublicacionInfo(alojamiento.getIdAlojamiento(),
-						alojamiento.getIdAnfitrion(), alojamiento.getUbicacion(), alojamiento.getCiudad(),
-						alojamiento.getTipoAlojamiento(), alojamiento.getCapacidad()))
+				.map(AlojamientoPublicacionQueryService::aInformacion)
 				.toList();
 	}
 
@@ -69,14 +66,15 @@ public class AlojamientoPublicacionQueryService implements AlojamientoPublicacio
 
 	    return alojamientoRepository.findAllById(idsAlojamientos)
 	            .stream()
-	            .map(alojamiento -> new AlojamientoPublicacionInfo(
-	                    alojamiento.getIdAlojamiento(),
-	                    alojamiento.getIdAnfitrion(),
-	                    alojamiento.getUbicacion(),
-	                    alojamiento.getCiudad(),
-	                    alojamiento.getTipoAlojamiento(),
-	                    alojamiento.getCapacidad()
-	            ))
+	            .map(AlojamientoPublicacionQueryService::aInformacion)
 	            .toList();
+	}
+
+	private static AlojamientoPublicacionInfo aInformacion(Alojamiento alojamiento) {
+		return new AlojamientoPublicacionInfo(alojamiento.getIdAlojamiento(), alojamiento.getIdAnfitrion(),
+				alojamiento.getUbicacion(), alojamiento.getCiudad(), alojamiento.getTipoAlojamiento(),
+				alojamiento.getCapacidad(), alojamiento.getHabitaciones(), alojamiento.getCamas(),
+				alojamiento.getBanos(), alojamiento.getPropietarioInmueble(), alojamiento.getPais(),
+				alojamiento.getCodigoPais());
 	}
 }

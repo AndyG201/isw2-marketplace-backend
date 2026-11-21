@@ -3,6 +3,7 @@ package co.edu.unbosque.marketplace.usuario.api;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import co.edu.unbosque.marketplace.usuario.api.request.ModificarDocumentoRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.RestringirUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.api.response.AdministradorUsuarioResponse;
 import co.edu.unbosque.marketplace.usuario.application.AdministradorService;
@@ -252,5 +253,41 @@ class AdministradorUsuarioControllerTest {
         assertTrue(response.getBody().isEmpty());
 
         verify(administradorService).consultarUsuarios();
+    }
+
+    @Test
+    void modificarDocumentoRetornaOk() {
+        ModificarDocumentoRequest solicitud = new ModificarDocumentoRequest("CE", "AB12345");
+
+        var response = controller.modificarDocumento(idUsuario, solicitud);
+
+        assertAll(
+            () -> assertEquals(HttpStatus.OK, response.getStatusCode()),
+            () -> assertEquals(
+                "El documento de la cuenta se actualizó correctamente.",
+                response.getBody()
+            )
+        );
+        verify(administradorService).modificarDocumento(idUsuario, solicitud);
+    }
+
+    @Test
+    void modificarDocumentoRetorna400Y409SegunElError() {
+        ModificarDocumentoRequest solicitud = new ModificarDocumentoRequest("CC", "12345");
+
+        doThrow(new IllegalArgumentException("Usuario no encontrado."))
+            .when(administradorService).modificarDocumento(idUsuario, solicitud);
+        var noEncontrado = controller.modificarDocumento(idUsuario, solicitud);
+
+        doThrow(new IllegalStateException("Ya existe otra cuenta con ese documento."))
+            .when(administradorService).modificarDocumento(idUsuario, solicitud);
+        var repetido = controller.modificarDocumento(idUsuario, solicitud);
+
+        assertAll(
+            () -> assertEquals(HttpStatus.BAD_REQUEST, noEncontrado.getStatusCode()),
+            () -> assertEquals("Usuario no encontrado.", noEncontrado.getBody()),
+            () -> assertEquals(HttpStatus.CONFLICT, repetido.getStatusCode()),
+            () -> assertEquals("Ya existe otra cuenta con ese documento.", repetido.getBody())
+        );
     }
 }

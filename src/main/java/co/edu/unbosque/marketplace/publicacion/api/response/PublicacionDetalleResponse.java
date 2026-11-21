@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplace.publicacion.api.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -24,6 +25,12 @@ public class PublicacionDetalleResponse {
     private String ciudad;
     private String tipoAlojamiento;
     private int capacidad;
+    private int habitaciones = 1;
+    private int camas = 1;
+    private int banos = 1;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String propietarioInmueble;
 
     private List<ServicioPublicacionResponse> servicios;
     private List<ImagenPublicacionResponse> imagenes;
@@ -88,4 +95,22 @@ public class PublicacionDetalleResponse {
         return servicios;
     }
     public List<ImagenPublicacionResponse> getImagenes() { return imagenes; }
+
+    public PublicacionDetalleResponse conDistribucion(int habitaciones, int camas, int banos) {
+        this.habitaciones = habitaciones;
+        this.camas = camas;
+        this.banos = banos;
+        return this;
+    }
+
+    public int getHabitaciones() { return habitaciones; }
+    public int getCamas() { return camas; }
+    public int getBanos() { return banos; }
+
+    public PublicacionDetalleResponse conPropietario(String propietarioInmueble) {
+        this.propietarioInmueble = propietarioInmueble;
+        return this;
+    }
+
+    public String getPropietarioInmueble() { return propietarioInmueble; }
 }

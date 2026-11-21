@@ -17,6 +17,11 @@ import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.Alojam
 public class AlojamientoPublicacionCommandService
         implements AlojamientoPublicacionCommand {
 
+    private static final int MAXIMO_PROPIETARIO = 120;
+
+    private static final int MINIMO = 1;
+    private static final int MAXIMO = 50;
+
     private final AlojamientoRepository alojamientoRepository;
 
     public AlojamientoPublicacionCommandService(
@@ -43,6 +48,11 @@ public class AlojamientoPublicacionCommandService
         alojamiento.setTipoAlojamiento(
                 solicitud.tipoAlojamiento().trim());
         alojamiento.setCapacidad(solicitud.capacidad());
+        alojamiento.setHabitaciones(valorOMinimo(solicitud.habitaciones()));
+        alojamiento.setCamas(valorOMinimo(solicitud.camas()));
+        alojamiento.setBanos(valorOMinimo(solicitud.banos()));
+        alojamiento.setPropietarioInmueble(textoOpcional(solicitud.propietarioInmueble()));
+        alojamiento.asignarPais(textoOpcional(solicitud.pais()), codigoPais(solicitud.codigoPais()));
         alojamiento.setFechaCreacion(OffsetDateTime.now());
 
         alojamientoRepository.save(alojamiento);
@@ -68,6 +78,8 @@ public class AlojamientoPublicacionCommandService
                 solicitud.capacidad()
         );
 
+        validarDistribucion(solicitud);
+
         Alojamiento alojamiento = alojamientoRepository
                 .findById(idAlojamiento)
                 .orElseThrow(() ->
@@ -79,6 +91,26 @@ public class AlojamientoPublicacionCommandService
         alojamiento.setTipoAlojamiento(
                 solicitud.tipoAlojamiento().trim());
         alojamiento.setCapacidad(solicitud.capacidad());
+
+        if (solicitud.habitaciones() != null) {
+            alojamiento.setHabitaciones(solicitud.habitaciones());
+        }
+
+        if (solicitud.camas() != null) {
+            alojamiento.setCamas(solicitud.camas());
+        }
+
+        if (solicitud.banos() != null) {
+            alojamiento.setBanos(solicitud.banos());
+        }
+
+        if (solicitud.propietarioInmueble() != null) {
+            alojamiento.setPropietarioInmueble(textoOpcional(solicitud.propietarioInmueble()));
+        }
+
+        if (solicitud.pais() != null) {
+            alojamiento.asignarPais(textoOpcional(solicitud.pais()), codigoPais(solicitud.codigoPais()));
+        }
 
         alojamientoRepository.save(alojamiento);
     }
@@ -97,6 +129,58 @@ public class AlojamientoPublicacionCommandService
                 solicitud.tipoAlojamiento(),
                 solicitud.capacidad()
         );
+
+        validarDistribucion(
+                solicitud.habitaciones(),
+                solicitud.camas(),
+                solicitud.banos()
+        );
+        validarPropietario(solicitud.propietarioInmueble());
+    }
+
+    private void validarPropietario(String propietario) {
+        if (propietario != null && propietario.trim().length() > MAXIMO_PROPIETARIO) {
+            throw new IllegalArgumentException(
+                    "El nombre del propietario del inmueble no puede superar "
+                            + MAXIMO_PROPIETARIO + " caracteres.");
+        }
+    }
+
+    private static String codigoPais(String codigo) {
+        String texto = textoOpcional(codigo);
+        return texto != null && texto.matches("[A-Za-z]{2}") ? texto.toUpperCase(java.util.Locale.ROOT) : null;
+    }
+
+    private static String textoOpcional(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
+    }
+
+    private void validarDistribucion(ActualizarAlojamientoParaPublicacion solicitud) {
+        validarDistribucion(solicitud.habitaciones(), solicitud.camas(), solicitud.banos());
+        validarPropietario(solicitud.propietarioInmueble());
+    }
+
+    private void validarDistribucion(
+            Integer habitaciones,
+            Integer camas,
+            Integer banos) {
+
+        validarCantidad(habitaciones, "habitaciones");
+        validarCantidad(camas, "camas");
+        validarCantidad(banos, "baños");
+    }
+
+    private void validarCantidad(Integer cantidad, String nombre) {
+
+        if (cantidad != null && (cantidad < MINIMO || cantidad > MAXIMO)) {
+            throw new IllegalArgumentException(
+                    "El número de " + nombre + " debe estar entre "
+                            + MINIMO + " y " + MAXIMO + ".");
+        }
+    }
+
+    private static int valorOMinimo(Integer cantidad) {
+        return cantidad == null ? MINIMO : cantidad;
     }
 
     private void validarDatosAlojamiento(

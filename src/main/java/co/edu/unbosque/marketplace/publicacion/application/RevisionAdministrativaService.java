@@ -4,10 +4,14 @@ package co.edu.unbosque.marketplace.publicacion.application;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.DecisionPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
@@ -21,24 +25,35 @@ import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 @Service
 public class RevisionAdministrativaService {
 
+    private static final String PAUSADA = "PAUSADA";
+
     private final PublicacionRepository publicacionRepository;
     private final AlojamientoPublicacionQuery alojamientoQuery;
     private final UsuarioAdministracionQuery usuarioAdministracionQuery;
     private final UsuarioPublicacionQuery usuarioPublicacionQuery;
     private final RevisionPublicacionRepository revisionRepository;
+    private final CambiosPublicacionService cambios;
+    private AuditoriaEventoCommand auditoria;
 
     public RevisionAdministrativaService(
             PublicacionRepository publicacionRepository,
             AlojamientoPublicacionQuery alojamientoQuery,
             UsuarioAdministracionQuery usuarioAdministracionQuery,
             UsuarioPublicacionQuery usuarioPublicacionQuery,
-            RevisionPublicacionRepository revisionRepository) {
+            RevisionPublicacionRepository revisionRepository,
+            CambiosPublicacionService cambios) {
 
         this.publicacionRepository = publicacionRepository;
         this.alojamientoQuery = alojamientoQuery;
         this.usuarioAdministracionQuery = usuarioAdministracionQuery;
         this.usuarioPublicacionQuery = usuarioPublicacionQuery;
         this.revisionRepository = revisionRepository;
+        this.cambios = cambios;
+    }
+
+    @Autowired
+    public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
+        this.auditoria = auditoria;
     }
 
     @Transactional
@@ -70,7 +85,11 @@ public class RevisionAdministrativaService {
 
         OffsetDateTime ahora = OffsetDateTime.now();
 
-        publicacion.setEstado("ACTIVA");
+        String estadoFinal = cambios.resolver(publicacion.getIdPublicacion(), ahora)
+                .filter(PAUSADA::equals)
+                .orElse("ACTIVA");
+
+        publicacion.setEstado(estadoFinal);
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);
@@ -83,6 +102,7 @@ public class RevisionAdministrativaService {
                 null,
                 ahora
         );
+        registrarEventoRevision(idAdministrador, publicacion, estadoAnterior, estadoFinal, "APROBAR_PUBLICACION", ahora);
 
         return new DecisionPublicacionResponse(
                 revision.getIdRevision(),
@@ -91,7 +111,9 @@ public class RevisionAdministrativaService {
                 estadoAnterior,
                 publicacion.getEstado(),
                 null,
-                "La publicación ha sido aprobada y activada correctamente.",
+                PAUSADA.equals(estadoFinal)
+                        ? "Los cambios fueron aprobados y la publicación sigue pausada, como la dejó el anfitrión."
+                        : "La publicación ha sido aprobada y activada correctamente.",
                 ahora
         );
     }
@@ -124,6 +146,8 @@ public class RevisionAdministrativaService {
 
         String motivoFinal = motivo.trim();
 
+        cambios.resolver(publicacion.getIdPublicacion(), ahora);
+
         publicacion.setEstado("BORRADOR");
         publicacion.setFechaActualizacion(ahora);
 
@@ -137,6 +161,7 @@ public class RevisionAdministrativaService {
                 motivoFinal,
                 ahora
         );
+        registrarEventoRevision(idAdministrador, publicacion, estadoAnterior, "BORRADOR", "RECHAZAR_PUBLICACION", ahora);
 
         return new DecisionPublicacionResponse(
                 revision.getIdRevision(),
@@ -148,6 +173,18 @@ public class RevisionAdministrativaService {
                 "La publicación ha sido rechazada y devuelta a BORRADOR.",
                 ahora
         );
+    }
+
+    private void registrarEventoRevision(
+            UUID idAdministrador, Publicacion publicacion, String estadoAnterior,
+            String estadoNuevo, String accion, OffsetDateTime fecha) {
+        if (auditoria != null) {
+            auditoria.registrarEvento(new RegistrarEventoAuditoria(
+                    idAdministrador, fecha, accion, "EXITOSO", "PUBLICACION",
+                    publicacion.getIdPublicacion(),
+                    "{\"estadoAnterior\":\"" + estadoAnterior
+                            + "\",\"estadoNuevo\":\"" + estadoNuevo + "\"}", null));
+        }
     }
 
     private void validarAdministrador(UUID idAdministrador) {

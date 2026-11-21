@@ -90,6 +90,9 @@ public class PublicacionConsultaService {
             );
         }
 
+        Map<UUID, String> portadas =
+                ResumenesPublicacion.portadas(imagenRepository, publicaciones);
+
         List<PublicacionResumenResponse> resultado =
                 publicaciones.stream()
                         .map(publicacion -> {
@@ -99,17 +102,7 @@ public class PublicacionConsultaService {
                                             publicacion.getIdAlojamiento()
                                     );
 
-                            return new PublicacionResumenResponse(
-                                    publicacion.getIdPublicacion(),
-                                    alojamiento.idAlojamiento(),
-                                    publicacion.getTitulo(),
-                                    alojamiento.ciudad(),
-                                    alojamiento.tipoAlojamiento(),
-                                    alojamiento.capacidad(),
-                                    publicacion.getPrecioPorNoche(),
-                                    publicacion.getEstado(),
-                                    publicacion.getFechaCreacion()
-                            );
+                            return ResumenesPublicacion.resumen(publicacion, alojamiento, portadas);
                         })
                         .toList();
 
@@ -158,6 +151,16 @@ public class PublicacionConsultaService {
                 .orElseThrow(() ->
                         new IllegalStateException(
                                 "No se encontró el alojamiento asociado."));
+
+        return armarDetalle(publicacion, alojamiento)
+                .conPropietario(alojamiento.propietarioInmueble());
+    }
+
+    PublicacionDetalleResponse armarDetalle(
+            Publicacion publicacion,
+            AlojamientoPublicacionInfo alojamiento) {
+
+        UUID idPublicacion = publicacion.getIdPublicacion();
 
         List<ImagenPublicacionResponse> imagenes =
                 imagenRepository
@@ -210,6 +213,10 @@ public class PublicacionConsultaService {
                 alojamiento.capacidad(),
                 servicios,
                 imagenes
+        ).conDistribucion(
+                alojamiento.habitaciones(),
+                alojamiento.camas(),
+                alojamiento.banos()
         );
     }
 }

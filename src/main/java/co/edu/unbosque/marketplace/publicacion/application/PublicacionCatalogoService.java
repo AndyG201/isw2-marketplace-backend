@@ -13,6 +13,7 @@ import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionI
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionResumenResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
+import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 
 @Service
@@ -22,13 +23,16 @@ public class PublicacionCatalogoService {
 
     private final PublicacionRepository publicacionRepository;
     private final AlojamientoPublicacionQuery alojamientoQuery;
+    private final ImagenPublicacionRepository imagenRepository;
 
     public PublicacionCatalogoService(
             PublicacionRepository publicacionRepository,
-            AlojamientoPublicacionQuery alojamientoQuery) {
+            AlojamientoPublicacionQuery alojamientoQuery,
+            ImagenPublicacionRepository imagenRepository) {
 
         this.publicacionRepository = publicacionRepository;
         this.alojamientoQuery = alojamientoQuery;
+        this.imagenRepository = imagenRepository;
     }
 
     @Transactional(readOnly = true)
@@ -61,6 +65,9 @@ public class PublicacionCatalogoService {
                                 Function.identity()
                         ));
 
+        Map<UUID, String> portadas =
+                ResumenesPublicacion.portadas(imagenRepository, publicaciones);
+
         return publicaciones.stream()
                 .map(publicacion -> {
 
@@ -77,17 +84,7 @@ public class PublicacionCatalogoService {
                         );
                     }
 
-                    return new PublicacionResumenResponse(
-                            publicacion.getIdPublicacion(),
-                            alojamiento.idAlojamiento(),
-                            publicacion.getTitulo(),
-                            alojamiento.ciudad(),
-                            alojamiento.tipoAlojamiento(),
-                            alojamiento.capacidad(),
-                            publicacion.getPrecioPorNoche(),
-                            publicacion.getEstado(),
-                            publicacion.getFechaCreacion()
-                    );
+                    return ResumenesPublicacion.resumen(publicacion, alojamiento, portadas);
                 })
                 .toList();
     }

@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.alojamiento.contracts;
 
 import java.util.UUID;
@@ -9,6 +8,50 @@ public record AlojamientoPublicacionInfo(
         String ubicacion,
         String ciudad,
         String tipoAlojamiento,
-        int capacidad
+        int capacidad,
+        int habitaciones,
+        int camas,
+        int banos,
+        String propietarioInmueble,
+        String pais,
+        String codigoPais
 ) {
+    public AlojamientoPublicacionInfo(
+            UUID idAlojamiento,
+            UUID idAnfitrion,
+            String ubicacion,
+            String ciudad,
+            String tipoAlojamiento,
+            int capacidad,
+            int habitaciones,
+            int camas,
+            int banos,
+            String propietarioInmueble) {
+        this(idAlojamiento, idAnfitrion, ubicacion, ciudad, tipoAlojamiento, capacidad,
+                habitaciones, camas, banos, propietarioInmueble, null, null);
+    }
+    public AlojamientoPublicacionInfo(
+            UUID idAlojamiento,
+            UUID idAnfitrion,
+            String ubicacion,
+            String ciudad,
+            String tipoAlojamiento,
+            int capacidad,
+            int habitaciones,
+            int camas,
+            int banos) {
+        this(idAlojamiento, idAnfitrion, ubicacion, ciudad, tipoAlojamiento, capacidad,
+                habitaciones, camas, banos, null, null, null);
+    }
+
+
+    public AlojamientoPublicacionInfo(
+            UUID idAlojamiento,
+            UUID idAnfitrion,
+            String ubicacion,
+            String ciudad,
+            String tipoAlojamiento,
+            int capacidad) {
+        this(idAlojamiento, idAnfitrion, ubicacion, ciudad, tipoAlojamiento, capacidad, 1, 1, 1, null, null, null);
+    }
 }

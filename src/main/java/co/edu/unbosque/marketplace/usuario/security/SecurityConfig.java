@@ -62,6 +62,8 @@ public class SecurityConfig {
 
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+						.requestMatchers("/error").permitAll()
+
 						// Autenticación y verificación de correo.
 
 						.requestMatchers("/autenticacion/**", "/verificacion-correo/**").permitAll()
@@ -76,7 +78,14 @@ public class SecurityConfig {
 
 						// Administración de usuarios.
 
+						.requestMatchers(HttpMethod.GET, "/administracion/usuarios", "/administracion/publicaciones",
+								"/administracion/dashboard/indicadores")
+						.hasAnyAuthority("ROLE_ADMINISTRADOR", "ROLE_AUDITOR_OPERACION")
+
 						.requestMatchers("/administracion/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
+				.requestMatchers("/administracion/reportes/**").hasAuthority("ROLE_ADMINISTRADOR")
+				.requestMatchers("/administracion/auditoria/**")
+				.hasAnyAuthority("ROLE_ADMINISTRADOR", "ROLE_AUDITOR_OPERACION")
 
 						// Creación de alojamientos.
 
@@ -104,7 +113,9 @@ public class SecurityConfig {
 
 						// Consultas de servicios y políticas.
 
-						.requestMatchers(HttpMethod.GET, "/servicios", "/politicas-cancelacion/activas")
+						.requestMatchers(HttpMethod.GET, "/servicios").permitAll()
+
+						.requestMatchers(HttpMethod.GET, "/politicas-cancelacion/activas")
 						.hasAuthority("ROLE_ANFITRION")
 
 						// Publicaciones propias del anfitrión.
@@ -166,6 +177,28 @@ public class SecurityConfig {
 						// HU-023: calendario completo exclusivo del anfitrión.
 						.requestMatchers(HttpMethod.GET, "/alojamientos/*/calendario").hasAuthority("ROLE_ANFITRION")
 
+						.requestMatchers(HttpMethod.GET, "/publicaciones/catalogo", "/publicaciones/busqueda")
+						.permitAll()
+
+						.requestMatchers(HttpMethod.GET, "/publicaciones/*/detalle-publico").permitAll()
+
+						.requestMatchers(HttpMethod.GET, "/publicaciones/*/resenas").permitAll()
+
+						.requestMatchers(HttpMethod.GET, "/imagenes/publicaciones/**").permitAll()
+						
+						.requestMatchers(
+						        HttpMethod.GET,
+						        "/publicaciones/*/servicios-adicionales"
+						).permitAll()
+
+						.requestMatchers(
+						        HttpMethod.POST,
+						        "/publicaciones/*/servicios-adicionales/seleccion"
+						).permitAll()
+						.requestMatchers(HttpMethod.POST, "/cotizaciones").permitAll()
+
+						.requestMatchers("/administracion/tarifas/**").hasAuthority("ROLE_ADMINISTRADOR")
+
 						// Todo lo demás requiere autenticación.
 						.anyRequest().authenticated())
 
@@ -214,6 +247,9 @@ public class SecurityConfig {
 		CorsConfiguration configuration = new CorsConfiguration();
 
 		configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
+		configuration.setAllowedOrigins(List.of(
+				"http://localhost:4200", "http://127.0.0.1:4200",
+				"http://localhost:5173", "http://127.0.0.1:5173"));
 
 		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 

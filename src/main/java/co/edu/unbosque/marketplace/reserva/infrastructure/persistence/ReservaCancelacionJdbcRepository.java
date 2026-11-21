@@ -1,0 +1,86 @@
+package co.edu.unbosque.marketplace.reserva.infrastructure.persistence;
+
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+
+import co.edu.unbosque.marketplace.reserva.contracts.ReservaCancelacionInfo;
+
+@Repository
+public class ReservaCancelacionJdbcRepository {
+
+    private static final String CONSULTAR_Y_BLOQUEAR = """
+            SELECT r.id_reserva AS "idReserva",
+                   r.id_huesped AS "idHuesped",
+                   r.estado AS "estado",
+                   r.id_politica_aplicada AS "idPoliticaAplicada",
+                   c.fecha_entrada AS "fechaEntrada",
+                   ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
+                    + c.tarifa_limpieza
+                    + ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
+                       * ct.porcentaje_servicio / 100)
+                    - ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
+                       * ct.porcentaje_descuento / 100)
+                    + COALESCE((SELECT SUM(ca.cantidad * ca.precio_aplicado)
+                                FROM public.cotizacion_adicional ca
+                                WHERE ca.id_cotizacion = c.id_cotizacion), 0)) AS "montoTotal",
+                   pago.monto AS "montoPagado",
+                   pago.estado AS "estadoPago"
+            FROM public.reserva r
+            JOIN public.cotizacion c ON c.id_cotizacion = r.id_cotizacion
+            JOIN public.configuracion_tarifa ct ON ct.id_configuracion = c.id_configuracion
+            LEFT JOIN LATERAL (
+                SELECT p.monto, p.estado
+                FROM public.pago p
+                WHERE p.id_reserva = r.id_reserva
+                ORDER BY p.fecha_creacion DESC
+                LIMIT 1
+            ) pago ON TRUE
+            WHERE r.id_reserva = ?
+            FOR UPDATE OF r
+            """;
+
+    private final JdbcTemplate jdbc;
+    private final RowMapper<ReservaCancelacionInfo> mapper = this::mapear;
+
+    public ReservaCancelacionJdbcRepository(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    public Optional<ReservaCancelacionInfo> bloquearYConsultar(UUID idReserva) {
+        List<ReservaCancelacionInfo> resultado = jdbc.query(CONSULTAR_Y_BLOQUEAR, mapper, idReserva);
+        return resultado.stream().findFirst();
+    }
+
+    public void marcarCancelada(UUID idReserva) {
+        int actualizadas = jdbc.update("""
+                UPDATE public.reserva
+                SET estado = 'CANCELADA', retencion_hasta = NULL
+                WHERE id_reserva = ?
+                  AND estado IN ('PENDIENTE_PAGO', 'PENDIENTE_APROBACION', 'CONFIRMADA')
+                """, idReserva);
+        if (actualizadas != 1) {
+            throw new IllegalStateException("La reserva cambió de estado durante la cancelación.");
+        }
+    }
+
+    private ReservaCancelacionInfo mapear(ResultSet rs, int fila) throws SQLException {
+        return new ReservaCancelacionInfo(
+                rs.getObject("idReserva", UUID.class),
+                rs.getObject("idHuesped", UUID.class),
+                rs.getString("estado"),
+                rs.getObject("idPoliticaAplicada", UUID.class),
+                rs.getObject("fechaEntrada", LocalDate.class),
+                rs.getBigDecimal("montoTotal"),
+                rs.getBigDecimal("montoPagado"),
+                rs.getString("estadoPago"));
+    }
+}

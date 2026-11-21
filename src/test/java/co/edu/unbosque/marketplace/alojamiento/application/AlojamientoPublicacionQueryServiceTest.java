@@ -1,3 +1,4 @@
+
 package co.edu.unbosque.marketplace.alojamiento.application;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,7 +23,7 @@ import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.Alojam
 class AlojamientoPublicacionQueryServiceTest {
 
     @Mock
-    private AlojamientoRepository alojamientoRepository;
+    private AlojamientoRepository repositorio;
 
     @InjectMocks
     private AlojamientoPublicacionQueryService servicio;
@@ -37,8 +38,12 @@ class AlojamientoPublicacionQueryServiceTest {
     }
 
     private Alojamiento crearAlojamiento(
-            UUID id, UUID anfitrion, String ubicacion,
-            String ciudad, String tipo, int capacidad) {
+            UUID id,
+            UUID anfitrion,
+            String ubicacion,
+            String ciudad,
+            String tipo,
+            int capacidad) {
 
         Alojamiento alojamiento = new Alojamiento();
 
@@ -52,14 +57,38 @@ class AlojamientoPublicacionQueryServiceTest {
         return alojamiento;
     }
 
+    private Alojamiento alojamientoConDistribucion(
+            UUID id,
+            UUID anfitrion) {
+
+        Alojamiento alojamiento = crearAlojamiento(
+                id, anfitrion,
+                "Calle 1", "Bogotá", "Casa", 6
+        );
+
+        alojamiento.setHabitaciones(3);
+        alojamiento.setCamas(4);
+        alojamiento.setBanos(2);
+
+        return alojamiento;
+    }
+
+    // =====================================================
+    // CONSULTA DE ANFITRIÓN
+    // =====================================================
+
     @Test
     void debeConsultarIdAnfitrionCorrectamente() {
         Alojamiento alojamiento = crearAlojamiento(
-                idAlojamiento, idAnfitrion,
-                "Calle 123", "Bogotá", "Apartamento", 4
+                idAlojamiento,
+                idAnfitrion,
+                "Calle 123",
+                "Bogotá",
+                "Apartamento",
+                4
         );
 
-        when(alojamientoRepository.findById(idAlojamiento))
+        when(repositorio.findById(idAlojamiento))
                 .thenReturn(Optional.of(alojamiento));
 
         Optional<UUID> resultado =
@@ -68,12 +97,12 @@ class AlojamientoPublicacionQueryServiceTest {
         assertTrue(resultado.isPresent());
         assertEquals(idAnfitrion, resultado.get());
 
-        verify(alojamientoRepository).findById(idAlojamiento);
+        verify(repositorio).findById(idAlojamiento);
     }
 
     @Test
     void debeRetornarVacioCuandoElAlojamientoNoExisteAlConsultarAnfitrion() {
-        when(alojamientoRepository.findById(idAlojamiento))
+        when(repositorio.findById(idAlojamiento))
                 .thenReturn(Optional.empty());
 
         Optional<UUID> resultado =
@@ -89,17 +118,25 @@ class AlojamientoPublicacionQueryServiceTest {
 
         assertTrue(resultado.isEmpty());
 
-        verifyNoInteractions(alojamientoRepository);
+        verifyNoInteractions(repositorio);
     }
+
+    // =====================================================
+    // CONSULTA DE DATOS PARA PUBLICACIÓN
+    // =====================================================
 
     @Test
     void debeConsultarDatosParaPublicacionCorrectamente() {
         Alojamiento alojamiento = crearAlojamiento(
-                idAlojamiento, idAnfitrion,
-                "Calle 123", "Bogotá", "Apartamento", 4
+                idAlojamiento,
+                idAnfitrion,
+                "Calle 123",
+                "Bogotá",
+                "Apartamento",
+                4
         );
 
-        when(alojamientoRepository.findById(idAlojamiento))
+        when(repositorio.findById(idAlojamiento))
                 .thenReturn(Optional.of(alojamiento));
 
         Optional<AlojamientoPublicacionInfo> resultado =
@@ -119,7 +156,7 @@ class AlojamientoPublicacionQueryServiceTest {
 
     @Test
     void debeRetornarVacioCuandoElAlojamientoNoExisteAlConsultarDatos() {
-        when(alojamientoRepository.findById(idAlojamiento))
+        when(repositorio.findById(idAlojamiento))
                 .thenReturn(Optional.empty());
 
         Optional<AlojamientoPublicacionInfo> resultado =
@@ -135,22 +172,34 @@ class AlojamientoPublicacionQueryServiceTest {
 
         assertTrue(resultado.isEmpty());
 
-        verifyNoInteractions(alojamientoRepository);
+        verifyNoInteractions(repositorio);
     }
+
+    // =====================================================
+    // CONSULTA DE ALOJAMIENTOS POR ANFITRIÓN
+    // =====================================================
 
     @Test
     void debeConsultarAlojamientosPorAnfitrion() {
         Alojamiento alojamiento1 = crearAlojamiento(
-                idAlojamiento, idAnfitrion,
-                "Calle 123", "Bogotá", "Apartamento", 4
+                idAlojamiento,
+                idAnfitrion,
+                "Calle 123",
+                "Bogotá",
+                "Apartamento",
+                4
         );
 
         Alojamiento alojamiento2 = crearAlojamiento(
-                UUID.randomUUID(), idAnfitrion,
-                "Carrera 15", "Medellín", "Casa", 6
+                UUID.randomUUID(),
+                idAnfitrion,
+                "Carrera 15",
+                "Medellín",
+                "Casa",
+                6
         );
 
-        when(alojamientoRepository.findByIdAnfitrion(idAnfitrion))
+        when(repositorio.findByIdAnfitrion(idAnfitrion))
                 .thenReturn(List.of(alojamiento1, alojamiento2));
 
         List<AlojamientoPublicacionInfo> resultado =
@@ -165,12 +214,12 @@ class AlojamientoPublicacionQueryServiceTest {
         assertEquals("Medellín", resultado.get(1).ciudad());
         assertEquals("Casa", resultado.get(1).tipoAlojamiento());
 
-        verify(alojamientoRepository).findByIdAnfitrion(idAnfitrion);
+        verify(repositorio).findByIdAnfitrion(idAnfitrion);
     }
 
     @Test
     void debeRetornarListaVaciaCuandoElAnfitrionNoTieneAlojamientos() {
-        when(alojamientoRepository.findByIdAnfitrion(idAnfitrion))
+        when(repositorio.findByIdAnfitrion(idAnfitrion))
                 .thenReturn(List.of());
 
         List<AlojamientoPublicacionInfo> resultado =
@@ -188,26 +237,38 @@ class AlojamientoPublicacionQueryServiceTest {
         assertNotNull(resultado);
         assertTrue(resultado.isEmpty());
 
-        verifyNoInteractions(alojamientoRepository);
+        verifyNoInteractions(repositorio);
     }
+
+    // =====================================================
+    // CONSULTA DE ALOJAMIENTOS POR IDENTIFICADORES
+    // =====================================================
 
     @Test
     void debeConsultarAlojamientosPorIds() {
         Alojamiento alojamiento1 = crearAlojamiento(
-                idAlojamiento, idAnfitrion,
-                "Calle 123", "Bogotá", "Apartamento", 4
+                idAlojamiento,
+                idAnfitrion,
+                "Calle 123",
+                "Bogotá",
+                "Apartamento",
+                4
         );
 
         UUID segundoId = UUID.randomUUID();
 
         Alojamiento alojamiento2 = crearAlojamiento(
-                segundoId, idAnfitrion,
-                "Carrera 15", "Medellín", "Casa", 6
+                segundoId,
+                idAnfitrion,
+                "Carrera 15",
+                "Medellín",
+                "Casa",
+                6
         );
 
         List<UUID> ids = List.of(idAlojamiento, segundoId);
 
-        when(alojamientoRepository.findAllById(ids))
+        when(repositorio.findAllById(ids))
                 .thenReturn(List.of(alojamiento1, alojamiento2));
 
         List<AlojamientoPublicacionInfo> resultado =
@@ -224,14 +285,14 @@ class AlojamientoPublicacionQueryServiceTest {
         assertEquals("Medellín", resultado.get(1).ciudad());
         assertEquals(6, resultado.get(1).capacidad());
 
-        verify(alojamientoRepository).findAllById(ids);
+        verify(repositorio).findAllById(ids);
     }
 
     @Test
     void debeRetornarListaVaciaCuandoNoEncuentraAlojamientosPorIds() {
         List<UUID> ids = List.of(idAlojamiento);
 
-        when(alojamientoRepository.findAllById(ids))
+        when(repositorio.findAllById(ids))
                 .thenReturn(List.of());
 
         List<AlojamientoPublicacionInfo> resultado =
@@ -249,7 +310,7 @@ class AlojamientoPublicacionQueryServiceTest {
         assertNotNull(resultado);
         assertTrue(resultado.isEmpty());
 
-        verifyNoInteractions(alojamientoRepository);
+        verifyNoInteractions(repositorio);
     }
 
     @Test
@@ -260,6 +321,56 @@ class AlojamientoPublicacionQueryServiceTest {
         assertNotNull(resultado);
         assertTrue(resultado.isEmpty());
 
-        verifyNoInteractions(alojamientoRepository);
+        verifyNoInteractions(repositorio);
+    }
+
+    // =====================================================
+    // PRUEBAS DE DISTRIBUCIÓN EN LAS CONSULTAS
+    // =====================================================
+
+    @Test
+    void incluyeLaDistribucionEnTodasLasConsultas() {
+        UUID id = UUID.randomUUID();
+        UUID anfitrion = UUID.randomUUID();
+
+        Alojamiento alojamiento =
+                alojamientoConDistribucion(id, anfitrion);
+
+        when(repositorio.findById(id))
+                .thenReturn(Optional.of(alojamiento));
+
+        when(repositorio.findByIdAnfitrion(anfitrion))
+                .thenReturn(List.of(alojamiento));
+
+        when(repositorio.findAllById(List.of(id)))
+                .thenReturn(List.of(alojamiento));
+
+        AlojamientoPublicacionInfo esperado =
+                new AlojamientoPublicacionInfo(
+                        id,
+                        anfitrion,
+                        "Calle 1",
+                        "Bogotá",
+                        "Casa",
+                        6,
+                        3,
+                        4,
+                        2
+                );
+
+        assertEquals(
+                Optional.of(esperado),
+                servicio.consultarDatosParaPublicacion(id)
+        );
+
+        assertEquals(
+                List.of(esperado),
+                servicio.consultarPorAnfitrion(anfitrion)
+        );
+
+        assertEquals(
+                List.of(esperado),
+                servicio.consultarPorIdsAlojamiento(List.of(id))
+        );
     }
 }

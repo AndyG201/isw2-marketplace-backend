@@ -1,6 +1,7 @@
 package co.edu.unbosque.marketplace.publicacion.api.response;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -40,5 +41,21 @@ class PublicacionResumenResponseTest {
         assertEquals(new BigDecimal("150000.00"), response.getPrecioPorNoche());
         assertEquals("PUBLICADA", response.getEstado());
         assertEquals(fechaCreacion, response.getFechaCreacion());
+    }
+
+    @Test
+    void incluyeLaImagenDePortadaCuandoSeIndica() {
+
+        PublicacionResumenResponse sinPortada = new PublicacionResumenResponse(
+                UUID.randomUUID(), UUID.randomUUID(), "Casa", "Cali", "CASA", 2,
+                BigDecimal.TEN, "ACTIVA", OffsetDateTime.now());
+
+        PublicacionResumenResponse conPortada = new PublicacionResumenResponse(
+                UUID.randomUUID(), UUID.randomUUID(), "Casa", "Cali", "CASA", 2,
+                BigDecimal.TEN, "ACTIVA", OffsetDateTime.now(),
+                "/imagenes/publicaciones/portada.jpg");
+
+        assertNull(sinPortada.getImagenPortada());
+        assertEquals("/imagenes/publicaciones/portada.jpg", conPortada.getImagenPortada());
     }
 }

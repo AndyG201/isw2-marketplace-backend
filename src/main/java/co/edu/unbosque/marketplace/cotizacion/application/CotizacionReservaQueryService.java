@@ -46,7 +46,8 @@ public class CotizacionReservaQueryService
                 cotizacion.getIdCotizacion(),
                 cotizacion.getIdPublicacion(),
                 cotizacion.getFechaEntrada(),
-                cotizacion.getFechaSalida()
+                cotizacion.getFechaSalida(),
+                cotizacion.getCantidadHuespedes()
         );
     }
 }

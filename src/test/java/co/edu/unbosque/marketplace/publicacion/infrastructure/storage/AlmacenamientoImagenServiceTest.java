@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -15,17 +16,38 @@ import org.springframework.web.multipart.MultipartFile;
 
 class AlmacenamientoImagenServiceTest {
 
+    private static final byte[] JPG = {
+        (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x00
+    };
+
     @TempDir
     Path directorioTemporal;
 
     private AlmacenamientoImagenService service;
+    private CloudinaryCliente cloudinary;
 
     @BeforeEach
     void setUp() {
+        cloudinary = mock(CloudinaryCliente.class);
+
         service = new AlmacenamientoImagenService(
-            directorioTemporal.toString()
+            directorioTemporal.toString(),
+            cloudinary
         );
     }
+
+    private MockMultipartFile archivo(byte[] contenido) {
+        return new MockMultipartFile(
+            "imagenes",
+            "foto.jpg",
+            "image/jpeg",
+            contenido
+        );
+    }
+
+    // ==========================================
+    // PRUEBAS DE ALMACENAMIENTO LOCAL
+    // ==========================================
 
     @Test
     void debeGuardarImagenJpgCorrectamente() throws IOException {
@@ -85,8 +107,91 @@ class AlmacenamientoImagenServiceTest {
             .resolve(nombreArchivo);
 
         assertTrue(Files.exists(archivoGuardado));
-        assertArrayEquals(contenido, Files.readAllBytes(archivoGuardado));
+        assertArrayEquals(
+            contenido,
+            Files.readAllBytes(archivoGuardado)
+        );
+
+        verify(cloudinary, never())
+            .subir(any(byte[].class), anyString(), anyString());
     }
+
+    @Test
+    void sinCloudinaryGuardaLaImagenEnElDisco() throws IOException {
+        String ruta = service.guardar(archivo(JPG));
+
+        assertTrue(ruta.startsWith("/imagenes/publicaciones/"));
+        assertTrue(ruta.endsWith(".jpg"));
+
+        Path guardada = directorioTemporal
+            .resolve("publicaciones")
+            .resolve(ruta.substring(ruta.lastIndexOf('/') + 1));
+
+        assertTrue(Files.exists(guardada));
+
+        verify(cloudinary, never())
+            .subir(any(byte[].class), anyString(), anyString());
+    }
+
+    // ==========================================
+    // PRUEBAS DE CLOUDINARY
+    // ==========================================
+
+    @Test
+    void conCloudinarySubeLaImagenYNoTocaElDisco() {
+        when(cloudinary.configurado()).thenReturn(true);
+
+        String urlEsperada =
+            "https://res.cloudinary.com/demo/image/upload/v1/a.jpg";
+
+        when(cloudinary.subir(
+            any(byte[].class),
+            anyString(),
+            eq(".jpg")
+        )).thenReturn(urlEsperada);
+
+        String ruta = service.guardar(archivo(JPG));
+
+        assertEquals(urlEsperada, ruta);
+
+        assertFalse(
+            Files.exists(
+                directorioTemporal.resolve("publicaciones")
+            )
+        );
+
+        verify(cloudinary).subir(
+            any(byte[].class),
+            anyString(),
+            eq(".jpg")
+        );
+    }
+
+    @Test
+    void eliminaEnCloudinaryLasImagenesDeLaCuenta() {
+        String url =
+            "https://res.cloudinary.com/demo/image/upload/v1/a.jpg";
+
+        when(cloudinary.esUrlPropia(url)).thenReturn(true);
+
+        service.eliminar(url);
+
+        verify(cloudinary).eliminar(url);
+    }
+
+    @Test
+    void ignoraDireccionesExternasQueNoSonDeLaCuenta() {
+        String url =
+            "https://res.cloudinary.com/otra/image/upload/v1/a.jpg";
+
+        service.eliminar(url);
+
+        verify(cloudinary, never()).eliminar(anyString());
+    }
+
+    // ==========================================
+    // PRUEBAS DE VALIDACIONES
+    // ==========================================
 
     @Test
     void debeLanzarExcepcionCuandoElArchivoEsNulo() {
@@ -165,10 +270,15 @@ class AlmacenamientoImagenServiceTest {
             "Formato de imagen no permitido. Utiliza JPG, PNG o WEBP.",
             excepcion.getMessage()
         );
+
+        verify(cloudinary, never())
+            .subir(any(byte[].class), anyString(), anyString());
     }
 
     @Test
-    void debeConvertirIOExceptionEnIllegalStateException() throws IOException {
+    void debeConvertirIOExceptionEnIllegalStateException()
+            throws IOException {
+
         MultipartFile archivo = mock(MultipartFile.class);
 
         when(archivo.isEmpty()).thenReturn(false);
@@ -191,19 +301,27 @@ class AlmacenamientoImagenServiceTest {
     }
 
     @Test
-    void debeEliminarImagenGuardada() throws IOException {
-        byte[] contenido = {
-            (byte) 0xFF, (byte) 0xD8, (byte) 0xFF
-        };
-
-        MockMultipartFile archivo = new MockMultipartFile(
-            "archivo",
-            "imagen.jpg",
-            "image/jpeg",
-            contenido
+    void rechazaArchivosQueNoSonImagenes() {
+        MockMultipartFile texto = archivo(
+            "hola".getBytes(StandardCharsets.UTF_8)
         );
 
-        String ruta = service.guardar(archivo);
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.guardar(texto)
+        );
+
+        verify(cloudinary, never())
+            .subir(any(byte[].class), anyString(), anyString());
+    }
+
+    // ==========================================
+    // PRUEBAS DE ELIMINACION LOCAL
+    // ==========================================
+
+    @Test
+    void debeEliminarImagenGuardada() throws IOException {
+        String ruta = service.guardar(archivo(JPG));
 
         String nombreArchivo =
             ruta.substring(ruta.lastIndexOf('/') + 1);
@@ -217,12 +335,16 @@ class AlmacenamientoImagenServiceTest {
         service.eliminar(ruta);
 
         assertFalse(Files.exists(archivoGuardado));
+
+        verify(cloudinary, never()).eliminar(anyString());
     }
 
     @Test
     void debePermitirEliminarUnArchivoInexistente() {
         assertDoesNotThrow(
-            () -> service.eliminar("/imagenes/publicaciones/inexistente.jpg")
+            () -> service.eliminar(
+                "/imagenes/publicaciones/inexistente.jpg"
+            )
         );
     }
 
