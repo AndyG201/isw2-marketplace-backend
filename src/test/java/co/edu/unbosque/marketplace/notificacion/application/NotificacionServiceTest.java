@@ -15,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
 import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.publicacion.contracts.ModoAceptacionActualizadoEvent;
@@ -146,15 +147,15 @@ class NotificacionServiceTest {
             );
 
         assertAll(
-            () -> assertThrows(IllegalArgumentException.class,
+            () -> assertThrows(DatosInvalidosException.class,
                 () -> service.registrarModoAceptacionActualizado(eventoNulo)),
-            () -> assertThrows(IllegalArgumentException.class,
+            () -> assertThrows(DatosInvalidosException.class,
                 () -> service.registrarModoAceptacionActualizado(sinAnfitrion)),
-            () -> assertThrows(IllegalArgumentException.class,
+            () -> assertThrows(DatosInvalidosException.class,
                 () -> service.registrarModoAceptacionActualizado(sinPublicacion)),
-            () -> assertThrows(IllegalArgumentException.class,
+            () -> assertThrows(DatosInvalidosException.class,
                 () -> service.registrarModoAceptacionActualizado(sinModoNuevo)),
-            () -> assertThrows(IllegalArgumentException.class,
+            () -> assertThrows(DatosInvalidosException.class,
                 () -> service.registrarModoAceptacionActualizado(sinFecha))
         );
 
@@ -252,13 +253,13 @@ class NotificacionServiceTest {
             );
 
         assertAll(
-            () -> assertThrows(IllegalArgumentException.class,
+            () -> assertThrows(DatosInvalidosException.class,
                 () -> service.registrarPublicacionDesbloqueada(eventoNulo)),
-            () -> assertThrows(IllegalArgumentException.class,
+            () -> assertThrows(DatosInvalidosException.class,
                 () -> service.registrarPublicacionDesbloqueada(sinAnfitrion)),
-            () -> assertThrows(IllegalArgumentException.class,
+            () -> assertThrows(DatosInvalidosException.class,
                 () -> service.registrarPublicacionDesbloqueada(sinPublicacion)),
-            () -> assertThrows(IllegalArgumentException.class,
+            () -> assertThrows(DatosInvalidosException.class,
                 () -> service.registrarPublicacionDesbloqueada(sinFecha))
         );
 

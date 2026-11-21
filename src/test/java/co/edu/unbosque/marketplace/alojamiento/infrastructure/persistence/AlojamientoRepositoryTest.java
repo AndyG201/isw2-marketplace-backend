@@ -1,4 +1,4 @@
-package co.edu.unbosque.marketplace.alojamiento.infraestructure.persistence;
+package co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.reserva.application.ReservaPagoSimuladoService;
 import co.edu.unbosque.marketplace.reserva.application.dto.PagoSimuladoResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -42,7 +43,7 @@ public class ReservaPagoSimuladoController {
                 && autenticacion.getAuthorities().stream()
                         .anyMatch(autoridad -> "ROLE_HUESPED".equals(autoridad.getAuthority()));
         if (!esHuesped) {
-            throw new AccessDeniedException("Solo un huésped puede pagar una reserva.");
+            throw new AccesoNoPermitidoException("Solo un huésped puede pagar una reserva.");
         }
     }
 }

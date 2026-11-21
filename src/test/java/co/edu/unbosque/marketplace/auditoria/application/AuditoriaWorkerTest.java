@@ -16,6 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
 import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
@@ -50,14 +52,14 @@ class AuditoriaWorkerTest {
 
     @Test
     void rechazaTipoDeTrabajoNoSoportado() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(FallaInternaException.class,
                 () -> worker.procesar(TipoTrabajo.EXPORTAR_REPORTE, idEvento.toString()));
         verifyNoInteractions(outbox, almacen);
     }
 
     @Test
     void rechazaIdentificadorQueNoEsUuid() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(DatosInvalidosException.class,
                 () -> worker.procesar(TipoTrabajo.COPIAR_AUDITORIA, "id-invalido"));
         verifyNoInteractions(outbox, almacen);
     }

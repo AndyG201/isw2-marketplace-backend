@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
 import co.edu.unbosque.marketplace.publicacion.contracts.ModoAceptacionActualizadoEvent;
@@ -37,7 +38,7 @@ public class NotificacionService {
                 || evento.modoNuevo() == null
                 || evento.fechaEvento() == null) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Los datos del evento de actualización son obligatorios."
             );
         }
@@ -92,7 +93,7 @@ public class NotificacionService {
                 || evento.idPublicacion() == null
                 || evento.fechaEvento() == null) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Los datos del evento de desbloqueo son obligatorios."
             );
         }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.application.port.BandejaSalidaAuditoriaRepository;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaReservaCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoReserva;
@@ -26,7 +27,7 @@ public class AuditoriaReservaService implements AuditoriaReservaCommand {
                 || solicitud.accion() == null || solicitud.accion().isBlank()
                 || solicitud.resultado() == null || solicitud.resultado().isBlank()
                 || solicitud.detalle() == null || solicitud.detalle().isBlank()) {
-            throw new IllegalArgumentException("Los datos de auditoría de reserva son obligatorios.");
+            throw new DatosInvalidosException("Los datos de auditoría de reserva son obligatorios.");
         }
         BandejaSalidaAuditoria evento = new BandejaSalidaAuditoria();
         evento.setIdEvento(UUID.randomUUID());

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.resena.api.request.OcultarResenaRequest;
 import co.edu.unbosque.marketplace.resena.application.ResenaModeracionService;
@@ -50,7 +51,7 @@ public class ResenaModeracionController {
                 && autenticacion.getAuthorities().stream()
                         .anyMatch(autoridad -> "ROLE_ADMINISTRADOR".equals(autoridad.getAuthority()));
         if (!esAdministrador) {
-            throw new AccessDeniedException("Solo un administrador puede ocultar una reseña.");
+            throw new AccesoNoPermitidoException("Solo un administrador puede ocultar una reseña.");
         }
     }
 }

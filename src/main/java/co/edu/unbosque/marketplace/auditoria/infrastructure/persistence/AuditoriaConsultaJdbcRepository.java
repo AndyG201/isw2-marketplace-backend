@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.application.port.AuditoriaConsultaRepository;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
 import co.edu.unbosque.marketplace.auditoria.domain.FiltrosAuditoria;
@@ -153,7 +154,7 @@ public class AuditoriaConsultaJdbcRepository implements AuditoriaConsultaReposit
     private void validarPaginacion(int limite, long desplazamiento) {
 
         if (limite <= 0 || desplazamiento < 0) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Los parámetros de paginación no son válidos.");
         }
     }

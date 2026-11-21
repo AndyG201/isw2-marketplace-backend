@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaResenaCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoResena;
 import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
@@ -89,7 +90,7 @@ public class ResenaModeracionService {
                     "visible", resena.isVisible(),
                     "fechaOcultamiento", resena.getFechaOcultamiento()));
         } catch (JsonProcessingException error) {
-            throw new IllegalStateException("No fue posible registrar la trazabilidad de la reseña.", error);
+            throw new FallaInternaException("No fue posible registrar la trazabilidad de la reseña.", error);
         }
     }
 }

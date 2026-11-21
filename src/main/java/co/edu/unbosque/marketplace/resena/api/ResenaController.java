@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.resena.application.ResenaService;
 import co.edu.unbosque.marketplace.resena.application.dto.CrearResenaRequest;
 import co.edu.unbosque.marketplace.resena.application.dto.CrearResenaResponse;
@@ -47,7 +48,7 @@ public class ResenaController {
                 && autenticacion.getAuthorities().stream()
                         .anyMatch(autoridad -> "ROLE_HUESPED".equals(autoridad.getAuthority()));
         if (!esHuesped) {
-            throw new AccessDeniedException("Solo un huésped puede crear una reseña.");
+            throw new AccesoNoPermitidoException("Solo un huésped puede crear una reseña.");
         }
     }
 }

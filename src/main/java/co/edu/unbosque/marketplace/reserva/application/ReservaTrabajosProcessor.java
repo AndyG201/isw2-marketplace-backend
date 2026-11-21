@@ -3,6 +3,7 @@ package co.edu.unbosque.marketplace.reserva.application;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
 import co.edu.unbosque.marketplace.trabajo.ProcesadorTrabajo;
 import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
@@ -37,7 +38,7 @@ public class ReservaTrabajosProcessor implements ProcesadorTrabajo {
             case LIBERAR_RETENCIONES_APROBACION ->
                     aprobacion.rechazarSolicitudesVencidas();
             case EXPIRAR_RETENCIONES -> retenciones.expirarReservasSinPago();
-            default -> throw new IllegalArgumentException(
+            default -> throw new FallaInternaException(
                     "El procesador de reservas no admite el trabajo " + tipo);
         }
     }

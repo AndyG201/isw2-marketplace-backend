@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.notificacion.application.dto.NotificacionResponse;
 import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
@@ -72,8 +73,8 @@ class NotificacionConsultaServiceTest {
     @Test
     void consultarMisNotificacionesDebeRechazarUsuarioNulo() {
 
-        IllegalArgumentException excepcion = assertThrows(
-                IllegalArgumentException.class,
+        SesionRequeridaException excepcion = assertThrows(
+                SesionRequeridaException.class,
                 () -> service.consultarMisNotificaciones(null)
         );
 

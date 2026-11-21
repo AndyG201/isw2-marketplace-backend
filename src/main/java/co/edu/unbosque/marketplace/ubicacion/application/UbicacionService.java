@@ -13,6 +13,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.ubicacion.application.dto.CiudadResponse;
 import co.edu.unbosque.marketplace.ubicacion.application.dto.PaisResponse;
 import co.edu.unbosque.marketplace.ubicacion.application.port.CatalogoUbicacionesExterno;
@@ -47,7 +48,7 @@ public class UbicacionService implements UbicacionRegistroQuery {
     @Transactional
     public List<CiudadResponse> listarCiudades(UUID idPais) {
         Pais pais = paisRepository.findById(idPais)
-                .orElseThrow(() -> new IllegalArgumentException("El país solicitado no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("El país solicitado no existe."));
         if (!ciudadRepository.existsByPaisIdPais(idPais)) sincronizarCiudades(pais);
         return ciudadRepository.findAllByPaisIdPaisOrderByNombreAsc(idPais).stream()
                 .map(ciudad -> new CiudadResponse(ciudad.getIdCiudad(), ciudad.getNombre())).toList();

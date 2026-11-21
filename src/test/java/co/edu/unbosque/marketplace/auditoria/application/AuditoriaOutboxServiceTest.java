@@ -27,6 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.application.port.BandejaSalidaAuditoriaRepository;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
@@ -90,10 +91,10 @@ class AuditoriaOutboxServiceTest {
 
     @Test
     void rechazaSolicitudInvalidaOSuperaLongitudes() {
-        assertThrows(IllegalArgumentException.class, () -> service.registrarEvento(null));
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(DatosInvalidosException.class, () -> service.registrarEvento(null));
+        assertThrows(DatosInvalidosException.class,
                 () -> service.registrarEvento(solicitud(" ", "EXITOSO", "RESERVA", null)));
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(DatosInvalidosException.class,
                 () -> service.registrarEvento(solicitud("A".repeat(101), "EXITOSO", "RESERVA", null)));
         verifyNoInteractions(repository);
     }
@@ -190,7 +191,7 @@ class AuditoriaOutboxServiceTest {
         UUID idError = UUID.randomUUID();
         BandejaSalidaAuditoria eventoError = evento(idError, "EN_PROCESO", 1);
         when(repository.findById(idError)).thenReturn(Optional.of(eventoError));
-        service.marcarError(idError, new IllegalArgumentException("x".repeat(1100)));
+        service.marcarError(idError, new DatosInvalidosException("x".repeat(1100)));
         assertEquals(1000, eventoError.getUltimoError().length());
 
         UUID idEnviado = UUID.randomUUID();
