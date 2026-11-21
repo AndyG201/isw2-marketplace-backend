@@ -3,7 +3,6 @@ package co.edu.unbosque.marketplace.publicacion.application;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,8 +14,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.security.access.AccessDeniedException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.EstadoPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
@@ -127,7 +129,7 @@ class PublicacionEstadoServiceTest {
     void pausarConAnfitrionNulo() {
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.pausarPublicacion(null, idPublicacion)
         );
 
@@ -142,7 +144,7 @@ class PublicacionEstadoServiceTest {
     void reactivarConAnfitrionNulo() {
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.reactivarPublicacion(null, idPublicacion)
         );
 
@@ -160,7 +162,7 @@ class PublicacionEstadoServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -177,7 +179,7 @@ class PublicacionEstadoServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -195,7 +197,7 @@ class PublicacionEstadoServiceTest {
         when(anfitrion.esAnfitrion()).thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -213,7 +215,7 @@ class PublicacionEstadoServiceTest {
         when(anfitrion.esAnfitrion()).thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -231,7 +233,7 @@ class PublicacionEstadoServiceTest {
         when(anfitrion.cuentaHabilitadaParaPublicar()).thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -249,7 +251,7 @@ class PublicacionEstadoServiceTest {
         when(anfitrion.cuentaHabilitadaParaPublicar()).thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -265,7 +267,7 @@ class PublicacionEstadoServiceTest {
         configurarAnfitrionValido();
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.pausarPublicacion(idAnfitrion, null)
         );
 
@@ -281,7 +283,7 @@ class PublicacionEstadoServiceTest {
         configurarAnfitrionValido();
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.reactivarPublicacion(idAnfitrion, null)
         );
 
@@ -300,7 +302,7 @@ class PublicacionEstadoServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                NoSuchElementException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -322,7 +324,7 @@ class PublicacionEstadoServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -346,7 +348,7 @@ class PublicacionEstadoServiceTest {
                 .thenReturn(Optional.of(otroAnfitrion));
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -370,7 +372,7 @@ class PublicacionEstadoServiceTest {
                 .thenReturn(Optional.of(otroAnfitrion));
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -383,7 +385,7 @@ class PublicacionEstadoServiceTest {
         prepararPublicacion("BLOQUEADA");
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -396,7 +398,7 @@ class PublicacionEstadoServiceTest {
         prepararPublicacion("BLOQUEADA");
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -409,7 +411,7 @@ class PublicacionEstadoServiceTest {
         prepararPublicacion("PAUSADA");
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.pausarPublicacion(idAnfitrion, idPublicacion)
         );
 
@@ -422,7 +424,7 @@ class PublicacionEstadoServiceTest {
         prepararPublicacion("ACTIVA");
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.reactivarPublicacion(idAnfitrion, idPublicacion)
         );
 

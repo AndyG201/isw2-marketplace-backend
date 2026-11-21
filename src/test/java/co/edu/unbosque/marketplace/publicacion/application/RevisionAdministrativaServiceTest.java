@@ -21,8 +21,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.security.access.AccessDeniedException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.RevisionPublicacionRepository;
@@ -172,7 +175,7 @@ class RevisionAdministrativaServiceTest {
     void aprobarConAdministradorNulo() {
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.aprobarPublicacion(null, idPublicacion)
         );
 
@@ -183,7 +186,7 @@ class RevisionAdministrativaServiceTest {
     void rechazarConAdministradorNulo() {
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.rechazarPublicacion(
                         null,
                         idPublicacion,
@@ -201,7 +204,7 @@ class RevisionAdministrativaServiceTest {
                 .thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         idPublicacion
@@ -218,7 +221,7 @@ class RevisionAdministrativaServiceTest {
                 .thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
@@ -233,7 +236,7 @@ class RevisionAdministrativaServiceTest {
     void aprobarConIdentificadorDePublicacionNulo() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         null
@@ -247,7 +250,7 @@ class RevisionAdministrativaServiceTest {
     void rechazarConIdentificadorDePublicacionNulo() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.rechazarPublicacion(
                         idAdministrador,
                         null,
@@ -264,7 +267,7 @@ class RevisionAdministrativaServiceTest {
         prepararPublicacionInexistente();
 
         assertThrows(
-                java.util.NoSuchElementException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         idPublicacion
@@ -280,7 +283,7 @@ class RevisionAdministrativaServiceTest {
         prepararPublicacionInexistente();
 
         assertThrows(
-                java.util.NoSuchElementException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
@@ -297,7 +300,7 @@ class RevisionAdministrativaServiceTest {
         estadoPublicacion.set("BORRADOR");
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         idPublicacion
@@ -314,7 +317,7 @@ class RevisionAdministrativaServiceTest {
         estadoPublicacion.set("ACTIVA");
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
@@ -333,7 +336,7 @@ class RevisionAdministrativaServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         idPublicacion
@@ -354,7 +357,7 @@ class RevisionAdministrativaServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         idPublicacion
@@ -372,7 +375,7 @@ class RevisionAdministrativaServiceTest {
         ));
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         idPublicacion
@@ -390,7 +393,7 @@ class RevisionAdministrativaServiceTest {
         ));
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         idPublicacion
@@ -408,7 +411,7 @@ class RevisionAdministrativaServiceTest {
         ));
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         idPublicacion
@@ -426,7 +429,7 @@ class RevisionAdministrativaServiceTest {
         ));
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         idPublicacion
@@ -444,7 +447,7 @@ class RevisionAdministrativaServiceTest {
         ));
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.aprobarPublicacion(
                         idAdministrador,
                         idPublicacion
@@ -458,7 +461,7 @@ class RevisionAdministrativaServiceTest {
     void rechazarConMotivoNulo() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
@@ -473,7 +476,7 @@ class RevisionAdministrativaServiceTest {
     void rechazarConMotivoVacio() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
@@ -490,7 +493,7 @@ class RevisionAdministrativaServiceTest {
         String motivo = "A".repeat(2001);
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,

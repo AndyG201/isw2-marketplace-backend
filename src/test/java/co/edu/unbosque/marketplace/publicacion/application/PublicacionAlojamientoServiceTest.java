@@ -22,6 +22,8 @@ import org.mockito.quality.Strictness;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
 import co.edu.unbosque.marketplace.alojamiento.contracts.CrearAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
@@ -197,7 +199,7 @@ class PublicacionAlojamientoServiceTest {
         when(solicitud.getCapacidad()).thenReturn(0);
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.crearPublicacion(idAnfitrion, solicitud)
         );
 
@@ -213,7 +215,7 @@ class PublicacionAlojamientoServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.crearPublicacion(idAnfitrion, solicitud)
         );
 
@@ -237,7 +239,7 @@ class PublicacionAlojamientoServiceTest {
         when(usuario.esAnfitrion()).thenReturn(false);
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.crearPublicacion(idAnfitrion, solicitud)
         );
 
@@ -255,7 +257,7 @@ class PublicacionAlojamientoServiceTest {
                 .thenReturn(false);
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.crearPublicacion(idAnfitrion, solicitud)
         );
 

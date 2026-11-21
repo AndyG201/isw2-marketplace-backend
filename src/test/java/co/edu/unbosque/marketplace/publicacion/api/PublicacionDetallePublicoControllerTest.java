@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplace.publicacion.api;
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
@@ -7,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionDetallePublicoService;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionDetalleResponse;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionPublicaResponse;
@@ -38,7 +39,8 @@ class PublicacionDetallePublicoControllerTest {
                 mock(PublicacionDetalleResponse.class), List.of(), null);
         when(detallePublicoService.consultar(id)).thenReturn(detalle);
 
-        ResponseEntity<?> respuesta = controller.consultar(id);
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.consultar(id));
 
         assertEquals(HttpStatus.OK, respuesta.getStatusCode());
         assertSame(detalle, respuesta.getBody());
@@ -48,9 +50,10 @@ class PublicacionDetallePublicoControllerTest {
     void respondeNoEncontradaSiNoEstaDisponible() {
         UUID id = UUID.randomUUID();
         when(detallePublicoService.consultar(id))
-                .thenThrow(new NoSuchElementException("La publicación no existe o no está disponible."));
+                .thenThrow(new RecursoNoEncontradoException("La publicación no existe o no está disponible."));
 
-        ResponseEntity<?> respuesta = controller.consultar(id);
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.consultar(id));
 
         assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
         assertEquals("La publicación no existe o no está disponible.",

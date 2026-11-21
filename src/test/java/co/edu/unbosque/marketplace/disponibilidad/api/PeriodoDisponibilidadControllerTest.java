@@ -1,21 +1,24 @@
 package co.edu.unbosque.marketplace.disponibilidad.api;
 
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadRequest;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadResponse;
 import co.edu.unbosque.marketplace.disponibilidad.application.PeriodoDisponibilidadService;
@@ -67,9 +70,10 @@ class PeriodoDisponibilidadControllerTest {
                 idAnfitrion, idAlojamiento, solicitud
         )).thenReturn(respuesta);
 
-        ResponseEntity<?> resultado = controller.registrarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.registrarPeriodo(
                 idAnfitrion, idAlojamiento, solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.CREATED, resultado.getStatusCode());
         assertEquals(respuesta, resultado.getBody());
@@ -81,9 +85,10 @@ class PeriodoDisponibilidadControllerTest {
 
     @Test
     void debeRetornarUnauthorizedAlRegistrarSinAutenticacion() {
-        ResponseEntity<?> resultado = controller.registrarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.registrarPeriodo(
                 null, idAlojamiento, solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.UNAUTHORIZED, resultado.getStatusCode());
         assertEquals(
@@ -98,9 +103,10 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarBadRequestAlRegistrarConErroresDeValidacion() {
         when(resultadoValidacion.hasErrors()).thenReturn(true);
 
-        ResponseEntity<?> resultado = controller.registrarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.registrarPeriodo(
                 idAnfitrion, idAlojamiento, solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.BAD_REQUEST, resultado.getStatusCode());
         verifyNoInteractions(disponibilidadService);
@@ -110,11 +116,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarForbiddenAlRegistrarSinPermiso() {
         when(disponibilidadService.registrarPeriodo(
                 idAnfitrion, idAlojamiento, solicitud
-        )).thenThrow(new AccessDeniedException("Acceso denegado."));
+        )).thenThrow(new AccesoNoPermitidoException("Acceso denegado."));
 
-        ResponseEntity<?> resultado = controller.registrarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.registrarPeriodo(
                 idAnfitrion, idAlojamiento, solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.FORBIDDEN, resultado.getStatusCode());
         assertEquals(
@@ -127,11 +134,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarNotFoundAlRegistrarEnAlojamientoInexistente() {
         when(disponibilidadService.registrarPeriodo(
                 idAnfitrion, idAlojamiento, solicitud
-        )).thenThrow(new NoSuchElementException("Alojamiento no encontrado."));
+        )).thenThrow(new RecursoNoEncontradoException("Alojamiento no encontrado."));
 
-        ResponseEntity<?> resultado = controller.registrarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.registrarPeriodo(
                 idAnfitrion, idAlojamiento, solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.NOT_FOUND, resultado.getStatusCode());
     }
@@ -140,11 +148,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarBadRequestAlRegistrarConDatosInvalidos() {
         when(disponibilidadService.registrarPeriodo(
                 idAnfitrion, idAlojamiento, solicitud
-        )).thenThrow(new IllegalArgumentException("Fechas inválidas."));
+        )).thenThrow(new DatosInvalidosException("Fechas inválidas."));
 
-        ResponseEntity<?> resultado = controller.registrarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.registrarPeriodo(
                 idAnfitrion, idAlojamiento, solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.BAD_REQUEST, resultado.getStatusCode());
     }
@@ -153,11 +162,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarConflictAlRegistrarUnPeriodoEnConflicto() {
         when(disponibilidadService.registrarPeriodo(
                 idAnfitrion, idAlojamiento, solicitud
-        )).thenThrow(new IllegalStateException("El periodo se encuentra ocupado."));
+        )).thenThrow(new ConflictoNegocioException("El periodo se encuentra ocupado."));
 
-        ResponseEntity<?> resultado = controller.registrarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.registrarPeriodo(
                 idAnfitrion, idAlojamiento, solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.CONFLICT, resultado.getStatusCode());
     }
@@ -172,9 +182,10 @@ class PeriodoDisponibilidadControllerTest {
                 idAnfitrion, idAlojamiento
         )).thenReturn(periodos);
 
-        ResponseEntity<?> resultado = controller.consultarPeriodos(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.consultarPeriodos(
                 idAnfitrion, idAlojamiento
-        );
+        ));
 
         assertEquals(HttpStatus.OK, resultado.getStatusCode());
         assertEquals(periodos, resultado.getBody());
@@ -182,9 +193,10 @@ class PeriodoDisponibilidadControllerTest {
 
     @Test
     void debeRetornarUnauthorizedAlConsultarSinAutenticacion() {
-        ResponseEntity<?> resultado = controller.consultarPeriodos(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.consultarPeriodos(
                 null, idAlojamiento
-        );
+        ));
 
         assertEquals(HttpStatus.UNAUTHORIZED, resultado.getStatusCode());
         assertEquals(
@@ -199,11 +211,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarForbiddenAlConsultarSinPermiso() {
         when(disponibilidadService.consultarPeriodos(
                 idAnfitrion, idAlojamiento
-        )).thenThrow(new AccessDeniedException("Acceso denegado."));
+        )).thenThrow(new AccesoNoPermitidoException("Acceso denegado."));
 
-        ResponseEntity<?> resultado = controller.consultarPeriodos(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.consultarPeriodos(
                 idAnfitrion, idAlojamiento
-        );
+        ));
 
         assertEquals(HttpStatus.FORBIDDEN, resultado.getStatusCode());
     }
@@ -212,11 +225,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarNotFoundAlConsultarAlojamientoInexistente() {
         when(disponibilidadService.consultarPeriodos(
                 idAnfitrion, idAlojamiento
-        )).thenThrow(new NoSuchElementException("Alojamiento no encontrado."));
+        )).thenThrow(new RecursoNoEncontradoException("Alojamiento no encontrado."));
 
-        ResponseEntity<?> resultado = controller.consultarPeriodos(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.consultarPeriodos(
                 idAnfitrion, idAlojamiento
-        );
+        ));
 
         assertEquals(HttpStatus.NOT_FOUND, resultado.getStatusCode());
     }
@@ -225,11 +239,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarBadRequestAlConsultarConDatosInvalidos() {
         when(disponibilidadService.consultarPeriodos(
                 idAnfitrion, idAlojamiento
-        )).thenThrow(new IllegalArgumentException("Identificador inválido."));
+        )).thenThrow(new DatosInvalidosException("Identificador inválido."));
 
-        ResponseEntity<?> resultado = controller.consultarPeriodos(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.consultarPeriodos(
                 idAnfitrion, idAlojamiento
-        );
+        ));
 
         assertEquals(HttpStatus.BAD_REQUEST, resultado.getStatusCode());
     }
@@ -242,10 +257,11 @@ class PeriodoDisponibilidadControllerTest {
                 idAnfitrion, idAlojamiento, idPeriodo, solicitud
         )).thenReturn(respuesta);
 
-        ResponseEntity<?> resultado = controller.actualizarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.actualizarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo,
                 solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.OK, resultado.getStatusCode());
         assertEquals(respuesta, resultado.getBody());
@@ -253,10 +269,11 @@ class PeriodoDisponibilidadControllerTest {
 
     @Test
     void debeRetornarUnauthorizedAlActualizarSinAutenticacion() {
-        ResponseEntity<?> resultado = controller.actualizarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.actualizarPeriodo(
                 null, idAlojamiento, idPeriodo,
                 solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.UNAUTHORIZED, resultado.getStatusCode());
         verifyNoInteractions(disponibilidadService);
@@ -266,10 +283,11 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarBadRequestAlActualizarConErroresDeValidacion() {
         when(resultadoValidacion.hasErrors()).thenReturn(true);
 
-        ResponseEntity<?> resultado = controller.actualizarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.actualizarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo,
                 solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.BAD_REQUEST, resultado.getStatusCode());
         verifyNoInteractions(disponibilidadService);
@@ -279,12 +297,13 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarForbiddenAlActualizarSinPermiso() {
         when(disponibilidadService.actualizarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo, solicitud
-        )).thenThrow(new AccessDeniedException("Acceso denegado."));
+        )).thenThrow(new AccesoNoPermitidoException("Acceso denegado."));
 
-        ResponseEntity<?> resultado = controller.actualizarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.actualizarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo,
                 solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.FORBIDDEN, resultado.getStatusCode());
     }
@@ -293,12 +312,13 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarNotFoundAlActualizarPeriodoInexistente() {
         when(disponibilidadService.actualizarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo, solicitud
-        )).thenThrow(new NoSuchElementException("Periodo no encontrado."));
+        )).thenThrow(new RecursoNoEncontradoException("Periodo no encontrado."));
 
-        ResponseEntity<?> resultado = controller.actualizarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.actualizarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo,
                 solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.NOT_FOUND, resultado.getStatusCode());
     }
@@ -307,12 +327,13 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarBadRequestAlActualizarConDatosInvalidos() {
         when(disponibilidadService.actualizarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo, solicitud
-        )).thenThrow(new IllegalArgumentException("Fechas inválidas."));
+        )).thenThrow(new DatosInvalidosException("Fechas inválidas."));
 
-        ResponseEntity<?> resultado = controller.actualizarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.actualizarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo,
                 solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.BAD_REQUEST, resultado.getStatusCode());
     }
@@ -321,12 +342,13 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarConflictAlActualizarPeriodoEnConflicto() {
         when(disponibilidadService.actualizarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo, solicitud
-        )).thenThrow(new IllegalStateException("El periodo se encuentra ocupado."));
+        )).thenThrow(new ConflictoNegocioException("El periodo se encuentra ocupado."));
 
-        ResponseEntity<?> resultado = controller.actualizarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.actualizarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo,
                 solicitud, resultadoValidacion
-        );
+        ));
 
         assertEquals(HttpStatus.CONFLICT, resultado.getStatusCode());
     }
@@ -339,9 +361,10 @@ class PeriodoDisponibilidadControllerTest {
                 idAnfitrion, idAlojamiento, idPeriodo
         )).thenReturn(respuesta);
 
-        ResponseEntity<?> resultado = controller.deshabilitarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.deshabilitarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo
-        );
+        ));
 
         assertEquals(HttpStatus.OK, resultado.getStatusCode());
         assertEquals(respuesta, resultado.getBody());
@@ -349,9 +372,10 @@ class PeriodoDisponibilidadControllerTest {
 
     @Test
     void debeRetornarUnauthorizedAlDeshabilitarSinAutenticacion() {
-        ResponseEntity<?> resultado = controller.deshabilitarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.deshabilitarPeriodo(
                 null, idAlojamiento, idPeriodo
-        );
+        ));
 
         assertEquals(HttpStatus.UNAUTHORIZED, resultado.getStatusCode());
         verifyNoInteractions(disponibilidadService);
@@ -361,11 +385,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarForbiddenAlDeshabilitarSinPermiso() {
         when(disponibilidadService.deshabilitarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo
-        )).thenThrow(new AccessDeniedException("Acceso denegado."));
+        )).thenThrow(new AccesoNoPermitidoException("Acceso denegado."));
 
-        ResponseEntity<?> resultado = controller.deshabilitarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.deshabilitarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo
-        );
+        ));
 
         assertEquals(HttpStatus.FORBIDDEN, resultado.getStatusCode());
     }
@@ -374,11 +399,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarNotFoundAlDeshabilitarPeriodoInexistente() {
         when(disponibilidadService.deshabilitarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo
-        )).thenThrow(new NoSuchElementException("Periodo no encontrado."));
+        )).thenThrow(new RecursoNoEncontradoException("Periodo no encontrado."));
 
-        ResponseEntity<?> resultado = controller.deshabilitarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.deshabilitarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo
-        );
+        ));
 
         assertEquals(HttpStatus.NOT_FOUND, resultado.getStatusCode());
     }
@@ -387,11 +413,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarBadRequestAlDeshabilitarConDatosInvalidos() {
         when(disponibilidadService.deshabilitarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo
-        )).thenThrow(new IllegalArgumentException("Identificador inválido."));
+        )).thenThrow(new DatosInvalidosException("Identificador inválido."));
 
-        ResponseEntity<?> resultado = controller.deshabilitarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.deshabilitarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo
-        );
+        ));
 
         assertEquals(HttpStatus.BAD_REQUEST, resultado.getStatusCode());
     }
@@ -400,11 +427,12 @@ class PeriodoDisponibilidadControllerTest {
     void debeRetornarConflictAlDeshabilitarPeriodoEnConflicto() {
         when(disponibilidadService.deshabilitarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo
-        )).thenThrow(new IllegalStateException("No se puede deshabilitar el periodo."));
+        )).thenThrow(new ConflictoNegocioException("No se puede deshabilitar el periodo."));
 
-        ResponseEntity<?> resultado = controller.deshabilitarPeriodo(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.deshabilitarPeriodo(
                 idAnfitrion, idAlojamiento, idPeriodo
-        );
+        ));
 
         assertEquals(HttpStatus.CONFLICT, resultado.getStatusCode());
     }

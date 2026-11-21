@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -17,6 +16,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import co.edu.unbosque.marketplace.config.ErroresApiHandler;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.config.PasswordConfig;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionDetallePublicoService;
@@ -33,7 +34,8 @@ import co.edu.unbosque.marketplace.usuario.security.SecurityConfig;
         JwtAuthenticationFilter.class,
         PublicacionDetallePublicoController.class,
         PublicacionAdministrativaDetalleController.class,
-        ServicioController.class
+        ServicioController.class,
+        ErroresApiHandler.class
 })
 class PublicacionDetallePublicoAccesoTest {
 
@@ -59,7 +61,7 @@ class PublicacionDetallePublicoAccesoTest {
     void permiteVerElDetallePublicoSinIniciarSesion() throws Exception {
         UUID id = UUID.randomUUID();
         when(detallePublicoService.consultar(id))
-                .thenThrow(new NoSuchElementException("La publicación no existe o no está disponible."));
+                .thenThrow(new RecursoNoEncontradoException("La publicación no existe o no está disponible."));
 
         mockMvc.perform(get("/publicaciones/{id}/detalle-publico", id))
                 .andExpect(status().isNotFound())

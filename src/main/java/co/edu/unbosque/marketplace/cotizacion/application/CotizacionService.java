@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -18,6 +17,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.cotizacion.application.dto.CrearCotizacionRequest;
 import co.edu.unbosque.marketplace.cotizacion.application.dto.CotizacionAdicionalResponse;
 import co.edu.unbosque.marketplace.cotizacion.application.dto.CotizacionResponse;
@@ -65,12 +67,12 @@ public class CotizacionService {
 
         PublicacionCotizacionInfo publicacion = publicacionQuery
                 .consultarPublicacionActiva(solicitud.idPublicacion())
-                .orElseThrow(() -> new NoSuchElementException(
+                .orElseThrow(() -> new RecursoNoEncontradoException(
                         "La publicación no existe o no está activa."
                 ));
 
         if (solicitud.cantidadHuespedes() > publicacion.capacidad()) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La cantidad de huéspedes supera la capacidad del alojamiento."
             );
         }
@@ -79,14 +81,14 @@ public class CotizacionService {
                 publicacion.idAlojamiento(),
                 solicitud.fechaEntrada(),
                 solicitud.fechaSalida())) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "El alojamiento no está disponible para las fechas indicadas."
             );
         }
 
         ConfiguracionTarifaInfo configuracion = tarifaQuery
                 .consultarConfiguracionVigente()
-                .orElseThrow(() -> new IllegalStateException(
+                .orElseThrow(() -> new ConflictoNegocioException(
                         "No hay una configuración de tarifas vigente."
                 ));
 
@@ -207,13 +209,13 @@ public class CotizacionService {
 
         for (UUID idAdicional : idsAdicionales) {
             if (idAdicional == null) {
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "El identificador de cada servicio adicional es obligatorio."
                 );
             }
 
             if (!identificadores.add(idAdicional)) {
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "No puedes incluir el mismo servicio adicional más de una vez."
                 );
             }
@@ -235,7 +237,7 @@ public class CotizacionService {
                     disponibles.get(idAdicional);
 
             if (adicional == null) {
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "Uno de los servicios no está activo o no pertenece a esta publicación."
                 );
             }
@@ -251,19 +253,19 @@ public class CotizacionService {
                 || solicitud.idPublicacion() == null
                 || solicitud.fechaEntrada() == null
                 || solicitud.fechaSalida() == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes indicar publicación y fechas para calcular la cotización."
             );
         }
 
         if (!solicitud.fechaSalida().isAfter(solicitud.fechaEntrada())) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La fecha de salida debe ser posterior a la fecha de entrada."
             );
         }
 
         if (solicitud.cantidadHuespedes() < 1) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debe indicarse al menos un huésped."
             );
         }

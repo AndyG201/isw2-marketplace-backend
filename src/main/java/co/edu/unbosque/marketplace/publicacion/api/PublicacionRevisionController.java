@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,35 +42,12 @@ public class PublicacionRevisionController {
                     ));
         }
 
-        try {
+        EnviarRevisionResponse respuesta =
+                revisionService.enviarRevision(
+                        idAnfitrion,
+                        idPublicacion
+                );
 
-            EnviarRevisionResponse respuesta =
-                    revisionService.enviarRevision(
-                            idAnfitrion,
-                            idPublicacion
-                    );
-
-            return ResponseEntity.ok(respuesta);
-
-        } catch (AccessDeniedException e) {
-
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (java.util.NoSuchElementException e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(respuesta);
     }
 }

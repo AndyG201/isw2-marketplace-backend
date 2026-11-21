@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.servicio.application.port.ServicioAdicionalRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalCommand;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalData;
@@ -98,7 +99,7 @@ public class ServicioAdicionalApplicationService
             List<ServicioAdicionalData> servicios) {
 
         if (idPublicacion == null || servicios == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La configuración de servicios no es válida."
             );
         }
@@ -112,7 +113,7 @@ public class ServicioAdicionalApplicationService
                     || servicio.nombre().isBlank()
                     || servicio.nombre().trim().length() > 100) {
 
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "Cada servicio debe tener un nombre válido de máximo 100 caracteres."
                 );
             }
@@ -120,7 +121,7 @@ public class ServicioAdicionalApplicationService
             if (servicio.costo() == null
                     || servicio.costo().signum() < 0) {
 
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "El costo de cada servicio no puede ser negativo."
                 );
             }
@@ -130,7 +131,7 @@ public class ServicioAdicionalApplicationService
 
             if (!nombres.add(nombreNormalizado)) {
 
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "No puedes registrar servicios con nombres duplicados."
                 );
             }

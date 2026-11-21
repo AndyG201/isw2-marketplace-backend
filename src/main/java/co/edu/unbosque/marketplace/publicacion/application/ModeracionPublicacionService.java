@@ -3,7 +3,6 @@ package co.edu.unbosque.marketplace.publicacion.application;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +12,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
@@ -89,7 +91,7 @@ public class ModeracionPublicacionService {
         Publicacion publicacion = obtenerPublicacion(idPublicacion);
 
         if (BLOQUEADA.equals(publicacion.getEstado())) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "La publicación ya se encuentra BLOQUEADA."
             );
         }
@@ -141,7 +143,7 @@ public class ModeracionPublicacionService {
         Publicacion publicacion = obtenerPublicacion(idPublicacion);
 
         if (!BLOQUEADA.equals(publicacion.getEstado())) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "Solamente puedes desbloquear publicaciones BLOQUEADAS."
             );
         }
@@ -149,7 +151,7 @@ public class ModeracionPublicacionService {
         UUID idAnfitrion = alojamientoQuery
                 .consultarIdAnfitrion(publicacion.getIdAlojamiento())
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new ConflictoNegocioException(
                                 "No se encontró el anfitrión del alojamiento."
                         )
                 );
@@ -215,7 +217,7 @@ public class ModeracionPublicacionService {
     private void validarAdministrador(UUID idAdministrador) {
 
         if (idAdministrador == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "No se pudo identificar al administrador."
             );
         }
@@ -226,7 +228,7 @@ public class ModeracionPublicacionService {
     private String validarMotivo(String motivo) {
 
         if (motivo == null || motivo.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes proporcionar el motivo de la operación."
             );
         }
@@ -234,7 +236,7 @@ public class ModeracionPublicacionService {
         String motivoFinal = motivo.trim();
 
         if (motivoFinal.length() > 2000) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El motivo no puede superar los 2000 caracteres."
             );
         }
@@ -247,14 +249,14 @@ public class ModeracionPublicacionService {
     private Publicacion obtenerPublicacion(UUID idPublicacion) {
 
         if (idPublicacion == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes proporcionar el identificador de la publicación."
             );
         }
 
         return publicacionRepository.findById(idPublicacion)
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no existe."
                         )
                 );

@@ -1,10 +1,7 @@
 package co.edu.unbosque.marketplace.publicacion.api;
 
-import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,10 +22,6 @@ public class PublicacionDetallePublicoController {
 
     @GetMapping("/{idPublicacion}/detalle-publico")
     public ResponseEntity<?> consultar(@PathVariable UUID idPublicacion) {
-        try {
-            return ResponseEntity.ok(detallePublicoService.consultar(idPublicacion));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(detallePublicoService.consultar(idPublicacion));
     }
 }

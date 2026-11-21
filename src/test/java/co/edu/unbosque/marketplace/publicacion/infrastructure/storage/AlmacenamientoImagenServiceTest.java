@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 
 class AlmacenamientoImagenServiceTest {
 
@@ -195,8 +197,8 @@ class AlmacenamientoImagenServiceTest {
 
     @Test
     void debeLanzarExcepcionCuandoElArchivoEsNulo() {
-        IllegalArgumentException excepcion = assertThrows(
-            IllegalArgumentException.class,
+        DatosInvalidosException excepcion = assertThrows(
+            DatosInvalidosException.class,
             () -> service.guardar(null)
         );
 
@@ -215,8 +217,8 @@ class AlmacenamientoImagenServiceTest {
             new byte[0]
         );
 
-        IllegalArgumentException excepcion = assertThrows(
-            IllegalArgumentException.class,
+        DatosInvalidosException excepcion = assertThrows(
+            DatosInvalidosException.class,
             () -> service.guardar(archivo)
         );
 
@@ -237,8 +239,8 @@ class AlmacenamientoImagenServiceTest {
             contenido
         );
 
-        IllegalArgumentException excepcion = assertThrows(
-            IllegalArgumentException.class,
+        DatosInvalidosException excepcion = assertThrows(
+            DatosInvalidosException.class,
             () -> service.guardar(archivo)
         );
 
@@ -261,8 +263,8 @@ class AlmacenamientoImagenServiceTest {
             contenido
         );
 
-        IllegalArgumentException excepcion = assertThrows(
-            IllegalArgumentException.class,
+        DatosInvalidosException excepcion = assertThrows(
+            DatosInvalidosException.class,
             () -> service.guardar(archivo)
         );
 
@@ -287,8 +289,8 @@ class AlmacenamientoImagenServiceTest {
             new IOException("Error de lectura")
         );
 
-        IllegalStateException excepcion = assertThrows(
-            IllegalStateException.class,
+        ConflictoNegocioException excepcion = assertThrows(
+            ConflictoNegocioException.class,
             () -> service.guardar(archivo)
         );
 
@@ -307,7 +309,7 @@ class AlmacenamientoImagenServiceTest {
         );
 
         assertThrows(
-            IllegalArgumentException.class,
+            DatosInvalidosException.class,
             () -> service.guardar(texto)
         );
 

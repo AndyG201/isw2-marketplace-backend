@@ -14,7 +14,6 @@ import static org.mockito.Mockito.verify;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,6 +23,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo;
@@ -124,8 +125,8 @@ class PublicacionDetallePublicoServiceTest {
         Publicacion publicacion = publicacion("BORRADOR");
         when(publicacionRepository.findById(PUBLICACION)).thenReturn(Optional.of(publicacion));
 
-        NoSuchElementException error =
-                assertThrows(NoSuchElementException.class, () -> servicio.consultar(PUBLICACION));
+        RecursoNoEncontradoException error =
+                assertThrows(RecursoNoEncontradoException.class, () -> servicio.consultar(PUBLICACION));
 
         assertEquals("La publicación no existe o no está disponible.", error.getMessage());
         verifyNoInteractions(alojamientoQuery, consultaService, adicionalesService, politicaQuery);
@@ -135,8 +136,8 @@ class PublicacionDetallePublicoServiceTest {
     void informaSiLaPublicacionNoExisteOElIdentificadorFalta() {
         when(publicacionRepository.findById(PUBLICACION)).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class, () -> servicio.consultar(PUBLICACION));
-        assertThrows(NoSuchElementException.class, () -> servicio.consultar(null));
+        assertThrows(RecursoNoEncontradoException.class, () -> servicio.consultar(PUBLICACION));
+        assertThrows(RecursoNoEncontradoException.class, () -> servicio.consultar(null));
     }
 
     @Test
@@ -174,11 +175,11 @@ class PublicacionDetallePublicoServiceTest {
     void laAdministracionRecibeNoEncontradaSiLaPublicacionNoExiste() {
         when(publicacionRepository.findById(PUBLICACION)).thenReturn(Optional.empty());
 
-        NoSuchElementException error = assertThrows(NoSuchElementException.class,
+        RecursoNoEncontradoException error = assertThrows(RecursoNoEncontradoException.class,
                 () -> servicio.consultarParaAdministracion(PUBLICACION));
 
         assertEquals("La publicación no existe.", error.getMessage());
-        assertThrows(NoSuchElementException.class, () -> servicio.consultarParaAdministracion(null));
+        assertThrows(RecursoNoEncontradoException.class, () -> servicio.consultarParaAdministracion(null));
         verifyNoInteractions(alojamientoQuery, consultaService, adicionalesService, politicaQuery);
     }
 
@@ -189,6 +190,6 @@ class PublicacionDetallePublicoServiceTest {
         when(publicacionRepository.findById(PUBLICACION)).thenReturn(Optional.of(publicacion));
         when(alojamientoQuery.consultarDatosParaPublicacion(ALOJAMIENTO)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalStateException.class, () -> servicio.consultar(PUBLICACION));
+        assertThrows(ConflictoNegocioException.class, () -> servicio.consultar(PUBLICACION));
     }
 }

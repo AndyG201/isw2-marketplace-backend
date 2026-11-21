@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaInfo;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaQuery;
@@ -83,11 +84,11 @@ public class CambiosPublicacionService {
     public String validarMensaje(String mensaje) {
         String texto = mensaje == null ? "" : mensaje.trim();
         if (texto.isEmpty()) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Explica al administrador qué cambiaste y por qué.");
         }
         if (texto.length() > MAXIMO_MENSAJE) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El mensaje para el administrador no puede superar "
                             + MAXIMO_MENSAJE + " caracteres.");
         }
@@ -112,7 +113,7 @@ public class CambiosPublicacionService {
                 .max()
                 .orElse(0);
         if (capacidadNueva < maximo) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "No puedes bajar la capacidad a menos de " + maximo
                             + " huéspedes porque hay reservas futuras para esa cantidad.");
         }

@@ -6,10 +6,13 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
@@ -70,13 +73,13 @@ public class RevisionAdministrativaService {
         UUID idAnfitrion = alojamientoQuery
                 .consultarIdAnfitrion(publicacion.getIdAlojamiento())
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new ConflictoNegocioException(
                                 "No se encontró el alojamiento asociado a la publicación."));
 
         UsuarioPublicacionInfo anfitrion = usuarioPublicacionQuery
                 .consultarParaPublicacion(idAnfitrion)
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new ConflictoNegocioException(
                                 "No se encontró la cuenta del anfitrión."));
 
         validarCuentaAnfitrion(anfitrion);
@@ -127,12 +130,12 @@ public class RevisionAdministrativaService {
         validarAdministrador(idAdministrador);
 
         if (motivo == null || motivo.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes proporcionar el motivo del rechazo.");
         }
 
         if (motivo.trim().length() > 2000) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El motivo no puede superar los 2000 caracteres.");
         }
 
@@ -192,7 +195,7 @@ public class RevisionAdministrativaService {
         if (idAdministrador == null
                 || !usuarioAdministracionQuery.esAdministrador(idAdministrador)) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Solo un Administrador puede aprobar o rechazar publicaciones.");
         }
     }
@@ -200,13 +203,13 @@ public class RevisionAdministrativaService {
     private Publicacion obtenerPublicacion(UUID idPublicacion) {
 
         if (idPublicacion == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes proporcionar el identificador de la publicación.");
         }
 
         return publicacionRepository.findById(idPublicacion)
                 .orElseThrow(() ->
-                        new java.util.NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no existe."));
     }
 
@@ -214,7 +217,7 @@ public class RevisionAdministrativaService {
 
         if (!"PENDIENTE_REVISION".equals(publicacion.getEstado())) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No se puede aprobar o rechazar la publicación "
                     + "porque no se encuentra en estado PENDIENTE_REVISION.");
         }
@@ -224,31 +227,31 @@ public class RevisionAdministrativaService {
             UsuarioPublicacionInfo anfitrion) {
 
         if (!anfitrion.cuentaActiva()) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No se puede activar la publicación porque la cuenta "
                     + "del anfitrión está desactivada.");
         }
 
         if (anfitrion.restringido()) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No se puede activar la publicación porque la cuenta "
                     + "del anfitrión tiene una restricción administrativa.");
         }
 
         if (!anfitrion.correoVerificado()) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No se puede activar la publicación porque el correo "
                     + "del anfitrión no está verificado.");
         }
 
         if (anfitrion.intentosFallidos() >= 5) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No se puede activar la publicación porque la cuenta "
                     + "del anfitrión está bloqueada por intentos fallidos.");
         }
 
         if (!anfitrion.esAnfitrion()) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "La cuenta propietaria ya no tiene el rol de ANFITRION.");
         }
     }

@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoImagenes;
 
 @Service
@@ -39,12 +41,12 @@ public class AlmacenamientoImagenService implements AlmacenamientoImagenes {
     public String guardar(MultipartFile archivo) {
 
         if (archivo == null || archivo.isEmpty()) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El archivo de imagen está vacío.");
         }
 
         if (archivo.getSize() > TAMANO_MAXIMO) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Cada imagen debe pesar máximo 5 MB.");
         }
 
@@ -69,7 +71,7 @@ public class AlmacenamientoImagenService implements AlmacenamientoImagenes {
                     .normalize();
 
             if (!destino.startsWith(directorioBase)) {
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "La ruta del archivo no es válida.");
             }
 
@@ -83,7 +85,7 @@ public class AlmacenamientoImagenService implements AlmacenamientoImagenes {
 
         } catch (IOException e) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No fue posible almacenar la imagen.", e);
         }
     }
@@ -124,7 +126,7 @@ public class AlmacenamientoImagenService implements AlmacenamientoImagenes {
             return ".webp";
         }
 
-        throw new IllegalArgumentException(
+        throw new DatosInvalidosException(
                 "Formato de imagen no permitido. Utiliza JPG, PNG o WEBP.");
     }
 
@@ -159,7 +161,7 @@ public class AlmacenamientoImagenService implements AlmacenamientoImagenes {
 
         } catch (IOException e) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No fue posible eliminar la imagen.", e);
         }
     }

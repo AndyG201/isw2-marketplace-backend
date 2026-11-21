@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 
 class AlojamientoPublicacionCommandTest {
 
@@ -104,12 +105,12 @@ class AlojamientoPublicacionCommandTest {
                         null
                 );
 
-        doThrow(new IllegalArgumentException("Solicitud inválida."))
+        doThrow(new DatosInvalidosException("Solicitud inválida."))
                 .when(comando)
                 .actualizarAlojamiento(idAlojamiento, solicitud);
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> comando.actualizarAlojamiento(idAlojamiento, solicitud)
         );
 

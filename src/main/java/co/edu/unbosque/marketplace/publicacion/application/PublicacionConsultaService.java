@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.ImagenPublicacionResponse;
@@ -51,7 +54,7 @@ public class PublicacionConsultaService {
             UUID idAnfitrion) {
 
         if (idAnfitrion == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "No se pudo identificar al anfitrión.");
         }
 
@@ -117,7 +120,7 @@ public class PublicacionConsultaService {
             UUID idPublicacion) {
 
         if (idAnfitrion == null || idPublicacion == null) {
-            throw new IllegalArgumentException(
+            throw new RecursoNoEncontradoException(
                     "No se pudo identificar la publicación.");
         }
 
@@ -130,7 +133,7 @@ public class PublicacionConsultaService {
                 .toList();
 
         if (idsAlojamientos.isEmpty()) {
-            throw new IllegalArgumentException(
+            throw new RecursoNoEncontradoException(
                     "La publicación no existe o no pertenece a tu cuenta.");
         }
 
@@ -140,7 +143,7 @@ public class PublicacionConsultaService {
                         idsAlojamientos
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no existe o no pertenece a tu cuenta."
                         ));
 
@@ -149,7 +152,7 @@ public class PublicacionConsultaService {
                         .equals(publicacion.getIdAlojamiento()))
                 .findFirst()
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new FallaInternaException(
                                 "No se encontró el alojamiento asociado."));
 
         return armarDetalle(publicacion, alojamiento)

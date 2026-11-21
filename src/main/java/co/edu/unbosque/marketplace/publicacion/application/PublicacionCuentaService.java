@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
@@ -33,7 +34,7 @@ public class PublicacionCuentaService {
             OffsetDateTime fechaEvento) {
 
         if (idUsuario == null || fechaEvento == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Los datos del evento de cuenta son obligatorios.");
         }
 

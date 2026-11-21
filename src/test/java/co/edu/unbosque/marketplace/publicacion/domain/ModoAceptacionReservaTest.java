@@ -3,6 +3,7 @@ package co.edu.unbosque.marketplace.publicacion.domain;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 
 class ModoAceptacionReservaTest {
 
@@ -50,8 +51,8 @@ class ModoAceptacionReservaTest {
 
     @Test
     void debeLanzarExcepcionCuandoElValorEsNulo() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> ModoAceptacionReserva.desde(null)
         );
 
@@ -63,8 +64,8 @@ class ModoAceptacionReservaTest {
 
     @Test
     void debeLanzarExcepcionCuandoElValorEstaVacio() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> ModoAceptacionReserva.desde("")
         );
 
@@ -76,8 +77,8 @@ class ModoAceptacionReservaTest {
 
     @Test
     void debeLanzarExcepcionCuandoElValorContieneSoloEspacios() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> ModoAceptacionReserva.desde("   ")
         );
 
@@ -89,8 +90,8 @@ class ModoAceptacionReservaTest {
 
     @Test
     void debeLanzarExcepcionCuandoElModoEsInvalido() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> ModoAceptacionReserva.desde("AUTOMATICA")
         );
 
@@ -103,7 +104,7 @@ class ModoAceptacionReservaTest {
     @Test
     void debeLanzarExcepcionCuandoElValorNoExiste() {
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> ModoAceptacionReserva.desde("RESERVA")
         );
     }

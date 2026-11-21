@@ -56,25 +56,12 @@ public class PublicacionAlojamientoController {
                     .body(Map.of("mensaje", mensaje));
         }
 
-        try {
-
-            PublicacionAlojamientoResponse respuesta =
-                    publicacionService.crearPublicacion(
-                            idUsuario,
-                            solicitud
-                        );
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(respuesta);
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        PublicacionAlojamientoResponse respuesta =
+                publicacionService.crearPublicacion(
+                        idUsuario,
+                        solicitud
+                    );
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(respuesta);
     }
 }

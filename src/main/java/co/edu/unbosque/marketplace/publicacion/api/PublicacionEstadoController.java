@@ -1,12 +1,10 @@
 package co.edu.unbosque.marketplace.publicacion.api;
 
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,36 +42,13 @@ public class PublicacionEstadoController {
                     ));
         }
 
-        try {
+        EstadoPublicacionResponse respuesta =
+                estadoService.pausarPublicacion(
+                        idAnfitrion,
+                        idPublicacion
+                );
 
-            EstadoPublicacionResponse respuesta =
-                    estadoService.pausarPublicacion(
-                            idAnfitrion,
-                            idPublicacion
-                    );
-
-            return ResponseEntity.ok(respuesta);
-
-        } catch (AccessDeniedException e) {
-
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (NoSuchElementException e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(respuesta);
     }
 
     @PatchMapping("/{idPublicacion}/reactivar")
@@ -89,35 +64,12 @@ public class PublicacionEstadoController {
                     ));
         }
 
-        try {
+        EstadoPublicacionResponse respuesta =
+                estadoService.reactivarPublicacion(
+                        idAnfitrion,
+                        idPublicacion
+                );
 
-            EstadoPublicacionResponse respuesta =
-                    estadoService.reactivarPublicacion(
-                            idAnfitrion,
-                            idPublicacion
-                    );
-
-            return ResponseEntity.ok(respuesta);
-
-        } catch (AccessDeniedException e) {
-
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (NoSuchElementException e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(respuesta);
     }
 }

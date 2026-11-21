@@ -5,14 +5,16 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.ConfiguracionComercialPublicacionResponse;
@@ -108,7 +110,7 @@ public class PublicacionConfiguracionComercialService {
 
         return publicacionRepository.findById(idPublicacion)
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no existe."
                         ));
     }
@@ -120,12 +122,12 @@ public class PublicacionConfiguracionComercialService {
         UsuarioPublicacionInfo usuario = usuarioQuery
                 .consultarParaPublicacion(idAnfitrion)
                 .orElseThrow(() ->
-                        new AccessDeniedException(
+                        new AccesoNoPermitidoException(
                                 "No tienes permisos para configurar esta publicación."
                         ));
 
         if (!usuario.esAnfitrion()) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Solo el anfitrión propietario puede configurar esta publicación."
             );
         }
@@ -135,12 +137,12 @@ public class PublicacionConfiguracionComercialService {
                         publicacion.getIdAlojamiento()
                 )
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new ConflictoNegocioException(
                                 "No se encontró el alojamiento asociado a la publicación."
                         ));
 
         if (!idAnfitrion.equals(alojamiento.idAnfitrion())) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "No tienes permisos para modificar la configuración comercial de esta publicación."
             );
         }
@@ -151,13 +153,13 @@ public class PublicacionConfiguracionComercialService {
             UUID idPublicacion) {
 
         if (idAnfitrion == null) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Debes iniciar sesión para configurar la publicación."
             );
         }
 
         if (idPublicacion == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El identificador de la publicación es obligatorio."
             );
         }
@@ -167,7 +169,7 @@ public class PublicacionConfiguracionComercialService {
             ConfigurarConfiguracionComercialRequest solicitud) {
 
         if (solicitud == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La configuración comercial es obligatoria."
             );
         }
@@ -175,13 +177,13 @@ public class PublicacionConfiguracionComercialService {
         BigDecimal tarifa = solicitud.getTarifaLimpieza();
 
         if (tarifa == null || tarifa.signum() < 0) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La tarifa de limpieza no puede ser negativa ni nula."
             );
         }
 
         if (solicitud.getServiciosAdicionales() == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes proporcionar la lista de servicios adicionales."
             );
         }
@@ -196,7 +198,7 @@ public class PublicacionConfiguracionComercialService {
                     || servicio.getNombre().isBlank()
                     || servicio.getNombre().trim().length() > 100) {
 
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "Cada servicio debe tener un nombre válido de máximo 100 caracteres."
                 );
             }
@@ -204,7 +206,7 @@ public class PublicacionConfiguracionComercialService {
             if (servicio.getCosto() == null
                     || servicio.getCosto().signum() < 0) {
 
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "El costo de los servicios adicionales no puede ser negativo."
                 );
             }
@@ -213,7 +215,7 @@ public class PublicacionConfiguracionComercialService {
                     servicio.getNombre().trim().toLowerCase(Locale.ROOT);
 
             if (!nombres.add(nombreNormalizado)) {
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "No puedes registrar servicios adicionales con nombres duplicados."
                 );
             }

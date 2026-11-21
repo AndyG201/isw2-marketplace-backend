@@ -1,7 +1,6 @@
 package co.edu.unbosque.marketplace.cotizacion.api;
 
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -45,18 +44,7 @@ public class CotizacionController {
                     .body(Map.of("mensaje", mensaje));
         }
 
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(cotizacionService.calcular(solicitud));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(cotizacionService.calcular(solicitud));
     }
 }

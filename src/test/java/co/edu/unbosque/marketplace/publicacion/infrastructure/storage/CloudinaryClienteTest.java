@@ -25,6 +25,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 
 class CloudinaryClienteTest {
 
@@ -103,7 +104,7 @@ class CloudinaryClienteTest {
         CloudinaryCliente cliente = cliente(URL);
         byte[] contenido = {1};
 
-        assertThrows(IllegalStateException.class,
+        assertThrows(ConflictoNegocioException.class,
                 () -> cliente.subir(contenido, "foto", ".jpg"));
     }
 
@@ -115,7 +116,7 @@ class CloudinaryClienteTest {
         CloudinaryCliente cliente = cliente(URL);
         byte[] contenido = {1};
 
-        assertThrows(IllegalStateException.class,
+        assertThrows(ConflictoNegocioException.class,
                 () -> cliente.subir(contenido, "foto", ".jpg"));
     }
 
@@ -159,7 +160,7 @@ class CloudinaryClienteTest {
 
         CloudinaryCliente cliente = cliente(URL);
 
-        assertThrows(IllegalStateException.class,
+        assertThrows(ConflictoNegocioException.class,
                 () -> cliente.eliminar("https://res.cloudinary.com/demo/image/upload/v1/sav/a.jpg"));
     }
 }

@@ -1,15 +1,17 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import java.time.OffsetDateTime;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.ConfigurarModoAceptacionRequest;
 import co.edu.unbosque.marketplace.publicacion.application.dto.ModoAceptacionPublicacionResponse;
@@ -53,7 +55,7 @@ public class PublicacionModoAceptacionService {
         validarIdentificadores(idActor, idPublicacion);
 
         if (solicitud == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La solicitud de configuración es obligatoria."
             );
         }
@@ -129,7 +131,7 @@ public class PublicacionModoAceptacionService {
         if (normalizarModoExistente(
                 publicacion.getModoAceptacion()) == null) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "La publicación todavía no tiene un modo de aceptación configurado."
             );
         }
@@ -141,7 +143,7 @@ public class PublicacionModoAceptacionService {
 
         return publicacionRepository.findById(idPublicacion)
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no existe."
                         ));
     }
@@ -153,7 +155,7 @@ public class PublicacionModoAceptacionService {
                         publicacion.getIdAlojamiento()
                 )
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "No se encontró el anfitrión de la publicación."
                         ));
     }
@@ -169,14 +171,14 @@ public class PublicacionModoAceptacionService {
         UsuarioPublicacionInfo usuario = usuarioPublicacionQuery
                 .consultarParaPublicacion(idActor)
                 .orElseThrow(() ->
-                        new AccessDeniedException(
+                        new AccesoNoPermitidoException(
                                 "No tienes permisos para modificar esta publicación."
                         ));
 
         if (!usuario.esAnfitrion()
                 || !idActor.equals(idAnfitrion)) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Solamente el anfitrión propietario o un administrador pueden modificar esta configuración."
             );
         }
@@ -189,13 +191,13 @@ public class PublicacionModoAceptacionService {
             UUID idPublicacion) {
 
         if (idActor == null) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Debes iniciar sesión para realizar esta operación."
             );
         }
 
         if (idPublicacion == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El identificador de la publicación es obligatorio."
             );
         }
@@ -211,9 +213,9 @@ public class PublicacionModoAceptacionService {
 
             return ModoAceptacionReserva.desde(modo).name();
 
-        } catch (IllegalArgumentException e) {
+        } catch (DatosInvalidosException e) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "La publicación tiene un modo de aceptación inválido.",
                     e
             );

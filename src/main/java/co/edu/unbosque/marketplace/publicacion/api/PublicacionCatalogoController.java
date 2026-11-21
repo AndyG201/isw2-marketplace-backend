@@ -3,7 +3,6 @@ package co.edu.unbosque.marketplace.publicacion.api;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -49,14 +48,10 @@ public class PublicacionCatalogoController {
 			@RequestParam(name = "pagina", defaultValue = "0") int pagina,
 			@RequestParam(name = "tamano", defaultValue = "20") int tamano) {
 
-		try {
-			PaginaPublicacionesResponse resultado = busquedaService
-					.buscar(new PublicacionBusquedaCriteria(ciudad, fechaInicio, fechaFin, capacidad, tipoAlojamiento,
-							precioMinimo, precioMaximo, servicios, pagina, tamano));
+		PaginaPublicacionesResponse resultado = busquedaService
+				.buscar(new PublicacionBusquedaCriteria(ciudad, fechaInicio, fechaFin, capacidad, tipoAlojamiento,
+						precioMinimo, precioMaximo, servicios, pagina, tamano));
 
-			return ResponseEntity.ok(resultado);
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
-		}
+		return ResponseEntity.ok(resultado);
 	}
 }

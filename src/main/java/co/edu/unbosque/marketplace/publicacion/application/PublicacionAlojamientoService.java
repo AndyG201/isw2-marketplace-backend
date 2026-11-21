@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
 import co.edu.unbosque.marketplace.alojamiento.contracts.CrearAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
@@ -82,23 +84,23 @@ public class PublicacionAlojamientoService {
         UsuarioPublicacionInfo anfitrion = usuarioPublicacionQuery
                 .consultarParaPublicacion(idAnfitrion)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new DatosInvalidosException(
                                 "Anfitrión no encontrado."));
 
         if (!anfitrion.esAnfitrion()) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "Solo un usuario con rol ANFITRION puede crear alojamientos.");
         }
 
         if (!anfitrion.cuentaHabilitadaParaPublicar()) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "La cuenta no está habilitada para crear publicaciones.");
         }
 
         if (!politicaCancelacionQuery.existePoliticaActiva(
                 solicitud.getIdPolitica())) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La política seleccionada no existe o está inactiva.");
         }
 
@@ -106,7 +108,7 @@ public class PublicacionAlojamientoService {
                 new HashSet<>(solicitud.getIdsServicios());
 
         if (idsServicios.size() != solicitud.getIdsServicios().size()) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "No puedes seleccionar un mismo servicio varias veces.");
         }
 
@@ -114,7 +116,7 @@ public class PublicacionAlojamientoService {
                 servicioPublicacionQuery.consultarPorIds(idsServicios);
 
         if (servicios.size() != idsServicios.size()) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Uno o varios servicios seleccionados no existen.");
         }
 
@@ -226,28 +228,28 @@ public class PublicacionAlojamientoService {
             CrearPublicacionRequest solicitud) {
 
         if (idAnfitrion == null || solicitud == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La solicitud de creación no es válida.");
         }
 
         if (solicitud.getCapacidad() == null
                 || solicitud.getCapacidad() <= 0) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La capacidad debe ser mayor que cero.");
         }
 
         if (solicitud.getPrecioPorNoche() == null
                 || solicitud.getPrecioPorNoche().signum() <= 0) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El precio por noche debe ser mayor que cero.");
         }
 
         if (solicitud.getTarifaLimpieza() != null
                 && solicitud.getTarifaLimpieza().signum() < 0) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La tarifa de limpieza no puede ser negativa.");
         }
 
@@ -256,7 +258,7 @@ public class PublicacionAlojamientoService {
                 || solicitud.getIdsServicios().size() > 20
                 || solicitud.getIdsServicios().contains(null)) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes seleccionar entre 1 y 20 servicios válidos.");
         }
 
@@ -266,12 +268,12 @@ public class PublicacionAlojamientoService {
                 || solicitud.getImagenes().stream()
                         .anyMatch(imagen -> imagen == null || imagen.isEmpty())) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes cargar entre 1 y 10 imágenes válidas.");
         }
 
         if (solicitud.getIdPolitica() == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes seleccionar una política de cancelación.");
         }
     }

@@ -1,7 +1,6 @@
 package co.edu.unbosque.marketplace.tarifa.api;
 
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -34,15 +33,10 @@ public class ConfiguracionTarifaController {
 
     @GetMapping("/configuracion-vigente")
     public ResponseEntity<?> consultarConfiguracionVigente() {
-        try {
-            ConfiguracionTarifaResponse respuesta =
-                    service.consultarParaAdministracion();
+        ConfiguracionTarifaResponse respuesta =
+                service.consultarParaAdministracion();
 
-            return ResponseEntity.ok(respuesta);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(respuesta);
     }
 
     @PutMapping("/configuracion-vigente")
@@ -60,14 +54,9 @@ public class ConfiguracionTarifaController {
                     ));
         }
 
-        try {
-            ConfiguracionTarifaResponse respuesta =
-                    service.configurar(idAdministrador, solicitud);
+        ConfiguracionTarifaResponse respuesta =
+                service.configurar(idAdministrador, solicitud);
 
-            return ResponseEntity.ok(respuesta);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(respuesta);
     }
 }

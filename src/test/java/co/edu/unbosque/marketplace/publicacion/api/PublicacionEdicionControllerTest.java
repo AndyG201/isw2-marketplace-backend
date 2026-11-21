@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplace.publicacion.api;
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
@@ -8,7 +9,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,10 +19,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionEdicionService;
 import co.edu.unbosque.marketplace.publicacion.application.dto.EditarPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAlojamientoResponse;
@@ -54,13 +57,13 @@ class PublicacionEdicionControllerTest {
     @Test
     void editarPublicacionSinUsuarioRetorna401() {
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.editarPublicacion(
                         null,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.UNAUTHORIZED, respuesta.getStatusCode());
 
@@ -80,13 +83,13 @@ class PublicacionEdicionControllerTest {
                 ))
         );
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.editarPublicacion(
                         idAnfitrion,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
 
@@ -107,13 +110,13 @@ class PublicacionEdicionControllerTest {
                 solicitud
         )).thenReturn(esperado);
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.editarPublicacion(
                         idAnfitrion,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.OK, respuesta.getStatusCode());
         assertSame(esperado, respuesta.getBody());
@@ -134,17 +137,17 @@ class PublicacionEdicionControllerTest {
                 idAnfitrion,
                 idPublicacion,
                 solicitud
-        )).thenThrow(new AccessDeniedException(
+        )).thenThrow(new AccesoNoPermitidoException(
                 "No tienes permiso para editar esta publicación."
         ));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.editarPublicacion(
                         idAnfitrion,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.FORBIDDEN, respuesta.getStatusCode());
     }
@@ -158,17 +161,17 @@ class PublicacionEdicionControllerTest {
                 idAnfitrion,
                 idPublicacion,
                 solicitud
-        )).thenThrow(new NoSuchElementException(
+        )).thenThrow(new RecursoNoEncontradoException(
                 "Publicación no encontrada."
         ));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.editarPublicacion(
                         idAnfitrion,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
     }
@@ -182,17 +185,17 @@ class PublicacionEdicionControllerTest {
                 idAnfitrion,
                 idPublicacion,
                 solicitud
-        )).thenThrow(new IllegalArgumentException(
+        )).thenThrow(new DatosInvalidosException(
                 "Los datos de la publicación no son válidos."
         ));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.editarPublicacion(
                         idAnfitrion,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
     }
@@ -206,17 +209,17 @@ class PublicacionEdicionControllerTest {
                 idAnfitrion,
                 idPublicacion,
                 solicitud
-        )).thenThrow(new IllegalStateException(
+        )).thenThrow(new ConflictoNegocioException(
                 "La publicación no puede modificarse en su estado actual."
         ));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.editarPublicacion(
                         idAnfitrion,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.CONFLICT, respuesta.getStatusCode());
     }

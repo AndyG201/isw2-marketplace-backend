@@ -1,14 +1,12 @@
 package co.edu.unbosque.marketplace.disponibilidad.api;
 
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -61,31 +59,12 @@ public class PeriodoDisponibilidadController {
             );
         }
 
-        try {
-
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(disponibilidadService.registrarPeriodo(
-                            idAnfitrion,
-                            idAlojamiento,
-                            solicitud
-                    ));
-
-        } catch (AccessDeniedException e) {
-
-            return error(HttpStatus.FORBIDDEN, e.getMessage());
-
-        } catch (NoSuchElementException e) {
-
-            return error(HttpStatus.NOT_FOUND, e.getMessage());
-
-        } catch (IllegalArgumentException e) {
-
-            return error(HttpStatus.BAD_REQUEST, e.getMessage());
-
-        } catch (IllegalStateException e) {
-
-            return error(HttpStatus.CONFLICT, e.getMessage());
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(disponibilidadService.registrarPeriodo(
+                        idAnfitrion,
+                        idAlojamiento,
+                        solicitud
+                ));
     }
 
     @GetMapping
@@ -100,27 +79,12 @@ public class PeriodoDisponibilidadController {
             );
         }
 
-        try {
-
-            return ResponseEntity.ok(
-                    disponibilidadService.consultarPeriodos(
-                            idAnfitrion,
-                            idAlojamiento
-                    )
-            );
-
-        } catch (AccessDeniedException e) {
-
-            return error(HttpStatus.FORBIDDEN, e.getMessage());
-
-        } catch (NoSuchElementException e) {
-
-            return error(HttpStatus.NOT_FOUND, e.getMessage());
-
-        } catch (IllegalArgumentException e) {
-
-            return error(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+        return ResponseEntity.ok(
+                disponibilidadService.consultarPeriodos(
+                        idAnfitrion,
+                        idAlojamiento
+                )
+        );
     }
 
     @PutMapping("/{idPeriodo}")
@@ -145,33 +109,14 @@ public class PeriodoDisponibilidadController {
             );
         }
 
-        try {
-
-            return ResponseEntity.ok(
-                    disponibilidadService.actualizarPeriodo(
-                            idAnfitrion,
-                            idAlojamiento,
-                            idPeriodo,
-                            solicitud
-                    )
-            );
-
-        } catch (AccessDeniedException e) {
-
-            return error(HttpStatus.FORBIDDEN, e.getMessage());
-
-        } catch (NoSuchElementException e) {
-
-            return error(HttpStatus.NOT_FOUND, e.getMessage());
-
-        } catch (IllegalArgumentException e) {
-
-            return error(HttpStatus.BAD_REQUEST, e.getMessage());
-
-        } catch (IllegalStateException e) {
-
-            return error(HttpStatus.CONFLICT, e.getMessage());
-        }
+        return ResponseEntity.ok(
+                disponibilidadService.actualizarPeriodo(
+                        idAnfitrion,
+                        idAlojamiento,
+                        idPeriodo,
+                        solicitud
+                )
+        );
     }
 
     @DeleteMapping("/{idPeriodo}")
@@ -187,32 +132,13 @@ public class PeriodoDisponibilidadController {
             );
         }
 
-        try {
-
-            return ResponseEntity.ok(
-                    disponibilidadService.deshabilitarPeriodo(
-                            idAnfitrion,
-                            idAlojamiento,
-                            idPeriodo
-                    )
-            );
-
-        } catch (AccessDeniedException e) {
-
-            return error(HttpStatus.FORBIDDEN, e.getMessage());
-
-        } catch (NoSuchElementException e) {
-
-            return error(HttpStatus.NOT_FOUND, e.getMessage());
-
-        } catch (IllegalArgumentException e) {
-
-            return error(HttpStatus.BAD_REQUEST, e.getMessage());
-
-        } catch (IllegalStateException e) {
-
-            return error(HttpStatus.CONFLICT, e.getMessage());
-        }
+        return ResponseEntity.ok(
+                disponibilidadService.deshabilitarPeriodo(
+                        idAnfitrion,
+                        idAlojamiento,
+                        idPeriodo
+                )
+        );
     }
 
     private String obtenerErrores(BindingResult resultado) {

@@ -17,8 +17,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.security.access.AccessDeniedException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaPublicacionCommand;
@@ -180,7 +183,7 @@ class PublicacionRevisionServiceTest {
     void enviarRevisionConAnfitrionNulo() {
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.enviarRevision(null, idPublicacion)
         );
 
@@ -194,7 +197,7 @@ class PublicacionRevisionServiceTest {
     void enviarRevisionConIdentificadorDeAnfitrionNulo() {
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.enviarRevision(null, idPublicacion)
         );
 
@@ -208,7 +211,7 @@ class PublicacionRevisionServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -226,7 +229,7 @@ class PublicacionRevisionServiceTest {
         when(anfitrion.esAnfitrion()).thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -241,7 +244,7 @@ class PublicacionRevisionServiceTest {
         when(anfitrion.cuentaHabilitadaParaPublicar()).thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -256,7 +259,7 @@ class PublicacionRevisionServiceTest {
         when(anfitrion.cuentaHabilitadaParaPublicar()).thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -271,7 +274,7 @@ class PublicacionRevisionServiceTest {
         when(anfitrion.cuentaHabilitadaParaPublicar()).thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -286,7 +289,7 @@ class PublicacionRevisionServiceTest {
         when(anfitrion.cuentaHabilitadaParaPublicar()).thenReturn(false);
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -302,7 +305,7 @@ class PublicacionRevisionServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                java.util.NoSuchElementException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -322,7 +325,7 @@ class PublicacionRevisionServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -338,7 +341,7 @@ class PublicacionRevisionServiceTest {
                 .thenReturn(UUID.randomUUID());
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -353,7 +356,7 @@ class PublicacionRevisionServiceTest {
         when(publicacion.getEstado()).thenReturn("BLOQUEADA");
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -368,7 +371,7 @@ class PublicacionRevisionServiceTest {
         when(publicacion.getEstado()).thenReturn("ACTIVA");
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -382,8 +385,8 @@ class PublicacionRevisionServiceTest {
 
         when(publicacion.getTitulo()).thenReturn(" ");
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -400,8 +403,8 @@ class PublicacionRevisionServiceTest {
         when(politicaCancelacionQuery.existePoliticaActiva(idPolitica))
                 .thenReturn(false);
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -419,8 +422,8 @@ class PublicacionRevisionServiceTest {
         when(publicacionServicioRepository.findByIdPublicacion(idPublicacion))
                 .thenReturn(List.of());
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -438,8 +441,8 @@ class PublicacionRevisionServiceTest {
         when(imagenRepository.findByIdPublicacionOrderByOrdenAsc(idPublicacion))
                 .thenReturn(List.of());
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 
@@ -461,8 +464,8 @@ class PublicacionRevisionServiceTest {
         when(imagenRepository.findByIdPublicacionOrderByOrdenAsc(idPublicacion))
                 .thenReturn(List.of(imagen));
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> service.enviarRevision(idAnfitrion, idPublicacion)
         );
 

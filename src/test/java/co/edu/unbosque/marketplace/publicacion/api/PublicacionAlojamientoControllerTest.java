@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplace.publicacion.api;
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -20,6 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionAlojamientoService;
 import co.edu.unbosque.marketplace.publicacion.application.dto.CrearPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAlojamientoResponse;
@@ -42,11 +45,12 @@ class PublicacionAlojamientoControllerTest {
     @Test
     void testCrearPublicacionSinUsuario() {
 
-        ResponseEntity<?> respuesta = controller.crearPublicacion(
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.crearPublicacion(
                 null,
                 solicitud,
                 resultadoValidacion
-        );
+        ));
 
         assertEquals(
                 HttpStatus.UNAUTHORIZED,
@@ -71,11 +75,12 @@ class PublicacionAlojamientoControllerTest {
         when(resultadoValidacion.getFieldErrors())
                 .thenReturn(List.of(error));
 
-        ResponseEntity<?> respuesta = controller.crearPublicacion(
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.crearPublicacion(
                 idUsuario,
                 solicitud,
                 resultadoValidacion
-        );
+        ));
 
         assertEquals(
                 HttpStatus.BAD_REQUEST,
@@ -109,11 +114,12 @@ class PublicacionAlojamientoControllerTest {
         when(publicacionService.crearPublicacion(idUsuario, solicitud))
                 .thenReturn(publicacion);
 
-        ResponseEntity<?> respuesta = controller.crearPublicacion(
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.crearPublicacion(
                 idUsuario,
                 solicitud,
                 resultadoValidacion
-        );
+        ));
 
         assertAll(
                 () -> assertEquals(
@@ -141,16 +147,17 @@ class PublicacionAlojamientoControllerTest {
 
         when(publicacionService.crearPublicacion(idUsuario, solicitud))
                 .thenThrow(
-                        new IllegalArgumentException(
+                        new DatosInvalidosException(
                                 "Datos incorrectos."
                         )
                 );
 
-        ResponseEntity<?> respuesta = controller.crearPublicacion(
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.crearPublicacion(
                 idUsuario,
                 solicitud,
                 resultadoValidacion
-        );
+        ));
 
         assertEquals(
                 HttpStatus.BAD_REQUEST,
@@ -172,16 +179,17 @@ class PublicacionAlojamientoControllerTest {
 
         when(publicacionService.crearPublicacion(idUsuario, solicitud))
                 .thenThrow(
-                        new IllegalStateException(
+                        new ConflictoNegocioException(
                                 "No es posible crear la publicación."
                         )
                 );
 
-        ResponseEntity<?> respuesta = controller.crearPublicacion(
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.crearPublicacion(
                 idUsuario,
                 solicitud,
                 resultadoValidacion
-        );
+        ));
 
         assertEquals(
                 HttpStatus.CONFLICT,

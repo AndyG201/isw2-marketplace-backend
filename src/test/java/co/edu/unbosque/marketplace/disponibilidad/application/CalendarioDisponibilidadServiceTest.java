@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,8 +17,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import org.springframework.security.access.AccessDeniedException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.CalendarioDisponibilidadResponse;
@@ -434,7 +435,7 @@ class CalendarioDisponibilidadServiceTest {
     void debeRechazarIdentificadorDeAlojamientoNulo() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.consultarPorFechas(
                         null,
                         fechaInicio,
@@ -449,7 +450,7 @@ class CalendarioDisponibilidadServiceTest {
     void debeRechazarFechasNulas() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.consultarPorFechas(
                         idAlojamiento,
                         null,
@@ -458,7 +459,7 @@ class CalendarioDisponibilidadServiceTest {
         );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.consultarPorFechas(
                         idAlojamiento,
                         fechaInicio,
@@ -471,7 +472,7 @@ class CalendarioDisponibilidadServiceTest {
     void debeRechazarFechaFinIgualAFechaInicio() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.consultarPorFechas(
                         idAlojamiento,
                         fechaInicio,
@@ -484,7 +485,7 @@ class CalendarioDisponibilidadServiceTest {
     void debeRechazarFechaFinAnteriorAFechaInicio() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.consultarPorFechas(
                         idAlojamiento,
                         fechaInicio,
@@ -501,7 +502,7 @@ class CalendarioDisponibilidadServiceTest {
         )).thenReturn(false);
 
         assertThrows(
-                NoSuchElementException.class,
+                RecursoNoEncontradoException.class,
                 () -> servicio.consultarPorFechas(
                         idAlojamiento,
                         fechaInicio,
@@ -569,7 +570,7 @@ class CalendarioDisponibilidadServiceTest {
     void debeRechazarAnfitrionNulo() {
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> servicio.consultarCalendarioCompleto(
                         null,
                         idAlojamiento
@@ -583,7 +584,7 @@ class CalendarioDisponibilidadServiceTest {
     void debeRechazarIdentificadorDeAlojamientoNuloEnCalendario() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.consultarCalendarioCompleto(
                         idAnfitrion,
                         null
@@ -600,7 +601,7 @@ class CalendarioDisponibilidadServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> servicio.consultarCalendarioCompleto(
                         idAnfitrion,
                         idAlojamiento
@@ -621,7 +622,7 @@ class CalendarioDisponibilidadServiceTest {
                 ));
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> servicio.consultarCalendarioCompleto(
                         idAnfitrion,
                         idAlojamiento
@@ -642,7 +643,7 @@ class CalendarioDisponibilidadServiceTest {
                 ));
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> servicio.consultarCalendarioCompleto(
                         idAnfitrion,
                         idAlojamiento
@@ -666,7 +667,7 @@ class CalendarioDisponibilidadServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                NoSuchElementException.class,
+                RecursoNoEncontradoException.class,
                 () -> servicio.consultarCalendarioCompleto(
                         idAnfitrion,
                         idAlojamiento
@@ -692,7 +693,7 @@ class CalendarioDisponibilidadServiceTest {
                 .thenReturn(Optional.of(otroAnfitrion));
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> servicio.consultarCalendarioCompleto(
                         idAnfitrion,
                         idAlojamiento

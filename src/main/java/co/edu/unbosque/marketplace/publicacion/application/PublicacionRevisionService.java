@@ -8,10 +8,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaPublicacionCommand;
@@ -68,52 +71,52 @@ public class PublicacionRevisionService {
             UUID idPublicacion) {
 
         if (idAnfitrion == null) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Debes iniciar sesión para realizar esta operación.");
         }
 
         UsuarioPublicacionInfo anfitrion = usuarioPublicacionQuery
                 .consultarParaPublicacion(idAnfitrion)
                 .orElseThrow(() ->
-                        new AccessDeniedException(
+                        new AccesoNoPermitidoException(
                                 "Debes iniciar sesión para realizar esta operación."));
 
         if (!anfitrion.esAnfitrion()) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Solo un anfitrión puede enviar publicaciones a revisión.");
         }
 
         if (!anfitrion.cuentaHabilitadaParaPublicar()) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Tu cuenta no está habilitada para enviar publicaciones a revisión.");
         }
 
         Publicacion publicacion = publicacionRepository
                 .findById(idPublicacion)
                 .orElseThrow(() ->
-                        new java.util.NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no existe."));
 
         AlojamientoPublicacionInfo alojamiento = alojamientoPublicacionQuery
                 .consultarDatosParaPublicacion(publicacion.getIdAlojamiento())
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new ConflictoNegocioException(
                                 "No se encontró el alojamiento asociado."));
 
         if (!idAnfitrion.equals(alojamiento.idAnfitrion())) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "No puedes enviar a revisión una publicación que no te pertenece.");
         }
 
         String estadoActual = publicacion.getEstado();
 
         if ("BLOQUEADA".equals(estadoActual)) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No puedes enviar a revisión una publicación bloqueada.");
         }
 
         if (!"BORRADOR".equals(estadoActual)) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "Solamente las publicaciones en estado BORRADOR pueden enviarse a revisión.");
         }
 
@@ -245,7 +248,7 @@ public class PublicacionRevisionService {
         }
 
         if (!faltantes.isEmpty()) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "No puedes enviar la publicación a revisión. "
                     + "Información faltante o inválida: "
                     + String.join(", ", faltantes) + ".");
