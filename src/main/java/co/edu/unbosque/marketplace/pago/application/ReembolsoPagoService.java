@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.pago.application.port.PagoRepository;
 import co.edu.unbosque.marketplace.pago.application.port.ReembolsoPagoRepository;
 import co.edu.unbosque.marketplace.pago.application.port.ReembolsosPendientes;
@@ -37,7 +38,7 @@ public class ReembolsoPagoService {
     @Transactional
     public void confirmar(UUID idReembolso, String referenciaStripe, OffsetDateTime ahora) {
         ReembolsoPago reembolso = reembolsos.findById(idReembolso)
-                .orElseThrow(() -> new IllegalStateException("No existe el reembolso pendiente."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el reembolso pendiente."));
         if ("REEMBOLSADO".equals(reembolso.getEstado())) return;
         reembolso.setStripeRefundId(referenciaStripe);
         reembolso.setEstado("REEMBOLSADO");
@@ -45,7 +46,7 @@ public class ReembolsoPagoService {
         reembolso.setFechaActualizacion(ahora);
         reembolsos.save(reembolso);
         Pago pago = pagos.findById(reembolso.getIdPago())
-                .orElseThrow(() -> new IllegalStateException("No existe el pago asociado al reembolso."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el pago asociado al reembolso."));
         pago.setEstado("REEMBOLSADO");
         pagos.save(pago);
     }
@@ -53,7 +54,7 @@ public class ReembolsoPagoService {
     @Transactional
     public void reprogramar(UUID idReembolso, String referenciaStripe, String error, OffsetDateTime ahora) {
         ReembolsoPago reembolso = reembolsos.findById(idReembolso)
-                .orElseThrow(() -> new IllegalStateException("No existe el reembolso pendiente."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el reembolso pendiente."));
         reembolso.setStripeRefundId(referenciaStripe);
         reembolso.setUltimoError(limitar(error));
         if (reembolso.getIntentos() >= MAXIMO_INTENTOS) {
@@ -70,7 +71,7 @@ public class ReembolsoPagoService {
     @Transactional
     public void marcarFallaDefinitiva(UUID idReembolso, String referenciaStripe, String error, OffsetDateTime ahora) {
         ReembolsoPago reembolso = reembolsos.findById(idReembolso)
-                .orElseThrow(() -> new IllegalStateException("No existe el reembolso pendiente."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el reembolso pendiente."));
         reembolso.setStripeRefundId(referenciaStripe);
         reembolso.setEstado("FALLIDA");
         reembolso.setUltimoError(limitar(error));

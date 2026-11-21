@@ -9,6 +9,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.pago.application.port.OperacionPendienteRepository;
 import co.edu.unbosque.marketplace.pago.application.port.PagoRepository;
 import co.edu.unbosque.marketplace.pago.application.port.ReembolsoPagoRepository;
@@ -81,7 +84,7 @@ public class RegistroPagosService implements RegistroPagos {
     public PagoInfo registrarResultado(
             String claveIdempotencia, boolean aprobado, String referencia, String mensaje, OffsetDateTime fecha) {
         Pago pago = pagos.findByClaveIdempotencia(claveIdempotencia)
-                .orElseThrow(() -> new IllegalStateException("No existe el intento de pago."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el intento de pago."));
         if ("REEMBOLSADO".equals(pago.getEstado())
                 || (PAGADO.equals(pago.getEstado()) && !aprobado)) {
             return convertir(pago);
@@ -109,7 +112,7 @@ public class RegistroPagosService implements RegistroPagos {
     @Transactional
     public void registrarFallo(String claveIdempotencia, String error, OffsetDateTime fecha) {
         OperacionPendiente operacion = operaciones.findByClaveIdempotencia(claveIdempotencia)
-                .orElseThrow(() -> new IllegalStateException("No existe la operación de conciliación."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe la operación de conciliación."));
         int intentos = operacion.getIntentos() + 1;
         operacion.setIntentos(intentos);
         operacion.setUltimaEjecucion(fecha);
@@ -154,12 +157,12 @@ public class RegistroPagosService implements RegistroPagos {
     @Transactional
     public void programarReembolso(String claveIdempotenciaPago, OffsetDateTime fecha) {
         Pago pago = pagos.findByClaveIdempotencia(claveIdempotenciaPago)
-                .orElseThrow(() -> new IllegalStateException("No existe el pago que requiere reembolso."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el pago que requiere reembolso."));
         if (!PAGADO.equals(pago.getEstado())) {
-            throw new IllegalStateException("Solo se puede reembolsar un pago capturado y aprobado.");
+            throw new ConflictoNegocioException("Solo se puede reembolsar un pago capturado y aprobado.");
         }
         if (pago.getReferenciaStripe() == null || pago.getReferenciaStripe().isBlank()) {
-            throw new IllegalStateException("El pago aprobado no tiene referencia de PaymentIntent de Stripe.");
+            throw new FallaInternaException("El pago aprobado no tiene referencia de PaymentIntent de Stripe.");
         }
         if (reembolsos.findByIdPago(pago.getIdPago()).isPresent()) return;
         String claveReembolso = "refund-" + pago.getIdPago();

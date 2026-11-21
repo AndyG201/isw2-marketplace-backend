@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.application.port.BandejaSalidaAuditoriaRepository;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoResena;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
@@ -55,12 +56,12 @@ class AuditoriaResenaServiceTest {
     void requiereUsuarioResenaFechaAccionResultadoYDetalle() {
         UUID id = UUID.randomUUID();
         OffsetDateTime fecha = OffsetDateTime.now();
-        assertThrows(IllegalArgumentException.class, () -> service.registrarEvento(null));
-        assertThrows(IllegalArgumentException.class, () -> service.registrarEvento(
+        assertThrows(DatosInvalidosException.class, () -> service.registrarEvento(null));
+        assertThrows(DatosInvalidosException.class, () -> service.registrarEvento(
                 new RegistrarEventoResena(null, id, fecha, "ACCION", "EXITOSO", "{}")));
-        assertThrows(IllegalArgumentException.class, () -> service.registrarEvento(
+        assertThrows(DatosInvalidosException.class, () -> service.registrarEvento(
                 new RegistrarEventoResena(id, null, fecha, "ACCION", "EXITOSO", "{}")));
-        assertThrows(IllegalArgumentException.class, () -> service.registrarEvento(
+        assertThrows(DatosInvalidosException.class, () -> service.registrarEvento(
                 new RegistrarEventoResena(id, id, fecha, "ACCION", "EXITOSO", " ")));
         verifyNoInteractions(repository);
     }

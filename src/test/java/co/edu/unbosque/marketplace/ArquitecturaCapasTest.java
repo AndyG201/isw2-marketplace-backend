@@ -21,8 +21,7 @@ class ArquitecturaCapasTest {
 
     private static final String BASE = "co.edu.unbosque.marketplace";
 
-    // Algunos módulos escribieron "infraestructure"; se aceptan ambas grafías.
-    private static final String[] INFRAESTRUCTURA = { "..infrastructure..", "..infraestructure.." };
+    private static final String INFRAESTRUCTURA = "..infrastructure..";
 
     private static JavaClasses clases;
 
@@ -37,7 +36,7 @@ class ArquitecturaCapasTest {
     void elDominioNoDependeDeLasDemasCapas() {
         noClasses().that().resideInAPackage("..domain..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "..api..", "..application..", INFRAESTRUCTURA[0], INFRAESTRUCTURA[1])
+                        "..api..", "..application..", INFRAESTRUCTURA)
                 .because("el dominio es el centro: no conoce la presentación, la aplicación ni la infraestructura")
                 .check(clases);
     }
@@ -75,16 +74,12 @@ class ArquitecturaCapasTest {
     }
 
     /**
-     * Módulos cuya capa de aplicación ya lanza excepciones de dominio (ErroresApiHandler las traduce a HTTP).
-     * Los demás (auditoria, notificacion, pago, reporte, resena, trabajo, ubicacion...) siguen
-     * pendientes de migrar y se agregan aquí cuando se conviertan.
+     * La capa de aplicación y la de presentación lanzan excepciones de dominio (compartido.domain);
+     * ErroresApiHandler las traduce a HTTP.
      */
     @Test
-    void laAplicacionDeLosModulosMigradosLanzaExcepcionesDeDominio() {
-        noClasses().that().resideInAnyPackage(
-                        "..publicacion.application..", "..alojamiento.application..",
-                        "..cotizacion.application..", "..disponibilidad.application..",
-                        "..tarifa.application..", "..servicio.application..", "..usuario.application..")
+    void laAplicacionYLaPresentacionLanzanExcepcionesDeDominio() {
+        noClasses().that().resideInAnyPackage("..application..", "..api..")
                 .should().callConstructorWhere(JavaCall.Predicates.target(
                         HasOwner.Predicates.With.owner(assignableTo(IllegalArgumentException.class)
                                 .or(assignableTo(IllegalStateException.class)))))

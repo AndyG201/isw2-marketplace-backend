@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.reserva.application.ReservaDecisionService;
 import co.edu.unbosque.marketplace.reserva.application.dto.DecisionReservaResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -52,7 +53,7 @@ public class ReservaDecisionController {
                         .anyMatch(autoridad -> "ROLE_ANFITRION".equals(autoridad.getAuthority()));
 
         if (!esAnfitrion) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Solo un anfitrión puede decidir sobre solicitudes de reserva.");
         }
     }

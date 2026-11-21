@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.notificacion.contracts.CrearNotificacionUsuario;
 import co.edu.unbosque.marketplace.notificacion.contracts.NotificacionUsuarioCommand;
@@ -29,7 +30,7 @@ public class NotificacionUsuarioService implements NotificacionUsuarioCommand {
                 || solicitud.mensaje() == null
                 || solicitud.mensaje().isBlank()
                 || solicitud.fechaCreacion() == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Los datos de la notificación son obligatorios.");
         }
 

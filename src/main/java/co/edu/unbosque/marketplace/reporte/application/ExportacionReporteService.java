@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaAdministracionCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAdministracion;
 import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
@@ -49,13 +50,13 @@ public class ExportacionReporteService {
             String formatoEntrada) {
 
         if (idAdministrador == null || formatoEntrada == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El administrador y el formato son obligatorios.");
         }
 
         String formato = formatoEntrada.trim().toUpperCase();
         if (!formato.equals("PDF") && !formato.equals("EXCEL")) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El formato debe ser PDF o EXCEL.");
         }
 
@@ -240,7 +241,7 @@ public class ExportacionReporteService {
         try {
             return mapper.writeValueAsString(datos);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException(
+            throw new FallaInternaException(
                     "No fue posible serializar el evento de auditoría.",
                     e);
         }

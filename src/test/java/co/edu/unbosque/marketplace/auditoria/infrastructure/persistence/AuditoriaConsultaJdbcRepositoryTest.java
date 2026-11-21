@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
 import co.edu.unbosque.marketplace.auditoria.domain.FiltrosAuditoria;
 
@@ -140,12 +141,12 @@ class AuditoriaConsultaJdbcRepositoryTest {
                 new FiltrosAuditoria(null, null, null, null, null, null);
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> repository.consultar(filtros, 0, 0)
         );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> repository.consultar(filtros, 10, -1)
         );
     }

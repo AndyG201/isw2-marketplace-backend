@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
 import co.edu.unbosque.marketplace.trabajo.ColaTrabajos;
 import co.edu.unbosque.marketplace.trabajo.ProcesadorTrabajo;
 
@@ -29,7 +30,7 @@ public class WorkerTrabajos {
             ProcesadorTrabajo procesador = procesadores.stream()
                     .filter(candidato -> candidato.soporta(trabajo.tipo()))
                     .findFirst()
-                    .orElseThrow(() -> new IllegalStateException(
+                    .orElseThrow(() -> new FallaInternaException(
                             "No existe un procesador para el trabajo "
                                     + trabajo.tipo()));
 

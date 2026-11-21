@@ -12,6 +12,7 @@ import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import co.edu.unbosque.marketplace.compartido.domain.ServicioNoDisponibleException;
 import co.edu.unbosque.marketplace.ubicacion.application.port.CatalogoUbicacionesExterno;
 
 @Component
@@ -54,7 +55,7 @@ public class CountriesNowClient implements CatalogoUbicacionesExterno {
 
     private JsonNode validarRespuesta(JsonNode response) {
         if (response == null || response.path("error").asBoolean(true) || !response.path("data").isArray()) {
-            throw new IllegalStateException("La API externa de países y ciudades devolvió una respuesta inválida.");
+            throw new ServicioNoDisponibleException("La API externa de países y ciudades devolvió una respuesta inválida.");
         }
         return response.path("data");
     }

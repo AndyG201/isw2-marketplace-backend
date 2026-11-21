@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.application.port.BandejaSalidaAuditoriaRepository;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoReserva;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
@@ -55,12 +56,12 @@ class AuditoriaReservaServiceTest {
     void rechazaDatosObligatoriosAusentes() {
         OffsetDateTime fecha = OffsetDateTime.now();
         UUID id = UUID.randomUUID();
-        assertThrows(IllegalArgumentException.class, () -> service.registrarEvento(null));
-        assertThrows(IllegalArgumentException.class, () -> service.registrarEvento(
+        assertThrows(DatosInvalidosException.class, () -> service.registrarEvento(null));
+        assertThrows(DatosInvalidosException.class, () -> service.registrarEvento(
                 new RegistrarEventoReserva(id, null, fecha, "ACCION", "EXITOSO", "{}")));
-        assertThrows(IllegalArgumentException.class, () -> service.registrarEvento(
+        assertThrows(DatosInvalidosException.class, () -> service.registrarEvento(
                 new RegistrarEventoReserva(id, id, fecha, " ", "EXITOSO", "{}")));
-        assertThrows(IllegalArgumentException.class, () -> service.registrarEvento(
+        assertThrows(DatosInvalidosException.class, () -> service.registrarEvento(
                 new RegistrarEventoReserva(id, id, fecha, "ACCION", "EXITOSO", " ")));
         verifyNoInteractions(repository);
     }

@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaSolicitadaEvent;
@@ -29,7 +30,7 @@ public class ReservaSolicitadaNotificationListener {
                 || evento.idReserva() == null
                 || evento.idPublicacion() == null
                 || evento.fechaEvento() == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Los datos del evento de reserva son obligatorios.");
         }
 

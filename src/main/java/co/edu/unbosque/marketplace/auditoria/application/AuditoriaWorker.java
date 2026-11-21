@@ -6,6 +6,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
 import co.edu.unbosque.marketplace.trabajo.ProcesadorTrabajo;
 import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
@@ -33,14 +35,14 @@ public class AuditoriaWorker implements ProcesadorTrabajo {
     @Override
     public void procesar(TipoTrabajo tipo, String identificador) {
         if (!soporta(tipo)) {
-            throw new IllegalArgumentException("Tipo de trabajo no soportado por el worker de auditoría.");
+            throw new FallaInternaException("Tipo de trabajo no soportado por el worker de auditoría.");
         }
 
         UUID idEvento;
         try {
             idEvento = UUID.fromString(identificador);
         } catch (RuntimeException error) {
-            throw new IllegalArgumentException("El identificador del evento de auditoría no es un UUID.", error);
+            throw new DatosInvalidosException("El identificador del evento de auditoría no es un UUID.", error);
         }
 
         BandejaSalidaAuditoria evento = outbox.buscarParaProcesar(idEvento);

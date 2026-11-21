@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteInfo;
 import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteRepository;
 import co.edu.unbosque.marketplace.notificacion.contracts.CrearNotificacionUsuario;
@@ -41,7 +43,7 @@ public class ExportacionReporteWorker implements ProcesadorTrabajo {
     @Override
     public void procesar(TipoTrabajo tipo, String identificador) {
         if (!soporta(tipo)) {
-            throw new IllegalArgumentException(
+            throw new FallaInternaException(
                     "El procesador de reportes no admite el trabajo " + tipo);
         }
         procesar(UUID.fromString(identificador));
@@ -59,7 +61,7 @@ public class ExportacionReporteWorker implements ProcesadorTrabajo {
             ExportacionReporteInfo solicitud = exportaciones
                     .buscar(idExportacion, idAdministrador)
                     .orElseThrow(() ->
-                            new IllegalStateException(
+                            new RecursoNoEncontradoException(
                                     "No se encontró la exportación solicitada."));
 
             ReporteArchivoGenerado resultado =

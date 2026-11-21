@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaCancelacionRepository;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaCancelacionInfo;
 
@@ -53,7 +54,7 @@ public class ReservaCancelacionJdbcRepository implements ReservaCancelacionRepos
                   AND estado IN ('PENDIENTE_PAGO', 'PENDIENTE_APROBACION', 'CONFIRMADA')
                 """, idReserva);
         if (actualizadas != 1) {
-            throw new IllegalStateException("La reserva cambió de estado durante la cancelación.");
+            throw new ConflictoNegocioException("La reserva cambió de estado durante la cancelación.");
         }
     }
 

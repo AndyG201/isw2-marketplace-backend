@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAuditoria;
@@ -73,7 +74,7 @@ class AlmacenAuditoriaInmutableJdbcTest {
     void rechazaEventoNulo() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> almacen.anexar(null)
         );
 

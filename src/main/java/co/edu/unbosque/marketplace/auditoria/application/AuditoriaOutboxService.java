@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.application.port.BandejaSalidaAuditoriaRepository;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
@@ -148,7 +149,7 @@ public class AuditoriaOutboxService implements AuditoriaEventoCommand {
                 || solicitud.entidadAfectada().trim().length() > 50
                 || (solicitud.idCorrelacion() != null
                         && solicitud.idCorrelacion().length() > 100)) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Los datos del evento de auditoría son obligatorios o superan su longitud máxima.");
         }
     }

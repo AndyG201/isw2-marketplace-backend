@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.reserva.application.ReservaHistorialService;
 import co.edu.unbosque.marketplace.reserva.application.dto.MisReservasResponse;
 import co.edu.unbosque.marketplace.reserva.application.dto.ReservaPropiaResponse;
@@ -50,7 +51,7 @@ public class ReservaHistorialController {
                         .anyMatch(autoridad -> "ROLE_HUESPED".equals(autoridad.getAuthority()));
 
         if (!esHuesped) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Solo un huésped puede consultar su historial de reservas.");
         }
     }

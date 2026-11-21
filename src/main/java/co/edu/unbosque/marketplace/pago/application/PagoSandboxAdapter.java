@@ -18,6 +18,9 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
+import co.edu.unbosque.marketplace.compartido.domain.ServicioNoDisponibleException;
 import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoReembolsoSandbox;
@@ -52,7 +55,7 @@ public class PagoSandboxAdapter implements PagoSandboxGateway {
             // Stripe recibe COP en centavos (dos decimales), igual que otras monedas de dos decimales.
             montoEnUnidadMenor = monto.movePointRight(2).setScale(0, RoundingMode.UNNECESSARY).longValueExact();
         } catch (ArithmeticException ex) {
-            throw new IllegalArgumentException("El monto no se puede representar en la moneda configurada.", ex);
+            throw new DatosInvalidosException("El monto no se puede representar en la moneda configurada.", ex);
         }
 
         String body = "amount=" + montoEnUnidadMenor
@@ -87,12 +90,12 @@ public class PagoSandboxAdapter implements PagoSandboxGateway {
                 String paymentIntentId = json.path("error").path("payment_intent").path("id").asText(null);
                 return new ResultadoPagoSandbox(false, paymentIntentId, mensaje);
             }
-            throw new IllegalStateException("Stripe respondió HTTP " + response.statusCode() + ": " + mensaje);
+            throw new ServicioNoDisponibleException("Stripe respondió HTTP " + response.statusCode() + ": " + mensaje);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("La solicitud a Stripe fue interrumpida.", ex);
+            throw new ServicioNoDisponibleException("La solicitud a Stripe fue interrumpida.", ex);
         } catch (IOException ex) {
-            throw new IllegalStateException("No fue posible comunicarse con Stripe.", ex);
+            throw new ServicioNoDisponibleException("No fue posible comunicarse con Stripe.", ex);
         }
     }
 
@@ -117,7 +120,7 @@ public class PagoSandboxAdapter implements PagoSandboxGateway {
     @Override
     public ResultadoReembolsoSandbox consultarReembolso(String referenciaReembolso) {
         if (referenciaReembolso == null || !referenciaReembolso.matches("re_[A-Za-z0-9]+")) {
-            throw new IllegalArgumentException("La referencia del reembolso Stripe no es válida.");
+            throw new DatosInvalidosException("La referencia del reembolso Stripe no es válida.");
         }
         URI uri = URI.create(REFUNDS_URI + "/" + codificar(referenciaReembolso));
         HttpRequest request = HttpRequest.newBuilder(uri)
@@ -140,24 +143,24 @@ public class PagoSandboxAdapter implements PagoSandboxGateway {
             }
             String mensaje = json.path("error").path("message")
                     .asText("Stripe rechazó la solicitud de reembolso.");
-            throw new IllegalStateException("Stripe respondió HTTP " + response.statusCode() + ": " + mensaje);
+            throw new ServicioNoDisponibleException("Stripe respondió HTTP " + response.statusCode() + ": " + mensaje);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("La solicitud de reembolso a Stripe fue interrumpida.", ex);
+            throw new ServicioNoDisponibleException("La solicitud de reembolso a Stripe fue interrumpida.", ex);
         } catch (IOException ex) {
-            throw new IllegalStateException("No fue posible consultar o solicitar el reembolso en Stripe.", ex);
+            throw new ServicioNoDisponibleException("No fue posible consultar o solicitar el reembolso en Stripe.", ex);
         }
     }
 
     private void validarConfiguracionReembolso(String paymentIntentId, BigDecimal monto, String clave) {
         if (!secretKey.startsWith("sk_test_")) {
-            throw new IllegalStateException("Configura STRIPE_SECRET_KEY con una clave de prueba sk_test_.");
+            throw new FallaInternaException("Configura STRIPE_SECRET_KEY con una clave de prueba sk_test_.");
         }
         if (paymentIntentId == null || !paymentIntentId.matches("pi_[A-Za-z0-9]+")) {
-            throw new IllegalArgumentException("La referencia PaymentIntent no es válida.");
+            throw new DatosInvalidosException("La referencia PaymentIntent no es válida.");
         }
         if (monto == null || monto.signum() <= 0 || clave == null || clave.isBlank()) {
-            throw new IllegalArgumentException("El monto y la clave de idempotencia del reembolso son obligatorios.");
+            throw new DatosInvalidosException("El monto y la clave de idempotencia del reembolso son obligatorios.");
         }
     }
 
@@ -168,17 +171,17 @@ public class PagoSandboxAdapter implements PagoSandboxGateway {
 
     private void validarConfiguracion(BigDecimal monto, String claveIdempotencia) {
         if (!secretKey.startsWith("sk_test_")) {
-            throw new IllegalStateException(
+            throw new FallaInternaException(
                     "Configura STRIPE_SECRET_KEY con una clave secreta de prueba que comience por sk_test_.");
         }
         if (currency.isBlank() || !currency.matches("[a-z]{3}")) {
-            throw new IllegalStateException("La moneda configurada para Stripe no es válida.");
+            throw new FallaInternaException("La moneda configurada para Stripe no es válida.");
         }
         if (paymentMethod.isBlank() || claveIdempotencia == null || claveIdempotencia.isBlank()) {
-            throw new IllegalArgumentException("El método de pago y la clave de idempotencia son obligatorios.");
+            throw new DatosInvalidosException("El método de pago y la clave de idempotencia son obligatorios.");
         }
         if (monto == null || monto.signum() <= 0) {
-            throw new IllegalArgumentException("El monto del pago debe ser mayor que cero.");
+            throw new DatosInvalidosException("El monto del pago debe ser mayor que cero.");
         }
     }
 

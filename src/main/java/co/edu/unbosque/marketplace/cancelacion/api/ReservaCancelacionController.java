@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.cancelacion.api.request.CancelarReservaRequest;
 import co.edu.unbosque.marketplace.cancelacion.application.CancelacionReservaService;
 import co.edu.unbosque.marketplace.cancelacion.application.dto.CancelarReservaResponse;
@@ -45,7 +46,7 @@ public class ReservaCancelacionController {
                 && autenticacion.getAuthorities().stream()
                         .anyMatch(autoridad -> "ROLE_HUESPED".equals(autoridad.getAuthority()));
         if (!esHuesped) {
-            throw new AccessDeniedException("Solo un huésped puede cancelar su reserva.");
+            throw new AccesoNoPermitidoException("Solo un huésped puede cancelar su reserva.");
         }
     }
 }

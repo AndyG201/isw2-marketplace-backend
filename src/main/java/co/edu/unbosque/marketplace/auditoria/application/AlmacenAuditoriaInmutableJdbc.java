@@ -4,6 +4,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAuditoria;
@@ -42,7 +43,7 @@ public class AlmacenAuditoriaInmutableJdbc {
     public void anexar(BandejaSalidaAuditoria evento) {
 
         if (evento == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El evento de auditoría no puede ser nulo.");
         }
 

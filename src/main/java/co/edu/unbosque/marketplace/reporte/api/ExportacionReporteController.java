@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.reporte.api.request.SolicitarExportacionRequest;
 import co.edu.unbosque.marketplace.reporte.application.ArchivoExportado;
 import co.edu.unbosque.marketplace.reporte.application.ExportacionReporteService;
@@ -75,14 +76,14 @@ public class ExportacionReporteController {
 
     private UUID obtenerIdAdministrador(Authentication autenticacion) {
         if (autenticacion == null || !autenticacion.isAuthenticated()) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Se requiere una sesión de administrador.");
         }
 
         UsuarioSesionInfo usuario = usuarios
                 .consultarPorCorreo(autenticacion.getName())
                 .filter(UsuarioSesionInfo::administrador)
-                .orElseThrow(() -> new AccessDeniedException(
+                .orElseThrow(() -> new AccesoNoPermitidoException(
                         "Solo un administrador puede exportar reportes."));
 
         return usuario.idUsuario();

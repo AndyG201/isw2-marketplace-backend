@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import co.edu.unbosque.marketplace.compartido.domain.ServicioNoDisponibleException;
 import co.edu.unbosque.marketplace.ubicacion.application.port.CatalogoUbicacionesExterno.PaisExterno;
 
 class CountriesNowClientTest {
@@ -63,7 +64,7 @@ class CountriesNowClientTest {
         responder("/countries/iso", """
                 {"error":true,"msg":"falló"}""");
 
-        assertThrows(IllegalStateException.class, () -> cliente.paises());
+        assertThrows(ServicioNoDisponibleException.class, () -> cliente.paises());
     }
 
     private void responder(String ruta, String json) {
