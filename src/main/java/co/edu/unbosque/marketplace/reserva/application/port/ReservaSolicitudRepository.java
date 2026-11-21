@@ -1,6 +1,5 @@
 package co.edu.unbosque.marketplace.reserva.application.port;
 
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,48 +40,4 @@ public interface ReservaSolicitudRepository
             """, nativeQuery = true)
     Optional<ReservaSolicitudDatos> consultarDatosCotizacion(
             @Param("idCotizacion") UUID idCotizacion);
-
-    @Query(value = """
-            SELECT NOT EXISTS (
-                SELECT 1
-                FROM generate_series(
-                    CAST(:fechaEntrada AS timestamp),
-                    CAST(:fechaSalida AS timestamp) - INTERVAL '1 day',
-                    INTERVAL '1 day'
-                ) AS fechas(noche)
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM public.periodo_disponibilidad pd
-                    WHERE pd.id_alojamiento = :idAlojamiento
-                      AND pd.habilitado = true
-                      AND pd.fecha_inicio <= CAST(fechas.noche AS date)
-                      AND pd.fecha_fin > CAST(fechas.noche AS date)
-                )
-                OR EXISTS (
-                    SELECT 1
-                    FROM public.noche_reservada nr
-                    INNER JOIN public.reserva_noche rn
-                        ON rn.id_noche = nr.id_noche
-                    INNER JOIN public.reserva r
-                        ON r.id_reserva = rn.id_reserva
-                    WHERE nr.id_alojamiento = :idAlojamiento
-                      AND nr.fecha = CAST(fechas.noche AS date)
-                      AND (
-                          r.estado IN (
-                              'PENDIENTE_APROBACION',
-                              'CONFIRMADA',
-                              'COMPLETADA'
-                          )
-                          OR (
-                              r.estado = 'PENDIENTE_PAGO'
-                              AND r.retencion_hasta > CURRENT_TIMESTAMP
-                          )
-                      )
-                )
-            )
-            """, nativeQuery = true)
-    boolean rangoDisponible(
-            @Param("idAlojamiento") UUID idAlojamiento,
-            @Param("fechaEntrada") LocalDate fechaEntrada,
-            @Param("fechaSalida") LocalDate fechaSalida);
 }

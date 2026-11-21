@@ -21,11 +21,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.ConsultaDisponibilidadResponse;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.RangoDisponibleResponse;
-import co.edu.unbosque.marketplace.disponibilidad.application.port.NocheReservadaRepository;
 import co.edu.unbosque.marketplace.disponibilidad.application.port.PeriodoDisponibilidadRepository;
-import co.edu.unbosque.marketplace.disponibilidad.domain.NocheReservada;
 import co.edu.unbosque.marketplace.disponibilidad.domain.PeriodoDisponibilidad;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionDisponibilidadQuery;
+import co.edu.unbosque.marketplace.reserva.contracts.NochesOcupadasQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,7 +38,7 @@ class CalendarioDisponibilidadServiceTest {
     private PeriodoDisponibilidadRepository periodoRepository;
 
     @Mock
-    private NocheReservadaRepository nocheReservadaRepository;
+    private NochesOcupadasQuery nochesOcupadas;
 
     @Mock
     private AlojamientoPublicacionQuery alojamientoQuery;
@@ -55,7 +54,7 @@ class CalendarioDisponibilidadServiceTest {
     @BeforeEach
     void preparar() {
         servicio = new CalendarioDisponibilidadService(
-                periodoRepository, nocheReservadaRepository, alojamientoQuery, usuarioQuery, publicacionQuery);
+                periodoRepository, nochesOcupadas, alojamientoQuery, usuarioQuery, publicacionQuery);
     }
 
     private PeriodoDisponibilidad periodo(LocalDate inicio, LocalDate fin, boolean habilitado) {
@@ -72,10 +71,8 @@ class CalendarioDisponibilidadServiceTest {
                 periodo(LocalDate.of(2026, 12, 10), LocalDate.of(2026, 12, 20), false),
                 periodo(LocalDate.of(2026, 12, 20), LocalDate.of(2027, 2, 1), true)));
         LocalDate ocupada = LocalDate.of(2026, 12, 5);
-        when(nocheReservadaRepository.consultarNochesOcupadasEnRango(ALOJAMIENTO, INICIO, FIN))
-                .thenReturn(List.of(
-                        new NocheReservada(UUID.randomUUID(), ALOJAMIENTO, ocupada),
-                        new NocheReservada(UUID.randomUUID(), ALOJAMIENTO, ocupada)));
+        when(nochesOcupadas.nochesOcupadas(ALOJAMIENTO, INICIO, FIN))
+                .thenReturn(List.of(ocupada, ocupada));
 
         ConsultaDisponibilidadResponse respuesta = servicio.consultarPorFechas(ALOJAMIENTO, INICIO, FIN);
 
@@ -93,7 +90,7 @@ class CalendarioDisponibilidadServiceTest {
         when(publicacionQuery.existePublicacionActivaPorAlojamiento(ALOJAMIENTO)).thenReturn(true);
         when(periodoRepository.findByIdAlojamientoOrderByFechaInicioAsc(ALOJAMIENTO))
                 .thenReturn(List.of(periodo(LocalDate.of(2026, 11, 1), LocalDate.of(2027, 3, 1), true)));
-        when(nocheReservadaRepository.consultarNochesOcupadasEnRango(ALOJAMIENTO, INICIO, FIN))
+        when(nochesOcupadas.nochesOcupadas(ALOJAMIENTO, INICIO, FIN))
                 .thenReturn(List.of());
 
         ConsultaDisponibilidadResponse respuesta = servicio.consultarPorFechas(ALOJAMIENTO, INICIO, FIN);
