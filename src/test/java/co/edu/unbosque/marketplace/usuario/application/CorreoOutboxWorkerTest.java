@@ -30,6 +30,18 @@ class CorreoOutboxWorkerTest {
     }
 
     @Test
+    void unTipoDeCorreoNoSoportadoSeRegistraComoErrorSinEnviar() {
+        UUID id = UUID.randomUUID();
+        when(outbox.reclamarPendientes(25)).thenReturn(List.of(
+                new CorreoOutboxService.CorreoParaEnviar(id, "ana@example.com", "OTRO_TIPO", "123456", "key")
+        ));
+        new CorreoOutboxWorker(outbox, servicioCorreo).procesarPendientes();
+        verify(outbox).marcarError(eq(id), any(co.edu.unbosque.marketplace.compartido.domain.FallaInternaException.class));
+        verifyNoInteractions(servicioCorreo);
+        verify(outbox, never()).marcarEnviado(id);
+    }
+
+    @Test
     void fallaEnvioYRegistraErrorParaReintento() {
         UUID id = UUID.randomUUID();
         RuntimeException error = new RuntimeException("SMTP down");

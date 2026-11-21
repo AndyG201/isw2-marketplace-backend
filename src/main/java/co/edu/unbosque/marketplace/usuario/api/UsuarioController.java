@@ -164,19 +164,9 @@ public class UsuarioController {
             )
             @Valid @RequestBody AutenticacionRequest solicitud) {
 
-        try {
-            String token = autenticacionService.iniciarSesion(solicitud);
+        String token = autenticacionService.iniciarSesion(solicitud);
 
-            return ResponseEntity.ok(new AutenticacionResponse(token));
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(e.getMessage());
-
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok(new AutenticacionResponse(token));
     }
 
     /**
@@ -234,21 +224,11 @@ public class UsuarioController {
             )
             @Valid @RequestBody ReactivarCuentaRequest solicitud) {
 
-        try {
-            usuarioService.reactivarCuenta(solicitud);
+        usuarioService.reactivarCuenta(solicitud);
 
-            return ResponseEntity.ok(
-                    "Tu cuenta ha sido reactivada correctamente. "
-                    + "Inicia sesión nuevamente."
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(e.getMessage());
-
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok(
+                "Tu cuenta ha sido reactivada correctamente. "
+                + "Inicia sesión nuevamente."
+        );
     }
 }

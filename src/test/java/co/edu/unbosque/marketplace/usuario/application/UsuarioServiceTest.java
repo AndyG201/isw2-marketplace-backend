@@ -4,6 +4,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.ubicacion.contracts.CiudadUbicacionInfo;
 import co.edu.unbosque.marketplace.ubicacion.contracts.UbicacionRegistroQuery;
 import co.edu.unbosque.marketplace.usuario.application.dto.ActualizarContrasenaRequest;
@@ -283,7 +287,7 @@ class UsuarioServiceTest {
     void actualizarContrasenaRechazaClaveIncorrecta() {
         Usuario u = usuario();
         encontrar(u);
-        var error = assertThrows(IllegalArgumentException.class,
+        var error = assertThrows(DatosInvalidosException.class,
                 () -> service.actualizarContrasena(ID, contrasena()));
 
         assertEquals("La contraseña actual es incorrecta.", error.getMessage());
@@ -315,7 +319,7 @@ class UsuarioServiceTest {
         u.setRestringido(true);
         encontrar(u);
 
-        var error = assertThrows(IllegalStateException.class, () -> service.desactivarCuenta(ID));
+        var error = assertThrows(ConflictoNegocioException.class, () -> service.desactivarCuenta(ID));
 
         assertEquals("No puedes desactivar una cuenta con restricción administrativa.",
                 error.getMessage());
@@ -410,7 +414,7 @@ class UsuarioServiceTest {
     @Test
     void consultarCuentaRechazaUsuarioInexistente() {
         when(usuarioRepository.findById(ID)).thenReturn(Optional.empty());
-        var error = assertThrows(IllegalArgumentException.class,
+        var error = assertThrows(RecursoNoEncontradoException.class,
                 () -> service.consultarMiCuenta(ID));
         assertEquals("Usuario no encontrado.", error.getMessage());
         verifyNoInteractions(proteccionDocumento);
@@ -421,7 +425,7 @@ class UsuarioServiceTest {
         Usuario u = usuario();
         u.setRol(null);
         encontrar(u);
-        var error = assertThrows(IllegalStateException.class,
+        var error = assertThrows(ConflictoNegocioException.class,
                 () -> service.consultarMiCuenta(ID));
         assertEquals("El usuario no tiene un rol asignado.", error.getMessage());
         verifyNoInteractions(proteccionDocumento);
@@ -460,7 +464,7 @@ class UsuarioServiceTest {
         encontrar(usuario());
         when(usuarioRepository.existsByCorreoIgnoreCaseAndIdUsuarioNot("nuevo@ejemplo.com", ID))
                 .thenReturn(true);
-        var error = assertThrows(IllegalStateException.class,
+        var error = assertThrows(ConflictoNegocioException.class,
                 () -> service.actualizarPerfil(ID, perfilConNuevoCorreo()));
         assertEquals("El correo electrónico ya está asociado a otra cuenta.", error.getMessage());
         verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -479,7 +483,7 @@ class UsuarioServiceTest {
         RuntimeException fallo = new RuntimeException("Error de correo");
         doThrow(fallo).when(servicioCorreo).enviarCodigoVerificacion(eq("nuevo@ejemplo.com"), anyString());
 
-        var error = assertThrows(IllegalStateException.class,
+        var error = assertThrows(ConflictoNegocioException.class,
                 () -> service.actualizarPerfil(ID, perfilConNuevoCorreo()));
 
         assertEquals("No se pudo enviar el código al nuevo correo.", error.getMessage());
@@ -491,7 +495,7 @@ class UsuarioServiceTest {
     @Test
     void confirmarCambioRechazaSolicitudExpirada() {
         encontrar(usuario());
-        var error = assertThrows(IllegalStateException.class,
+        var error = assertThrows(ConflictoNegocioException.class,
                 () -> service.confirmarCambioCorreo(ID, "123456"));
         assertEquals("El código ha expirado o no existe una solicitud pendiente.", error.getMessage());
         verificarLimpiezaCambioCorreo();
@@ -507,13 +511,13 @@ class UsuarioServiceTest {
         when(redisTemplate.opsForValue().increment(PREFIJO + ":intentos")).thenReturn(intentos);
 
         if (intentos == 5) {
-            var error = assertThrows(IllegalStateException.class,
+            var error = assertThrows(ConflictoNegocioException.class,
                     () -> service.confirmarCambioCorreo(ID, "000000"));
             assertEquals("Superaste los cinco intentos. Solicita nuevamente el cambio de correo.",
                     error.getMessage());
             verificarLimpiezaCambioCorreo();
         } else {
-            var error = assertThrows(IllegalArgumentException.class,
+            var error = assertThrows(DatosInvalidosException.class,
                     () -> service.confirmarCambioCorreo(ID, "000000"));
             assertEquals("El código de verificación es incorrecto.", error.getMessage());
             verify(redisTemplate, never()).delete(anyString());
@@ -526,7 +530,7 @@ class UsuarioServiceTest {
         Usuario u = usuario();
         u.setIntentosFallidos(5);
         encontrar(u);
-        var error = assertThrows(IllegalStateException.class, () -> service.desactivarCuenta(ID));
+        var error = assertThrows(ConflictoNegocioException.class, () -> service.desactivarCuenta(ID));
         assertEquals("No puedes desactivar una cuenta bloqueada por intentos fallidos.", error.getMessage());
         assertEquals(EstadoUsuario.ACTIVA, u.getEstado());
         verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -542,7 +546,7 @@ class UsuarioServiceTest {
         r.setCorreo(CORREO);
         r.setContrasena("incorrecta");
 
-        var error = assertThrows(IllegalArgumentException.class, () -> service.reactivarCuenta(r));
+        var error = assertThrows(SesionRequeridaException.class, () -> service.reactivarCuenta(r));
 
         assertEquals("Correo o contraseña incorrectos.", error.getMessage());
         assertEquals(EstadoUsuario.INACTIVA, u.getEstado());

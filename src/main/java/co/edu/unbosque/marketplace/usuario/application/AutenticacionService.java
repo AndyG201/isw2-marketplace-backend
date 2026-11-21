@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.usuario.application.dto.AutenticacionRequest;
@@ -54,7 +56,7 @@ public class AutenticacionService {
                 || solicitud.getContrasena().isBlank()) {
 
             registrarResultado(null, "FALLIDO", "CREDENCIALES_INCOMPLETAS");
-            throw new IllegalArgumentException(
+            throw new SesionRequeridaException(
                     "Debes proporcionar el correo y la contraseña."
             );
         }
@@ -64,13 +66,13 @@ public class AutenticacionService {
                 .orElse(null);
         if (usuario == null) {
             registrarResultado(null, "FALLIDO", "CUENTA_NO_ENCONTRADA");
-            throw new IllegalArgumentException("Correo o contraseña incorrectos.");
+            throw new SesionRequeridaException("Correo o contraseña incorrectos.");
         }
 
         if (usuario.isRestringido()) {
 
             registrarResultado(usuario.getIdUsuario(), "FALLIDO", "CUENTA_RESTRINGIDA");
-            throw new IllegalStateException(
+            throw new AccesoNoPermitidoException(
                     "Tu cuenta tiene una restricción administrativa. "
                     + "No puedes iniciar sesión."
             );
@@ -79,7 +81,7 @@ public class AutenticacionService {
         if (usuario.getIntentosFallidos() >= MAX_INTENTOS) {
 
             registrarResultado(usuario.getIdUsuario(), "FALLIDO", "CUENTA_BLOQUEADA");
-            throw new IllegalStateException(
+            throw new AccesoNoPermitidoException(
                     "Tu cuenta está bloqueada por intentos fallidos. "
                     + "Debes solicitar su reactivación a un Administrador."
             );
@@ -89,7 +91,7 @@ public class AutenticacionService {
                 || usuario.getEstado() == EstadoUsuario.PENDIENTE_VERIFICACION) {
 
             registrarResultado(usuario.getIdUsuario(), "FALLIDO", "CORREO_NO_VERIFICADO");
-            throw new IllegalStateException(
+            throw new AccesoNoPermitidoException(
                     "Debes verificar tu correo antes de iniciar sesión."
             );
         }
@@ -97,7 +99,7 @@ public class AutenticacionService {
         if (usuario.getEstado() == EstadoUsuario.INACTIVA) {
 
             registrarResultado(usuario.getIdUsuario(), "FALLIDO", "CUENTA_INACTIVA");
-            throw new IllegalStateException(
+            throw new AccesoNoPermitidoException(
                     "Tu cuenta está desactivada."
             );
         }
@@ -105,7 +107,7 @@ public class AutenticacionService {
         if (usuario.getEstado() != EstadoUsuario.ACTIVA) {
 
             registrarResultado(usuario.getIdUsuario(), "FALLIDO", "CUENTA_NO_HABILITADA");
-            throw new IllegalStateException(
+            throw new AccesoNoPermitidoException(
                     "La cuenta no se encuentra habilitada para iniciar sesión."
             );
         }
@@ -119,14 +121,14 @@ public class AutenticacionService {
 
             if (usuario.getIntentosFallidos() >= MAX_INTENTOS) {
 
-                throw new IllegalStateException(
+                throw new AccesoNoPermitidoException(
                         "Tu cuenta ha sido bloqueada por alcanzar "
                         + "cinco intentos fallidos. "
                         + "Debes solicitar su reactivación a un Administrador."
                 );
             }
 
-            throw new IllegalArgumentException(
+            throw new SesionRequeridaException(
                     "Correo o contraseña incorrectos."
             );
         }
@@ -136,7 +138,7 @@ public class AutenticacionService {
                 || usuario.getRol().getNombre().isBlank()) {
 
             registrarResultado(usuario.getIdUsuario(), "FALLIDO", "ROL_NO_ASIGNADO");
-            throw new IllegalStateException(
+            throw new AccesoNoPermitidoException(
                     "La cuenta no tiene un rol asignado."
             );
         }

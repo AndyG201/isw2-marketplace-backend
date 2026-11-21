@@ -13,6 +13,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
@@ -114,7 +116,7 @@ public class VerificacionCorreoService {
                     TimeUnit.SECONDS
             );
 
-            throw new IllegalStateException(
+            throw new DatosInvalidosException(
                     "Debes esperar "
                     + (segundosRestantes != null
                             && segundosRestantes > 0
@@ -132,7 +134,7 @@ public class VerificacionCorreoService {
 
             redisTemplate.delete(claveUltimoEnvio);
 
-            throw new IllegalStateException(
+            throw new DatosInvalidosException(
                     "No se pudo verificar el límite de reenvíos."
             );
         }
@@ -152,7 +154,7 @@ public class VerificacionCorreoService {
 
             redisTemplate.opsForValue().decrement(claveContador);
 
-            throw new IllegalStateException(
+            throw new DatosInvalidosException(
                     "Has alcanzado el máximo de 3 reenvíos por hora."
             );
         }
@@ -231,7 +233,7 @@ public class VerificacionCorreoService {
 
         if (correo == null || correo.isBlank()) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes proporcionar un correo electrónico."
             );
         }
@@ -239,7 +241,7 @@ public class VerificacionCorreoService {
         return usuarioRepository.findByCorreoIgnoreCase(
                 correo.trim()
         ).orElseThrow(() ->
-                new IllegalArgumentException(
+                new DatosInvalidosException(
                         "Usuario no encontrado."
                 )
         );
@@ -253,7 +255,7 @@ public class VerificacionCorreoService {
 
         if (usuario.isCorreoVerificado()) {
 
-            throw new IllegalStateException(
+            throw new DatosInvalidosException(
                     "El correo ya está verificado."
             );
         }
@@ -299,7 +301,7 @@ public class VerificacionCorreoService {
 
         } catch (Exception e) {
 
-            throw new IllegalStateException(
+            throw new FallaInternaException(
                     "No se pudo generar el hash.",
                     e
             );
@@ -311,7 +313,7 @@ public class VerificacionCorreoService {
     // =====================================================
 
     @Transactional(
-            noRollbackFor = CodigoVerificacionIncorrectoException.class
+            noRollbackFor = DatosInvalidosException.class
     )
     public void confirmarCodigo(String correo, String codigo) {
 
@@ -319,14 +321,14 @@ public class VerificacionCorreoService {
 
         if (usuario.isCorreoVerificado()) {
 
-            throw new IllegalStateException(
+            throw new DatosInvalidosException(
                     "El correo ya está verificado."
             );
         }
 
         if (codigo == null || !codigo.matches("\\d{6}")) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El código debe contener exactamente 6 dígitos."
             );
         }
@@ -337,7 +339,7 @@ public class VerificacionCorreoService {
                                 usuario
                         )
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new DatosInvalidosException(
                                         "No hay un código pendiente de verificación."
                                 )
                         );
@@ -347,7 +349,7 @@ public class VerificacionCorreoService {
         // Comprobar vencimiento.
         if (!ahora.isBefore(verificacion.getFechaExpiracion())) {
 
-            throw new IllegalStateException(
+            throw new DatosInvalidosException(
                     "El código ha expirado."
             );
         }
@@ -355,7 +357,7 @@ public class VerificacionCorreoService {
         // Comprobar límite de intentos.
         if (verificacion.getIntentos() >= 5) {
 
-            throw new IllegalStateException(
+            throw new DatosInvalidosException(
                     "Superaste el límite de intentos. Solicita otro código."
             );
         }
@@ -372,7 +374,7 @@ public class VerificacionCorreoService {
 
             verificacionRepository.save(verificacion);
 
-            throw new CodigoVerificacionIncorrectoException(
+            throw new DatosInvalidosException(
                     "El código es incorrecto."
             );
         }
@@ -403,17 +405,4 @@ public class VerificacionCorreoService {
         );
     }
 
-    // =====================================================
-    // EXCEPCIÓN PARA CONSERVAR INTENTOS FALLIDOS
-    // =====================================================
-
-    private static class CodigoVerificacionIncorrectoException
-            extends IllegalArgumentException {
-
-        private static final long serialVersionUID = 1L;
-
-        public CodigoVerificacionIncorrectoException(String mensaje) {
-            super(mensaje);
-        }
-    }
 }

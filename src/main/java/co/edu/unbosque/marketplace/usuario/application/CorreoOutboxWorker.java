@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
 import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
 
 @Component
@@ -26,7 +27,7 @@ public class CorreoOutboxWorker {
         for (CorreoOutboxService.CorreoParaEnviar item : outbox.reclamarPendientes(25)) {
             try {
                 if (!"VERIFICACION".equals(item.tipo())) {
-                    throw new IllegalStateException("Tipo de correo no soportado: " + item.tipo());
+                    throw new FallaInternaException("Tipo de correo no soportado: " + item.tipo());
                 }
                 correo.enviarCodigoVerificacion(item.destinatario(), item.codigo());
                 outbox.marcarEnviado(item.id());

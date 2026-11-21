@@ -98,18 +98,10 @@ public class AdministradorUsuarioController {
             @Size(max = 254, message = "El correo supera la longitud permitida.")
             String correo) {
 
-        try {
-            administradorService.reactivarBloqueo(correo.trim());
+        administradorService.reactivarBloqueo(correo.trim());
 
-            return ResponseEntity.ok(
-                    "La cuenta ha sido reactivada correctamente.");
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(404).body(e.getMessage());
-
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(409).body(e.getMessage());
-        }
+        return ResponseEntity.ok(
+                "La cuenta ha sido reactivada correctamente.");
     }
 
     @Operation(
@@ -149,21 +141,13 @@ public class AdministradorUsuarioController {
             )
             @Valid @RequestBody RestringirUsuarioRequest solicitud) {
 
-        try {
-            administradorService.restringirUsuario(
-                    idUsuario,
-                    solicitud
-            );
+        administradorService.restringirUsuario(
+                idUsuario,
+                solicitud
+        );
 
-            return ResponseEntity.ok(
-                    "La cuenta ha sido restringida correctamente.");
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(409).body(e.getMessage());
-        }
+        return ResponseEntity.ok(
+                "La cuenta ha sido restringida correctamente.");
     }
 
     @Operation(
@@ -197,18 +181,10 @@ public class AdministradorUsuarioController {
             )
             @PathVariable UUID idUsuario) {
 
-        try {
-            administradorService.levantarRestriccion(idUsuario);
+        administradorService.levantarRestriccion(idUsuario);
 
-            return ResponseEntity.ok(
-                    "La restricción administrativa ha sido levantada correctamente.");
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(409).body(e.getMessage());
-        }
+        return ResponseEntity.ok(
+                "La restricción administrativa ha sido levantada correctamente.");
     }
 
 
@@ -249,18 +225,10 @@ public class AdministradorUsuarioController {
             )
             @Valid @RequestBody ModificarDocumentoRequest solicitud) {
 
-        try {
-            administradorService.modificarDocumento(idUsuario, solicitud);
+        administradorService.modificarDocumento(idUsuario, solicitud);
 
-            return ResponseEntity.ok(
-                    "El documento de la cuenta se actualizó correctamente.");
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(409).body(e.getMessage());
-        }
+        return ResponseEntity.ok(
+                "El documento de la cuenta se actualizó correctamente.");
     }
 
     @Operation(

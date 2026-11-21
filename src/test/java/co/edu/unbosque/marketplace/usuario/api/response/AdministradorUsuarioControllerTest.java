@@ -1,8 +1,12 @@
 package co.edu.unbosque.marketplace.usuario.api.response;
 
+import java.util.Map;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 
 import co.edu.unbosque.marketplace.usuario.api.AdministradorUsuarioController;
 import co.edu.unbosque.marketplace.usuario.application.AdministradorService;
@@ -16,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -38,9 +43,9 @@ class AdministradorUsuarioControllerTest {
 
     @Test
     void reactivarBloqueoRetornaOkYEliminaEspaciosDelCorreo() {
-        var response = controller.reactivarBloqueo(
+        var response = traducir(() -> controller.reactivarBloqueo(
             "  usuario@ejemplo.com  "
-        );
+        ));
 
         assertAll(
             () -> assertEquals(HttpStatus.OK, response.getStatusCode()),
@@ -56,40 +61,40 @@ class AdministradorUsuarioControllerTest {
     }
 
     @Test
-    void reactivarBloqueoRetorna404AnteIllegalArgumentException() {
+    void reactivarBloqueoRetorna404AnteRecursoNoEncontradoException() {
         String correo = "usuario@ejemplo.com";
         String mensaje = "Usuario no encontrado.";
 
-        doThrow(new IllegalArgumentException(mensaje))
+        doThrow(new RecursoNoEncontradoException(mensaje))
             .when(administradorService).reactivarBloqueo(correo);
 
-        var response = controller.reactivarBloqueo(correo);
+        var response = traducir(() -> controller.reactivarBloqueo(correo));
 
         assertAll(
             () -> assertEquals(
                 HttpStatus.NOT_FOUND, response.getStatusCode()
             ),
-            () -> assertEquals(mensaje, response.getBody())
+            () -> assertEquals(Map.of("mensaje", mensaje), response.getBody())
         );
 
         verify(administradorService).reactivarBloqueo(correo);
     }
 
     @Test
-    void reactivarBloqueoRetorna409AnteIllegalStateException() {
+    void reactivarBloqueoRetorna409AnteConflictoNegocioException() {
         String correo = "usuario@ejemplo.com";
         String mensaje = "La cuenta no está bloqueada.";
 
-        doThrow(new IllegalStateException(mensaje))
+        doThrow(new ConflictoNegocioException(mensaje))
             .when(administradorService).reactivarBloqueo(correo);
 
-        var response = controller.reactivarBloqueo(correo);
+        var response = traducir(() -> controller.reactivarBloqueo(correo));
 
         assertAll(
             () -> assertEquals(
                 HttpStatus.CONFLICT, response.getStatusCode()
             ),
-            () -> assertEquals(mensaje, response.getBody())
+            () -> assertEquals(Map.of("mensaje", mensaje), response.getBody())
         );
 
         verify(administradorService).reactivarBloqueo(correo);
@@ -99,7 +104,7 @@ class AdministradorUsuarioControllerTest {
     void restringirUsuarioRetornaOk() {
         RestringirUsuarioRequest solicitud = solicitudValida();
 
-        var response = controller.restringirUsuario(idUsuario, solicitud);
+        var response = traducir(() -> controller.restringirUsuario(idUsuario, solicitud));
 
         assertAll(
             () -> assertEquals(HttpStatus.OK, response.getStatusCode()),
@@ -115,21 +120,21 @@ class AdministradorUsuarioControllerTest {
     }
 
     @Test
-    void restringirUsuarioRetorna400AnteIllegalArgumentException() {
+    void restringirUsuarioRetorna400AnteDatosInvalidosException() {
         RestringirUsuarioRequest solicitud = solicitudValida();
         String mensaje = "Usuario no encontrado.";
 
-        doThrow(new IllegalArgumentException(mensaje))
+        doThrow(new DatosInvalidosException(mensaje))
             .when(administradorService)
             .restringirUsuario(idUsuario, solicitud);
 
-        var response = controller.restringirUsuario(idUsuario, solicitud);
+        var response = traducir(() -> controller.restringirUsuario(idUsuario, solicitud));
 
         assertAll(
             () -> assertEquals(
                 HttpStatus.BAD_REQUEST, response.getStatusCode()
             ),
-            () -> assertEquals(mensaje, response.getBody())
+            () -> assertEquals(Map.of("mensaje", mensaje), response.getBody())
         );
 
         verify(administradorService).restringirUsuario(
@@ -138,21 +143,21 @@ class AdministradorUsuarioControllerTest {
     }
 
     @Test
-    void restringirUsuarioRetorna409AnteIllegalStateException() {
+    void restringirUsuarioRetorna409AnteConflictoNegocioException() {
         RestringirUsuarioRequest solicitud = solicitudValida();
         String mensaje = "La cuenta ya está restringida.";
 
-        doThrow(new IllegalStateException(mensaje))
+        doThrow(new ConflictoNegocioException(mensaje))
             .when(administradorService)
             .restringirUsuario(idUsuario, solicitud);
 
-        var response = controller.restringirUsuario(idUsuario, solicitud);
+        var response = traducir(() -> controller.restringirUsuario(idUsuario, solicitud));
 
         assertAll(
             () -> assertEquals(
                 HttpStatus.CONFLICT, response.getStatusCode()
             ),
-            () -> assertEquals(mensaje, response.getBody())
+            () -> assertEquals(Map.of("mensaje", mensaje), response.getBody())
         );
 
         verify(administradorService).restringirUsuario(
@@ -162,7 +167,7 @@ class AdministradorUsuarioControllerTest {
 
     @Test
     void levantarRestriccionRetornaOk() {
-        var response = controller.levantarRestriccion(idUsuario);
+        var response = traducir(() -> controller.levantarRestriccion(idUsuario));
 
         assertAll(
             () -> assertEquals(HttpStatus.OK, response.getStatusCode()),
@@ -176,38 +181,38 @@ class AdministradorUsuarioControllerTest {
     }
 
     @Test
-    void levantarRestriccionRetorna400AnteIllegalArgumentException() {
+    void levantarRestriccionRetorna400AnteDatosInvalidosException() {
         String mensaje = "Usuario no encontrado.";
 
-        doThrow(new IllegalArgumentException(mensaje))
+        doThrow(new DatosInvalidosException(mensaje))
             .when(administradorService).levantarRestriccion(idUsuario);
 
-        var response = controller.levantarRestriccion(idUsuario);
+        var response = traducir(() -> controller.levantarRestriccion(idUsuario));
 
         assertAll(
             () -> assertEquals(
                 HttpStatus.BAD_REQUEST, response.getStatusCode()
             ),
-            () -> assertEquals(mensaje, response.getBody())
+            () -> assertEquals(Map.of("mensaje", mensaje), response.getBody())
         );
 
         verify(administradorService).levantarRestriccion(idUsuario);
     }
 
     @Test
-    void levantarRestriccionRetorna409AnteIllegalStateException() {
+    void levantarRestriccionRetorna409AnteConflictoNegocioException() {
         String mensaje = "La cuenta no está restringida.";
 
-        doThrow(new IllegalStateException(mensaje))
+        doThrow(new ConflictoNegocioException(mensaje))
             .when(administradorService).levantarRestriccion(idUsuario);
 
-        var response = controller.levantarRestriccion(idUsuario);
+        var response = traducir(() -> controller.levantarRestriccion(idUsuario));
 
         assertAll(
             () -> assertEquals(
                 HttpStatus.CONFLICT, response.getStatusCode()
             ),
-            () -> assertEquals(mensaje, response.getBody())
+            () -> assertEquals(Map.of("mensaje", mensaje), response.getBody())
         );
 
         verify(administradorService).levantarRestriccion(idUsuario);
@@ -232,7 +237,7 @@ class AdministradorUsuarioControllerTest {
         when(administradorService.consultarUsuarios())
             .thenReturn(usuarios);
 
-        var response = controller.consultarUsuarios();
+        var response = traducir(() -> controller.consultarUsuarios());
 
         assertAll(
             () -> assertEquals(HttpStatus.OK, response.getStatusCode()),
@@ -247,11 +252,11 @@ class AdministradorUsuarioControllerTest {
         when(administradorService.consultarUsuarios())
             .thenReturn(Collections.emptyList());
 
-        var response = controller.consultarUsuarios();
+        var response = traducir(() -> controller.consultarUsuarios());
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().isEmpty());
+        assertTrue(((java.util.Collection<?>) response.getBody()).isEmpty());
 
         verify(administradorService).consultarUsuarios();
     }

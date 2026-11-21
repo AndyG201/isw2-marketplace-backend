@@ -126,18 +126,10 @@ public class CuentaController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        try {
-            String resultado = usuarioService.actualizarPerfil(
-                    usuario.getIdUsuario(), solicitud);
+        String resultado = usuarioService.actualizarPerfil(
+                usuario.getIdUsuario(), solicitud);
 
-            return ResponseEntity.ok(resultado);
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        }
+        return ResponseEntity.ok(resultado);
     }
 
     @Operation(
@@ -177,19 +169,11 @@ public class CuentaController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        try {
-            usuarioService.confirmarCambioCorreo(
-                    usuario.getIdUsuario(), solicitud.getCodigo());
+        usuarioService.confirmarCambioCorreo(
+                usuario.getIdUsuario(), solicitud.getCodigo());
 
-            return ResponseEntity.ok(
-                    "El correo electrónico se actualizó y verificó correctamente.");
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        }
+        return ResponseEntity.ok(
+                "El correo electrónico se actualizó y verificó correctamente.");
     }
 
     @Operation(
@@ -225,15 +209,10 @@ public class CuentaController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        try {
-            usuarioService.actualizarContrasena(
-                    usuario.getIdUsuario(), solicitud);
+        usuarioService.actualizarContrasena(
+                usuario.getIdUsuario(), solicitud);
 
-            return ResponseEntity.ok("La contraseña se actualizó correctamente.");
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ResponseEntity.ok("La contraseña se actualizó correctamente.");
     }
 
     @Operation(
@@ -268,17 +247,9 @@ public class CuentaController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        try {
-            usuarioService.desactivarCuenta(usuario.getIdUsuario());
+        usuarioService.desactivarCuenta(usuario.getIdUsuario());
 
-            return ResponseEntity.ok(
-                    "Tu cuenta ha sido desactivada correctamente.");
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        }
+        return ResponseEntity.ok(
+                "Tu cuenta ha sido desactivada correctamente.");
     }
 }

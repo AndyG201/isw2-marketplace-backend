@@ -6,6 +6,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.usuario.application.dto.RestringirUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
@@ -67,7 +70,7 @@ class AdministradorServiceTest {
     @ValueSource(strings = {"   ", "\t", "\n"})
     void reactivarBloqueoRechazaCorreoInvalido(String correo) {
         var error = assertThrows(
-            IllegalArgumentException.class,
+            RecursoNoEncontradoException.class,
             () -> service.reactivarBloqueo(correo)
         );
 
@@ -85,7 +88,7 @@ class AdministradorServiceTest {
             .thenReturn(Optional.empty());
 
         var error = assertThrows(
-            IllegalArgumentException.class,
+            RecursoNoEncontradoException.class,
             () -> service.reactivarBloqueo("ana@ejemplo.com")
         );
 
@@ -117,7 +120,7 @@ class AdministradorServiceTest {
             .thenReturn(Optional.of(usuario));
 
         var error = assertThrows(
-            IllegalStateException.class,
+            ConflictoNegocioException.class,
             () -> service.reactivarBloqueo("ana@ejemplo.com")
         );
 
@@ -186,7 +189,7 @@ class AdministradorServiceTest {
             RestringirUsuarioRequest request) {
 
         var error = assertThrows(
-            IllegalArgumentException.class,
+            DatosInvalidosException.class,
             () -> service.restringirUsuario(id, request)
         );
 
@@ -204,7 +207,7 @@ class AdministradorServiceTest {
             .thenReturn(Optional.empty());
 
         var error = assertThrows(
-            IllegalArgumentException.class,
+            DatosInvalidosException.class,
             () -> service.restringirUsuario(
                 idUsuario, solicitud("Incumplimiento")
             )
@@ -226,7 +229,7 @@ class AdministradorServiceTest {
             .thenReturn(Optional.of(usuario));
 
         var error = assertThrows(
-            IllegalStateException.class,
+            ConflictoNegocioException.class,
             () -> service.restringirUsuario(
                 idUsuario, solicitud("Motivo nuevo")
             )
@@ -284,7 +287,7 @@ class AdministradorServiceTest {
     @Test
     void levantarRestriccionRechazaIdNulo() {
         var error = assertThrows(
-            IllegalArgumentException.class,
+            DatosInvalidosException.class,
             () -> service.levantarRestriccion(null)
         );
 
@@ -302,7 +305,7 @@ class AdministradorServiceTest {
             .thenReturn(Optional.empty());
 
         var error = assertThrows(
-            IllegalArgumentException.class,
+            DatosInvalidosException.class,
             () -> service.levantarRestriccion(idUsuario)
         );
 
@@ -321,7 +324,7 @@ class AdministradorServiceTest {
             .thenReturn(Optional.of(usuario));
 
         var error = assertThrows(
-            IllegalStateException.class,
+            ConflictoNegocioException.class,
             () -> service.levantarRestriccion(idUsuario)
         );
 

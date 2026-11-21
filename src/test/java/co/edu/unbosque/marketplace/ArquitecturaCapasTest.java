@@ -76,7 +76,7 @@ class ArquitecturaCapasTest {
 
     /**
      * Módulos cuya capa de aplicación ya lanza excepciones de dominio (ErroresApiHandler las traduce a HTTP).
-     * Los demás (auditoria, notificacion, pago, reporte, resena, trabajo, ubicacion, usuario...) siguen
+     * Los demás (auditoria, notificacion, pago, reporte, resena, trabajo, ubicacion...) siguen
      * pendientes de migrar y se agregan aquí cuando se conviertan.
      */
     @Test
@@ -84,7 +84,7 @@ class ArquitecturaCapasTest {
         noClasses().that().resideInAnyPackage(
                         "..publicacion.application..", "..alojamiento.application..",
                         "..cotizacion.application..", "..disponibilidad.application..",
-                        "..tarifa.application..", "..servicio.application..")
+                        "..tarifa.application..", "..servicio.application..", "..usuario.application..")
                 .should().callConstructorWhere(JavaCall.Predicates.target(
                         HasOwner.Predicates.With.owner(assignableTo(IllegalArgumentException.class)
                                 .or(assignableTo(IllegalStateException.class)))))

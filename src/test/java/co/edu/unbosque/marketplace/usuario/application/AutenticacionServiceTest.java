@@ -4,6 +4,8 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.usuario.application.dto.AutenticacionRequest;
 import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
@@ -122,7 +124,7 @@ class AutenticacionServiceTest {
     @MethodSource("solicitudesInvalidas")
     void rechazaSolicitudInvalida(AutenticacionRequest request) {
         var error = assertThrows(
-            IllegalArgumentException.class,
+            SesionRequeridaException.class,
             () -> service.iniciarSesion(request)
         );
 
@@ -142,7 +144,7 @@ class AutenticacionServiceTest {
             .thenReturn(Optional.empty());
 
         var error = assertThrows(
-            IllegalArgumentException.class,
+            SesionRequeridaException.class,
             () -> service.iniciarSesion(solicitud(CORREO, CLAVE))
         );
 
@@ -220,7 +222,7 @@ class AutenticacionServiceTest {
         configurarUsuarioEncontrado(usuario);
 
         var error = assertThrows(
-            IllegalStateException.class,
+            AccesoNoPermitidoException.class,
             () -> service.iniciarSesion(solicitud(CORREO, CLAVE))
         );
 
@@ -248,7 +250,7 @@ class AutenticacionServiceTest {
         OffsetDateTime antes = OffsetDateTime.now();
 
         var error = assertThrows(
-            IllegalArgumentException.class,
+            SesionRequeridaException.class,
             () -> service.iniciarSesion(solicitud(CORREO, CLAVE))
         );
 
@@ -283,7 +285,7 @@ class AutenticacionServiceTest {
         OffsetDateTime antes = OffsetDateTime.now();
 
         var error = assertThrows(
-            IllegalStateException.class,
+            AccesoNoPermitidoException.class,
             () -> service.iniciarSesion(solicitud(CORREO, CLAVE))
         );
 
@@ -316,7 +318,7 @@ class AutenticacionServiceTest {
         configurarClaveCorrecta();
 
         var error = assertThrows(
-            IllegalStateException.class,
+            AccesoNoPermitidoException.class,
             () -> service.iniciarSesion(solicitud(CORREO, CLAVE))
         );
 
@@ -339,7 +341,7 @@ class AutenticacionServiceTest {
         configurarClaveCorrecta();
 
         var error = assertThrows(
-            IllegalStateException.class,
+            AccesoNoPermitidoException.class,
             () -> service.iniciarSesion(solicitud(CORREO, CLAVE))
         );
 

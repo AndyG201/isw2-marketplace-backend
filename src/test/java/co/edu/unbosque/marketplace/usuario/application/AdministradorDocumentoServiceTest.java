@@ -22,6 +22,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.usuario.application.dto.ModificarDocumentoRequest;
@@ -105,7 +107,7 @@ class AdministradorDocumentoServiceTest {
         when(proteccionDocumento.protegerDocumento("CC", "99999")).thenReturn(datos(HASH_NUEVO));
         when(usuarioRepository.existsByDocumentoHash(HASH_NUEVO)).thenReturn(true);
 
-        IllegalStateException error = assertThrows(IllegalStateException.class,
+        ConflictoNegocioException error = assertThrows(ConflictoNegocioException.class,
                 () -> service.modificarDocumento(idUsuario, new ModificarDocumentoRequest("CC", "99999")));
 
         assertEquals("Ya existe otra cuenta con ese documento.", error.getMessage());
@@ -118,7 +120,7 @@ class AdministradorDocumentoServiceTest {
         when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuario));
         when(proteccionDocumento.protegerDocumento("CC", "12345")).thenReturn(datos(HASH_ACTUAL));
 
-        IllegalStateException error = assertThrows(IllegalStateException.class,
+        ConflictoNegocioException error = assertThrows(ConflictoNegocioException.class,
                 () -> service.modificarDocumento(idUsuario, new ModificarDocumentoRequest("CC", "12345")));
 
         assertEquals("La cuenta ya tiene registrado ese documento.", error.getMessage());
@@ -127,16 +129,16 @@ class AdministradorDocumentoServiceTest {
 
     @Test
     void rechazaTiposDesconocidosYUsuariosQueNoExisten() {
-        IllegalArgumentException tipo = assertThrows(IllegalArgumentException.class,
+        DatosInvalidosException tipo = assertThrows(DatosInvalidosException.class,
                 () -> service.modificarDocumento(idUsuario, new ModificarDocumentoRequest("NIT", "12345")));
         assertEquals("El tipo de documento debe ser CC, CE, TI o PASAPORTE.", tipo.getMessage());
 
-        IllegalArgumentException vacio = assertThrows(IllegalArgumentException.class,
+        DatosInvalidosException vacio = assertThrows(DatosInvalidosException.class,
                 () -> service.modificarDocumento(idUsuario, new ModificarDocumentoRequest("CC", " ")));
         assertEquals("Debes proporcionar el tipo y el número de documento.", vacio.getMessage());
 
         when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.empty());
-        IllegalArgumentException inexistente = assertThrows(IllegalArgumentException.class,
+        DatosInvalidosException inexistente = assertThrows(DatosInvalidosException.class,
                 () -> service.modificarDocumento(idUsuario, new ModificarDocumentoRequest("CC", "12345")));
         assertEquals("Usuario no encontrado.", inexistente.getMessage());
         verifyNoInteractions(proteccionDocumento);

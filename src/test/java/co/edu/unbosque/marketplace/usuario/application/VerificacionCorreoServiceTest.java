@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.application.port.VerificacionCorreoRepository;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
@@ -92,13 +93,13 @@ class VerificacionCorreoServiceTest {
     void rechazaCorreoInvalido(String correo) {
         assertAll(
                 () -> assertEquals("Debes proporcionar un correo electrónico.",
-                        assertThrows(IllegalArgumentException.class,
+                        assertThrows(DatosInvalidosException.class,
                                 () -> service.enviarCodigo(correo)).getMessage()),
                 () -> assertEquals("Debes proporcionar un correo electrónico.",
-                        assertThrows(IllegalArgumentException.class,
+                        assertThrows(DatosInvalidosException.class,
                                 () -> service.reenviarCodigo(correo)).getMessage()),
                 () -> assertEquals("Debes proporcionar un correo electrónico.",
-                        assertThrows(IllegalArgumentException.class,
+                        assertThrows(DatosInvalidosException.class,
                                 () -> service.confirmarCodigo(correo, CODIGO)).getMessage()));
         verifyNoInteractions(usuarioRepository, redisTemplate, verificacionRepository, servicioCorreo);
     }
@@ -108,13 +109,13 @@ class VerificacionCorreoServiceTest {
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO)).thenReturn(Optional.empty());
         assertAll(
                 () -> assertEquals("Usuario no encontrado.",
-                        assertThrows(IllegalArgumentException.class,
+                        assertThrows(DatosInvalidosException.class,
                                 () -> service.enviarCodigo(CORREO)).getMessage()),
                 () -> assertEquals("Usuario no encontrado.",
-                        assertThrows(IllegalArgumentException.class,
+                        assertThrows(DatosInvalidosException.class,
                                 () -> service.reenviarCodigo(CORREO)).getMessage()),
                 () -> assertEquals("Usuario no encontrado.",
-                        assertThrows(IllegalArgumentException.class,
+                        assertThrows(DatosInvalidosException.class,
                                 () -> service.confirmarCodigo(CORREO, CODIGO)).getMessage()));
         verificarSinEnvio();
         verifyNoInteractions(redisTemplate);
@@ -126,13 +127,13 @@ class VerificacionCorreoServiceTest {
         u.setCorreoVerificado(true);
         assertAll(
                 () -> assertEquals("El correo ya está verificado.",
-                        assertThrows(IllegalStateException.class,
+                        assertThrows(DatosInvalidosException.class,
                                 () -> service.enviarCodigo(CORREO)).getMessage()),
                 () -> assertEquals("El correo ya está verificado.",
-                        assertThrows(IllegalStateException.class,
+                        assertThrows(DatosInvalidosException.class,
                                 () -> service.reenviarCodigo(CORREO)).getMessage()),
                 () -> assertEquals("El correo ya está verificado.",
-                        assertThrows(IllegalStateException.class,
+                        assertThrows(DatosInvalidosException.class,
                                 () -> service.confirmarCodigo(CORREO, CODIGO)).getMessage()));
         verificarSinEnvio();
         verifyNoInteractions(redisTemplate);
@@ -231,7 +232,7 @@ class VerificacionCorreoServiceTest {
         when(valores.setIfAbsent(ULTIMO, "1", 60L, TimeUnit.SECONDS)).thenReturn(permiso);
         when(redisTemplate.getExpire(ULTIMO, TimeUnit.SECONDS)).thenReturn(ttl);
 
-        var error = assertThrows(IllegalStateException.class, () -> service.reenviarCodigo(CORREO));
+        var error = assertThrows(DatosInvalidosException.class, () -> service.reenviarCodigo(CORREO));
 
         assertEquals("Debes esperar " + esperado + " segundos antes de solicitar otro código.",
                 error.getMessage());
@@ -246,7 +247,7 @@ class VerificacionCorreoServiceTest {
         when(valores.setIfAbsent(ULTIMO, "1", 60L, TimeUnit.SECONDS)).thenReturn(true);
         when(valores.increment(CONTADOR)).thenReturn(null);
 
-        var error = assertThrows(IllegalStateException.class, () -> service.reenviarCodigo(CORREO));
+        var error = assertThrows(DatosInvalidosException.class, () -> service.reenviarCodigo(CORREO));
 
         assertEquals("No se pudo verificar el límite de reenvíos.", error.getMessage());
         verify(redisTemplate).delete(ULTIMO);
@@ -258,7 +259,7 @@ class VerificacionCorreoServiceTest {
         encontrarUsuario();
         permitirReenvio(4);
 
-        var error = assertThrows(IllegalStateException.class, () -> service.reenviarCodigo(CORREO));
+        var error = assertThrows(DatosInvalidosException.class, () -> service.reenviarCodigo(CORREO));
 
         assertEquals("Has alcanzado el máximo de 3 reenvíos por hora.", error.getMessage());
         verify(valores).decrement(CONTADOR);
@@ -297,7 +298,7 @@ class VerificacionCorreoServiceTest {
     void confirmarCodigoRechazaFormatoInvalido(String codigo) {
         encontrarUsuario();
 
-        var error = assertThrows(IllegalArgumentException.class,
+        var error = assertThrows(DatosInvalidosException.class,
                 () -> service.confirmarCodigo(CORREO, codigo));
 
         assertEquals("El código debe contener exactamente 6 dígitos.", error.getMessage());
@@ -310,7 +311,7 @@ class VerificacionCorreoServiceTest {
         when(verificacionRepository.findTopByUsuarioAndVerificadoFalseOrderByFechaExpiracionDesc(u))
                 .thenReturn(Optional.empty());
 
-        var error = assertThrows(IllegalArgumentException.class,
+        var error = assertThrows(DatosInvalidosException.class,
                 () -> service.confirmarCodigo(CORREO, CODIGO));
 
         assertEquals("No hay un código pendiente de verificación.", error.getMessage());
@@ -323,7 +324,7 @@ class VerificacionCorreoServiceTest {
         VerificacionCorreo v = codigoPendiente(u);
         v.setFechaExpiracion(OffsetDateTime.now().minusMinutes(1));
 
-        var error = assertThrows(IllegalStateException.class,
+        var error = assertThrows(DatosInvalidosException.class,
                 () -> service.confirmarCodigo(CORREO, CODIGO));
 
         assertEquals("El código ha expirado.", error.getMessage());
@@ -339,7 +340,7 @@ class VerificacionCorreoServiceTest {
         VerificacionCorreo v = codigoPendiente(u);
         v.setIntentos(intentos);
 
-        var error = assertThrows(IllegalStateException.class,
+        var error = assertThrows(DatosInvalidosException.class,
                 () -> service.confirmarCodigo(CORREO, CODIGO));
 
         assertEquals("Superaste el límite de intentos. Solicita otro código.", error.getMessage());
@@ -355,7 +356,7 @@ class VerificacionCorreoServiceTest {
         v.setIntentos(intentos);
 
         // La excepción específica es privada; se comprueba mediante su tipo padre.
-        var error = assertThrows(IllegalArgumentException.class,
+        var error = assertThrows(DatosInvalidosException.class,
                 () -> service.confirmarCodigo(CORREO, "000000"));
 
         assertEquals("El código es incorrecto.", error.getMessage());

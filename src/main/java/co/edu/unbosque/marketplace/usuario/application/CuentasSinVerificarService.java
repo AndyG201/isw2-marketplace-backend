@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 
@@ -23,7 +24,7 @@ public class CuentasSinVerificarService {
             UsuarioRepository usuarioRepository,
             @Value("${app.usuario.pendiente.horas-limite:24}") long horasLimite) {
         if (horasLimite <= 0) {
-            throw new IllegalArgumentException("Las horas límite deben ser mayores que cero.");
+            throw new DatosInvalidosException("Las horas límite deben ser mayores que cero.");
         }
         this.usuarioRepository = usuarioRepository;
         this.horasLimite = horasLimite;
