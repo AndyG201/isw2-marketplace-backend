@@ -5,25 +5,23 @@ import java.time.ZoneOffset;
 
 import org.springframework.stereotype.Component;
 
-import co.edu.unbosque.marketplace.pago.application.port.OperacionPendienteRepository;
+import co.edu.unbosque.marketplace.pago.contracts.RegistroPagos;
 
 @Component
 public class ReservaPagoConciliacionWorker {
 
-    private final OperacionPendienteRepository operaciones;
+    private final RegistroPagos registro;
     private final ReservaPagoSimuladoService pagos;
 
     public ReservaPagoConciliacionWorker(
-            OperacionPendienteRepository operaciones,
+            RegistroPagos registro,
             ReservaPagoSimuladoService pagos) {
-        this.operaciones = operaciones;
+        this.registro = registro;
         this.pagos = pagos;
     }
 
     public void conciliarPendientes() {
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
-        operaciones.findTop25ByEstadoAndProximaEjecucionLessThanEqualOrderByProximaEjecucionAsc(
-                        "PENDIENTE", ahora)
-                .forEach(operacion -> pagos.conciliar(operacion.getClaveIdempotencia()));
+        registro.clavesPorConciliar(ahora).forEach(pagos::conciliar);
     }
 }

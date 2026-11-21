@@ -14,10 +14,10 @@ import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.PlazoVencidoException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
-import co.edu.unbosque.marketplace.pago.application.port.PagoRepository;
+import co.edu.unbosque.marketplace.pago.contracts.PagoInfo;
 import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
+import co.edu.unbosque.marketplace.pago.contracts.RegistroPagos;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
-import co.edu.unbosque.marketplace.pago.domain.Pago;
 import co.edu.unbosque.marketplace.reserva.application.dto.ConfirmacionReservaResponse;
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
@@ -29,13 +29,13 @@ import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 public class ReservaConfirmacionService {
     private static final String PENDIENTE_PAGO = "PENDIENTE_PAGO";
     private final ReservaConfirmacionRepository reservas;
-    private final PagoRepository pagos;
+    private final RegistroPagos pagos;
     private final NocheReservaRepository noches;
     private final PeriodosHabilitadosQuery periodos;
     private final PagoSandboxGateway pasarela;
     private final JdbcTemplate jdbc;
 
-    public ReservaConfirmacionService(ReservaConfirmacionRepository reservas, PagoRepository pagos,
+    public ReservaConfirmacionService(ReservaConfirmacionRepository reservas, RegistroPagos pagos,
             NocheReservaRepository noches, PeriodosHabilitadosQuery periodos, PagoSandboxGateway pasarela,
             JdbcTemplate jdbc) {
         this.reservas = reservas;
@@ -79,14 +79,14 @@ public class ReservaConfirmacionService {
         Reserva reserva = bloquearYValidarPropietario(idUsuario, idReserva);
         bloquearClaveIdempotencia(idempotencia);
 
-        var pagoPrevio = pagos.findByClaveIdempotencia(idempotencia);
+        var pagoPrevio = pagos.buscarPorClave(idempotencia);
         if (pagoPrevio.isPresent()) {
-            Pago existente = pagoPrevio.get();
-            if (!idReserva.equals(existente.getIdReserva())) {
+            PagoInfo existente = pagoPrevio.get();
+            if (!idReserva.equals(existente.idReserva())) {
                 throw new ConflictoNegocioException(
                         "La clave de idempotencia ya corresponde a otra operación.");
             }
-            return respuesta(reserva, existente, existente.getMonto(), "Resultado de pago idempotente.");
+            return respuesta(reserva, existente, existente.monto(), "Resultado de pago idempotente.");
         }
         validarReservaInmediata(reserva);
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
@@ -97,10 +97,8 @@ public class ReservaConfirmacionService {
         ReservaConfirmacionDatos datos = datos(reserva);
         ResultadoPagoSandbox resultado = pasarela.procesar(datos.getMontoTotal(), idempotencia);
         OffsetDateTime momento = OffsetDateTime.now(ZoneOffset.UTC);
-        Pago pago = new Pago(UUID.randomUUID(), idReserva, resultado.referencia(), idempotencia,
-                datos.getMontoTotal(), resultado.aprobado() ? "PAGADO" : "FALLIDO", momento,
-                resultado.aprobado() ? momento : null);
-        pagos.saveAndFlush(pago);
+        PagoInfo pago = pagos.registrarPago(idReserva, resultado.referencia(), idempotencia,
+                datos.getMontoTotal(), resultado.aprobado(), momento);
         if (resultado.aprobado()) {
             reserva.setEstado("CONFIRMADA");
             reserva.setFechaConfirmacion(momento);
@@ -167,10 +165,10 @@ public class ReservaConfirmacionService {
                 new ConflictoNegocioException("No fue posible recuperar la cotización."));
     }
 
-    private ConfirmacionReservaResponse respuesta(Reserva reserva, Pago pago,
+    private ConfirmacionReservaResponse respuesta(Reserva reserva, PagoInfo pago,
             java.math.BigDecimal monto, String mensaje) {
         return new ConfirmacionReservaResponse(reserva.getIdReserva(), reserva.getEstado(),
-                pago == null ? null : pago.getEstado(), monto, reserva.getRetencionHasta(),
-                pago == null ? null : pago.getReferenciaStripe(), mensaje);
+                pago == null ? null : pago.estado(), monto, reserva.getRetencionHasta(),
+                pago == null ? null : pago.referencia(), mensaje);
     }
 }
