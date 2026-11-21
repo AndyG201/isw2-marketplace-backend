@@ -13,6 +13,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,7 +38,10 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.jayway.jsonpath.JsonPath;
 
+import co.edu.unbosque.marketplace.pago.application.ReembolsoTrabajo;
+import co.edu.unbosque.marketplace.pago.application.port.ReembolsosPendientes;
 import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
+import co.edu.unbosque.marketplace.pago.contracts.RegistroPagos;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
 import co.edu.unbosque.marketplace.reserva.application.ReservaAprobacionRetencionScheduler;
 import co.edu.unbosque.marketplace.reserva.application.ReservaPagoConciliacionWorker;
@@ -74,6 +79,12 @@ class ReservaFlujoIntegracionTest {
 
     @Autowired
     private ReservaPagoIntentoService intentosPago;
+
+    @Autowired
+    private RegistroPagos registroPagos;
+
+    @Autowired
+    private ReembolsosPendientes reembolsosPendientes;
 
     @MockitoBean
     private PagoSandboxGateway pasarela;
@@ -380,6 +391,31 @@ class ReservaFlujoIntegracionTest {
     }
 
     @Test
+    void elReembolsoProgramadoSeReclamaUnaSolaVezContraPostgres() throws Exception {
+        escenario = escenario("INMEDIATA");
+        pasarelaAprueba();
+        UUID idReserva = reservaRetenida();
+        String clave = "pago-reembolso-" + idReserva;
+        assertEquals(200, escenario.pagar(escenario.idHuesped, idReserva, clave).getResponse().getStatus());
+        UUID idPago = jdbc.queryForObject("SELECT id_pago FROM pago WHERE id_reserva = ?", UUID.class, idReserva);
+
+        registroPagos.programarReembolso(clave, OffsetDateTime.now(ZoneOffset.UTC).minusSeconds(1));
+
+        List<ReembolsoTrabajo> primera = reclamadosDe(idPago);
+        assertEquals(1, primera.size());
+        assertEquals("pi_prueba", primera.get(0).paymentIntentId());
+        assertEquals("refund-" + idPago, primera.get(0).claveIdempotencia());
+        assertEquals(0, MONTO_DOS_NOCHES.compareTo(primera.get(0).monto()));
+        assertEquals("EN_PROCESO", jdbc.queryForObject(
+                "SELECT estado FROM reembolso_pago WHERE id_pago = ?", String.class, idPago));
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT intentos FROM reembolso_pago WHERE id_pago = ?", Integer.class, idPago));
+
+        // Mientras el trabajo está en proceso (reclamo vigente) otro worker no lo vuelve a tomar.
+        assertEquals(0, reclamadosDe(idPago).size());
+    }
+
+    @Test
     void pagarConLaRetencionVencidaRespondeQueElPlazoTermino() throws Exception {
         escenario = escenario("INMEDIATA");
         UUID idReserva = reservaRetenida();
@@ -447,6 +483,12 @@ class ReservaFlujoIntegracionTest {
         UUID idReserva = escenario.solicitarReserva(escenario.idHuesped, escenario.nuevaCotizacion(30, 2));
         assertEquals(200, escenario.retener(escenario.idHuesped, idReserva).getResponse().getStatus());
         return idReserva;
+    }
+
+    private List<ReembolsoTrabajo> reclamadosDe(UUID idPago) {
+        return reembolsosPendientes.reclamar(OffsetDateTime.now(ZoneOffset.UTC)).stream()
+                .filter(t -> t.claveIdempotencia().equals("refund-" + idPago))
+                .toList();
     }
 
     private int nochesDeReserva(UUID idReserva) {
