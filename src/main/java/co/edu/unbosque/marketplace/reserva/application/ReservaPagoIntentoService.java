@@ -6,6 +6,8 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
+import jakarta.persistence.EntityManager;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,16 +40,19 @@ public class ReservaPagoIntentoService {
     private final RegistroPagos pagos;
     private final BloqueoClaveIdempotencia bloqueo;
     private final NocheReservaRepository noches;
+    private final EntityManager entityManager;
 
     public ReservaPagoIntentoService(
             ReservaConfirmacionRepository reservas,
             RegistroPagos pagos,
             BloqueoClaveIdempotencia bloqueo,
-            NocheReservaRepository noches) {
+            NocheReservaRepository noches,
+            EntityManager entityManager) {
         this.reservas = reservas;
         this.pagos = pagos;
         this.bloqueo = bloqueo;
         this.noches = noches;
+        this.entityManager = entityManager;
     }
 
     @Transactional
@@ -140,6 +145,10 @@ public class ReservaPagoIntentoService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe el intento de pago."));
         Reserva reserva = reservas.bloquearPorId(registrado.idReserva())
                 .orElseThrow(() -> new RecursoNoEncontradoException("La reserva no existe."));
+        // La reserva se cargó en preparar(), antes de llamar a Stripe, y la petición reutiliza esa copia
+        // en memoria. Mientras Stripe respondía, la retención pudo vencer y otra reserva pudo tomar las
+        // noches, así que se vuelve a leer de la base de datos para decidir con su estado real.
+        entityManager.refresh(reserva);
 
         if (PAGO_PAGADO.equals(registrado.estado())) {
             return respuesta(reserva, registrado, "El pago ya había sido aprobado.");

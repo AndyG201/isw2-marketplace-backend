@@ -416,6 +416,51 @@ class ReservaFlujoIntegracionTest {
     }
 
     @Test
+    void siStripeApruebaDespuesDeVencerLaRetencionYOtroHuespedTomoLasNochesSeReembolsaYNoSeConfirma()
+            throws Exception {
+        escenario = escenario("INMEDIATA");
+        UUID reservaOtro = escenario.solicitarReserva(escenario.idOtroHuesped, escenario.nuevaCotizacion(30, 2));
+        UUID idReserva = reservaRetenida();
+        when(pasarela.procesar(any(), any())).thenAnswer(invocacion -> {
+            // La retención vence mientras Stripe procesa y otro huésped retiene las mismas noches.
+            escenario.vencerRetencion(idReserva);
+            assertEquals(200, escenario.retener(escenario.idOtroHuesped, reservaOtro).getResponse().getStatus());
+            return new ResultadoPagoSandbox(true, "pi_tarde", "Pago aprobado");
+        });
+
+        MvcResult pago = escenario.pagar(escenario.idHuesped, idReserva, "pago-tarde-ocupado-" + idReserva);
+
+        assertEquals(200, pago.getResponse().getStatus());
+        assertEquals("EXPIRADA", escenario.estadoReserva(idReserva));
+        assertEquals("PAGADO", campo(pago, "$.estadoPago"));
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT count(*) FROM reembolso_pago WHERE id_reserva = ? AND estado = 'PENDIENTE'",
+                Integer.class, idReserva));
+        // Las noches siguen siendo de la otra reserva: la reserva pagada tarde no las toca.
+        assertEquals(0, nochesDeReserva(idReserva));
+        assertEquals(2, nochesDeReserva(reservaOtro));
+        assertEquals(2, escenario.nochesOcupadas());
+    }
+
+    @Test
+    void siStripeApruebaDespuesDeVencerLaRetencionSinOtroHuespedTambienSeReembolsa() throws Exception {
+        escenario = escenario("INMEDIATA");
+        UUID idReserva = reservaRetenida();
+        when(pasarela.procesar(any(), any())).thenAnswer(invocacion -> {
+            escenario.vencerRetencion(idReserva);
+            return new ResultadoPagoSandbox(true, "pi_tarde", "Pago aprobado");
+        });
+
+        MvcResult pago = escenario.pagar(escenario.idHuesped, idReserva, "pago-tarde-libre-" + idReserva);
+
+        assertEquals(200, pago.getResponse().getStatus());
+        assertEquals("EXPIRADA", escenario.estadoReserva(idReserva));
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT count(*) FROM reembolso_pago WHERE id_reserva = ?", Integer.class, idReserva));
+        assertEquals(0, escenario.nochesOcupadas());
+    }
+
+    @Test
     void pagarConLaRetencionVencidaRespondeQueElPlazoTermino() throws Exception {
         escenario = escenario("INMEDIATA");
         UUID idReserva = reservaRetenida();

@@ -8,6 +8,8 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import jakarta.persistence.EntityManager;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +30,7 @@ class ReservaPagoIntentoReembolsoTest {
     @Mock private RegistroPagos pagos;
     @Mock private BloqueoClaveIdempotencia bloqueo;
     @Mock private NocheReservaRepository noches;
+    @Mock private EntityManager entityManager;
     @InjectMocks private ReservaPagoIntentoService servicio;
 
     @Test
