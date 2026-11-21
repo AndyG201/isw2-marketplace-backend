@@ -30,7 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import co.edu.unbosque.marketplace.auditoria.application.port.BandejaSalidaAuditoriaRepository;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
-import co.edu.unbosque.marketplace.trabajo.ColaTrabajosRedis;
+import co.edu.unbosque.marketplace.trabajo.ColaTrabajos;
 import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,7 +40,7 @@ class AuditoriaOutboxServiceTest {
     private BandejaSalidaAuditoriaRepository repository;
 
     @Mock
-    private ColaTrabajosRedis cola;
+    private ColaTrabajos cola;
 
     @InjectMocks
     private AuditoriaOutboxService service;

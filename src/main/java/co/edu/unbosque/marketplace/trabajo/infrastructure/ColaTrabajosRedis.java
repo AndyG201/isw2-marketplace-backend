@@ -1,12 +1,15 @@
-package co.edu.unbosque.marketplace.trabajo;
+package co.edu.unbosque.marketplace.trabajo.infrastructure;
 
 import java.util.Optional;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import co.edu.unbosque.marketplace.trabajo.ColaTrabajos;
+import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
+
 @Service
-public class ColaTrabajosRedis {
+public class ColaTrabajosRedis implements ColaTrabajos {
 
     public static final String CLAVE = "marketplace:trabajos:prioridad";
 
@@ -16,6 +19,7 @@ public class ColaTrabajosRedis {
         this.redis = redis;
     }
 
+    @Override
     public void encolar(TipoTrabajo tipo, String identificador) {
         String miembro = tipo.name() + "|" + identificador;
 
@@ -26,6 +30,7 @@ public class ColaTrabajosRedis {
         redis.opsForZSet().addIfAbsent(CLAVE, miembro, puntuacion);
     }
 
+    @Override
     public Optional<Trabajo> tomarSiguiente() {
         var minimo = redis.opsForZSet().popMin(CLAVE);
         if (minimo == null || minimo.getValue() == null) {
@@ -44,8 +49,5 @@ public class ColaTrabajosRedis {
         } catch (IllegalArgumentException e) {
             return Optional.empty();
         }
-    }
-
-    public record Trabajo(TipoTrabajo tipo, String identificador) {
     }
 }

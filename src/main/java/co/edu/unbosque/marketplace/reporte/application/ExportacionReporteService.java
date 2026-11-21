@@ -21,7 +21,7 @@ import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoExceptio
 import co.edu.unbosque.marketplace.reporte.application.dto.ExportacionReporteResponse;
 import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteInfo;
 import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteRepository;
-import co.edu.unbosque.marketplace.trabajo.ColaTrabajosRedis;
+import co.edu.unbosque.marketplace.trabajo.ColaTrabajos;
 import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
 @Service
@@ -29,13 +29,13 @@ public class ExportacionReporteService {
 
     private final ExportacionReporteRepository repositorio;
     private final AuditoriaAdministracionCommand auditoria;
-    private final ColaTrabajosRedis cola;
+    private final ColaTrabajos cola;
     private final ObjectMapper mapper;
 
     public ExportacionReporteService(
             ExportacionReporteRepository repositorio,
             AuditoriaAdministracionCommand auditoria,
-            ColaTrabajosRedis cola,
+            ColaTrabajos cola,
             ObjectMapper mapper) {
         this.repositorio = repositorio;
         this.auditoria = auditoria;

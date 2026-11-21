@@ -2,6 +2,7 @@ package co.edu.unbosque.marketplace.auditoria.application;
 
 import java.util.UUID;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
 @Component
 @Profile("worker")
+@ConditionalOnProperty(prefix = "app.auditoria.b2", name = "enabled", havingValue = "true")
 public class AuditoriaWorker implements ProcesadorTrabajo {
 
     private final AuditoriaOutboxService outbox;

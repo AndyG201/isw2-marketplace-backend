@@ -13,7 +13,7 @@ import co.edu.unbosque.marketplace.auditoria.application.port.BandejaSalidaAudit
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
-import co.edu.unbosque.marketplace.trabajo.ColaTrabajosRedis;
+import co.edu.unbosque.marketplace.trabajo.ColaTrabajos;
 import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
 @Service
@@ -23,11 +23,11 @@ public class AuditoriaOutboxService implements AuditoriaEventoCommand {
     private static final long MAX_REINTENTO_SEGUNDOS = 3600;
 
     private final BandejaSalidaAuditoriaRepository repository;
-    private final ColaTrabajosRedis cola;
+    private final ColaTrabajos cola;
 
     public AuditoriaOutboxService(
             BandejaSalidaAuditoriaRepository repository,
-            ColaTrabajosRedis cola) {
+            ColaTrabajos cola) {
         this.repository = repository;
         this.cola = cola;
     }

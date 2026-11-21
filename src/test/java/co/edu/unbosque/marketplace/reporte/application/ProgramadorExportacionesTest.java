@@ -11,14 +11,14 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteRepository;
-import co.edu.unbosque.marketplace.trabajo.ColaTrabajosRedis;
+import co.edu.unbosque.marketplace.trabajo.ColaTrabajos;
 import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
 class ProgramadorExportacionesTest {
 
     @Test
     void recuperaLasExportacionesAbandonadasYEncolaLasSolicitadas() {
-        ColaTrabajosRedis cola = mock(ColaTrabajosRedis.class);
+        ColaTrabajos cola = mock(ColaTrabajos.class);
         ExportacionReporteRepository exportaciones = mock(ExportacionReporteRepository.class);
         UUID idExportacion = UUID.randomUUID();
         when(exportaciones.listarIdsSolicitados(100)).thenReturn(List.of(idExportacion));

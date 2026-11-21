@@ -21,22 +21,22 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
-import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.ActualizarAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.EditarPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAlojamientoResponse;
-import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
-import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
-import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
+import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoImagenes;
 import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.storage.AlmacenamientoImagenService;
+import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
+import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
+import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioAdministracionQuery;
@@ -63,7 +63,7 @@ public class PublicacionEdicionService {
     private final ServicioPublicacionQuery servicioPublicacionQuery;
     private final PoliticaCancelacionQuery politicaCancelacionQuery;
 
-    private final AlmacenamientoImagenService almacenamientoImagenService;
+    private final AlmacenamientoImagenes almacenamientoImagenes;
     private final CambiosPublicacionService cambios;
     private AuditoriaEventoCommand auditoria;
 
@@ -77,7 +77,7 @@ public class PublicacionEdicionService {
             UsuarioPublicacionQuery usuarioPublicacionQuery,
             ServicioPublicacionQuery servicioPublicacionQuery,
             PoliticaCancelacionQuery politicaCancelacionQuery,
-            AlmacenamientoImagenService almacenamientoImagenService,
+            AlmacenamientoImagenes almacenamientoImagenes,
             CambiosPublicacionService cambios) {
 
         this.publicacionRepository = publicacionRepository;
@@ -89,7 +89,7 @@ public class PublicacionEdicionService {
         this.usuarioPublicacionQuery = usuarioPublicacionQuery;
         this.servicioPublicacionQuery = servicioPublicacionQuery;
         this.politicaCancelacionQuery = politicaCancelacionQuery;
-        this.almacenamientoImagenService = almacenamientoImagenService;
+        this.almacenamientoImagenes = almacenamientoImagenes;
         this.cambios = cambios;
     }
 
@@ -385,7 +385,7 @@ public class PublicacionEdicionService {
 
         for (int i = 0; i < archivos.size(); i++) {
 
-            String ruta = almacenamientoImagenService.guardar(
+            String ruta = almacenamientoImagenes.guardar(
                     archivos.get(i));
 
             rutasNuevas.add(ruta);
@@ -412,7 +412,7 @@ public class PublicacionEdicionService {
 
         for (String ruta : rutas) {
             try {
-                almacenamientoImagenService.eliminar(ruta);
+                almacenamientoImagenes.eliminar(ruta);
             } catch (RuntimeException e) {
                 logger.warn(
                         "No fue posible eliminar el archivo de imagen: {}",

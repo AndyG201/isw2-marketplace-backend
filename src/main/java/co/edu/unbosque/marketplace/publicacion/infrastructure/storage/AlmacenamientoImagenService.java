@@ -12,8 +12,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoImagenes;
+
 @Service
-public class AlmacenamientoImagenService {
+public class AlmacenamientoImagenService implements AlmacenamientoImagenes {
 
     private static final long TAMANO_MAXIMO = 5 * 1024 * 1024;
 
@@ -33,6 +35,7 @@ public class AlmacenamientoImagenService {
                 .normalize();
     }
 
+    @Override
     public String guardar(MultipartFile archivo) {
 
         if (archivo == null || archivo.isEmpty()) {
@@ -125,6 +128,7 @@ public class AlmacenamientoImagenService {
                 "Formato de imagen no permitido. Utiliza JPG, PNG o WEBP.");
     }
 
+    @Override
     public void eliminar(String rutaImagen) {
 
         if (rutaImagen == null || rutaImagen.isBlank()) {

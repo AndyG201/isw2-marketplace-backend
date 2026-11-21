@@ -1,4 +1,4 @@
-package co.edu.unbosque.marketplace.ubicacion.application;
+package co.edu.unbosque.marketplace.ubicacion.infrastructure.externo;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -12,11 +12,13 @@ import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import co.edu.unbosque.marketplace.ubicacion.application.port.CatalogoUbicacionesExterno;
+
 @Component
-class CountriesNowClient {
+public class CountriesNowClient implements CatalogoUbicacionesExterno {
     private final RestClient client;
 
-    CountriesNowClient(@Value("${app.ubicacion.api-base-url:https://countriesnow.space/api/v0.1}") String baseUrl) {
+    public CountriesNowClient(@Value("${app.ubicacion.api-base-url:https://countriesnow.space/api/v0.1}") String baseUrl) {
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
         this.client = RestClient.builder()
                 .baseUrl(baseUrl)
@@ -24,19 +26,21 @@ class CountriesNowClient {
                 .build();
     }
 
-    List<CountryData> countries() {
+    @Override
+    public List<PaisExterno> paises() {
         JsonNode response = client.get().uri("/countries/iso").retrieve().body(JsonNode.class);
         JsonNode data = validarRespuesta(response);
-        List<CountryData> result = new ArrayList<>();
+        List<PaisExterno> result = new ArrayList<>();
         for (JsonNode item : data) {
             String name = item.path("name").asText("").trim();
             String iso2 = item.path("Iso2").asText("").trim().toUpperCase();
-            if (!name.isBlank() && iso2.matches("[A-Z]{2}")) result.add(new CountryData(name, iso2));
+            if (!name.isBlank() && iso2.matches("[A-Z]{2}")) result.add(new PaisExterno(name, iso2));
         }
         return result;
     }
 
-    List<String> cities(String countryName) {
+    @Override
+    public List<String> ciudades(String countryName) {
         JsonNode response = client.post().uri("/countries/cities")
                 .body(Map.of("country", countryName)).retrieve().body(JsonNode.class);
         JsonNode data = validarRespuesta(response);
@@ -54,6 +58,4 @@ class CountriesNowClient {
         }
         return response.path("data");
     }
-
-    record CountryData(String name, String iso2) { }
 }
