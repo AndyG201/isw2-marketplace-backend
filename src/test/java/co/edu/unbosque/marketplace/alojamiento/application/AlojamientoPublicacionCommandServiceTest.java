@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.marketplace.alojamiento.application;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,15 +68,15 @@ class AlojamientoPublicacionCommandServiceTest {
 
         assertNotNull(resultado);
 
-        Alojamiento guardado = guardado();
+        Alojamiento alojamientoGuardado = guardado();
 
-        assertEquals(resultado, guardado.getIdAlojamiento());
-        assertEquals(idAnfitrion, guardado.getIdAnfitrion());
-        assertEquals("Calle 123", guardado.getUbicacion());
-        assertEquals("Bogotá", guardado.getCiudad());
-        assertEquals("Apartamento", guardado.getTipoAlojamiento());
-        assertEquals(4, guardado.getCapacidad());
-        assertNotNull(guardado.getFechaCreacion());
+        assertEquals(resultado, alojamientoGuardado.getIdAlojamiento());
+        assertEquals(idAnfitrion, alojamientoGuardado.getIdAnfitrion());
+        assertEquals("Calle 123", alojamientoGuardado.getUbicacion());
+        assertEquals("Bogotá", alojamientoGuardado.getCiudad());
+        assertEquals("Apartamento", alojamientoGuardado.getTipoAlojamiento());
+        assertEquals(4, alojamientoGuardado.getCapacidad());
+        assertNotNull(alojamientoGuardado.getFechaCreacion());
     }
 
     @Test
@@ -250,7 +249,10 @@ class AlojamientoPublicacionCommandServiceTest {
                         " Carrera 15 ",
                         " Medellín ",
                         " Casa ",
-                        6
+                        6,
+                        null,
+                        null,
+                        null
                 );
 
         servicio.actualizarAlojamiento(idAlojamiento, solicitud);
@@ -267,7 +269,8 @@ class AlojamientoPublicacionCommandServiceTest {
     void debeRechazarIdentificadorNuloAlActualizar() {
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        "Calle 123", "Bogotá", "Apartamento", 4
+                        "Calle 123", "Bogotá", "Apartamento", 4,
+                        null, null, null
                 );
 
         assertThrows(
@@ -294,7 +297,8 @@ class AlojamientoPublicacionCommandServiceTest {
     void debeRechazarUbicacionVaciaAlActualizar() {
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        " ", "Bogotá", "Apartamento", 4
+                        " ", "Bogotá", "Apartamento", 4,
+                        null, null, null
                 );
 
         assertThrows(
@@ -310,7 +314,8 @@ class AlojamientoPublicacionCommandServiceTest {
     void debeRechazarCiudadVaciaAlActualizar() {
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        "Calle 123", " ", "Apartamento", 4
+                        "Calle 123", " ", "Apartamento", 4,
+                        null, null, null
                 );
 
         assertThrows(
@@ -326,7 +331,8 @@ class AlojamientoPublicacionCommandServiceTest {
     void debeRechazarTipoAlojamientoVacioAlActualizar() {
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        "Calle 123", "Bogotá", " ", 4
+                        "Calle 123", "Bogotá", " ", 4,
+                        null, null, null
                 );
 
         assertThrows(
@@ -342,7 +348,8 @@ class AlojamientoPublicacionCommandServiceTest {
     void debeRechazarCapacidadNegativaAlActualizar() {
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        "Calle 123", "Bogotá", "Apartamento", -1
+                        "Calle 123", "Bogotá", "Apartamento", -1,
+                        null, null, null
                 );
 
         assertThrows(
@@ -361,7 +368,8 @@ class AlojamientoPublicacionCommandServiceTest {
 
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        "Calle 123", "Bogotá", "Apartamento", 4
+                        "Calle 123", "Bogotá", "Apartamento", 4,
+                        null, null, null
                 );
 
         IllegalStateException exception = assertThrows(
