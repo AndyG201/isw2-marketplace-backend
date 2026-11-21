@@ -102,6 +102,15 @@ class ArquitecturaCapasTest {
     }
 
     @Test
+    void laAplicacionNoDependeDeRedisNiDelAdministradorDeEntidades() {
+        noClasses().that().resideInAPackage("..application..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "org.springframework.data.redis..", "jakarta.persistence..")
+                .because("Redis y JPA se usan detrás de un puerto implementado en infraestructura")
+                .check(clases);
+    }
+
+    @Test
     void laAplicacionNoUsaClientesHttp() {
         noClasses().that().resideInAPackage("..application..")
                 .should().dependOnClassesThat().resideInAPackage("java.net.http..")

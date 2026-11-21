@@ -8,7 +8,6 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.persistence.EntityManager;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +19,7 @@ import co.edu.unbosque.marketplace.pago.contracts.PagoInfo;
 import co.edu.unbosque.marketplace.pago.contracts.RegistroPagos;
 import co.edu.unbosque.marketplace.reserva.application.port.BloqueoClaveIdempotencia;
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.RefrescoDeReserva;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 
@@ -30,7 +30,7 @@ class ReservaPagoIntentoReembolsoTest {
     @Mock private RegistroPagos pagos;
     @Mock private BloqueoClaveIdempotencia bloqueo;
     @Mock private NocheReservaRepository noches;
-    @Mock private EntityManager entityManager;
+    @Mock private RefrescoDeReserva refresco;
     @InjectMocks private ReservaPagoIntentoService servicio;
 
     @Test

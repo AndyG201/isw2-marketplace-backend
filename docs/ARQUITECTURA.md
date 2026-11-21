@@ -42,6 +42,7 @@ Las dependencias van hacia adentro: `api → application → domain`, y la infra
 7. La aplicación no depende de Spring Data (`org.springframework.data.jpa` ni `.repository`).
 8. La aplicación no usa JDBC directamente.
 9. La aplicación no usa clientes HTTP (`java.net.http`): las integraciones externas son adaptadores de infraestructura.
+10. La aplicación no depende de Redis (`org.springframework.data.redis`) ni de JPA (`jakarta.persistence`): se usan detrás de un puerto.
 
 ## 3. Repositorios: puertos y adaptadores
 
@@ -51,6 +52,9 @@ Las dependencias van hacia adentro: `api → application → domain`, y la infra
   que extiende el puerto y conserva las anotaciones `@Query`, `@Lock` y `@Modifying`.
 - Las consultas SQL directas (candado de idempotencia, reclamo de reembolsos, ocupación de noches) viven en adaptadores JDBC
   de infraestructura detrás de un puerto.
+- Los datos temporales de `usuario` (códigos de verificación y recuperación, contadores de intentos, esperas de reenvío) pasan por
+  el puerto `AlmacenTemporal`, implementado con Redis en `usuario/infrastructure/redis`.
+- Releer una reserva tras la llamada a Stripe pasa por el puerto `RefrescoDeReserva`, implementado con JPA en `reserva/infrastructure/persistence`.
 
 ## 4. Errores y códigos HTTP
 
@@ -83,9 +87,6 @@ Estas dependencias técnicas siguen dentro de las capas y están aceptadas por a
 
 - `MultipartFile` en la capa de aplicación (3 clases de `publicacion`): las imágenes llegan así desde el formulario.
 - Las entidades del dominio llevan anotaciones JPA (29 clases) y `Usuario` implementa `UserDetails` de Spring Security.
-- `UsuarioService` y `VerificacionCorreoService` usan `StringRedisTemplate` directamente (códigos temporales y límites de reenvío).
-  Lo correcto sería un puerto con adaptador de Redis.
-- `ReservaPagoIntentoService` usa `EntityManager` para releer la reserva tras la llamada a Stripe.
 - Algunos servicios usan Jackson (`ObjectMapper`) para serializar el detalle de auditoría, y los puertos de dos repositorios
   usan los tipos de valor `Sort`/`Pageable` de Spring Data.
 - Los adaptadores de infraestructura de Backblaze, Cloudinary, JWT y cifrado lanzan `IllegalStateException` para fallas
@@ -95,7 +96,7 @@ Estas dependencias técnicas siguen dentro de las capas y están aceptadas por a
 
 - `./mvnw clean verify` ejecuta las pruebas y genera el informe JaCoCo en `target/site/jacoco/jacoco.xml`.
   Las pruebas de integración necesitan PostgreSQL 18 y Redis 7 (la CI los levanta como servicios).
-- Estado medido tras la última integración: **1704 pruebas**, cobertura total de **84,1 % de líneas** y **71,9 % de ramas**.
+- Estado medido tras la última integración: **1716 pruebas**, cobertura total de **84,1 % de líneas** y **72,0 % de ramas**.
   Los módulos con menor cobertura de líneas son `servicio` (24 %), `reporte` (47 %) y `config` (62 %).
 - GitHub Actions (`.github/workflows/backend-ci.yml`) compila con Java 22, corre las pruebas, verifica que exista el informe
   JaCoCo, lo envía a SonarCloud y publica los informes como artefacto.

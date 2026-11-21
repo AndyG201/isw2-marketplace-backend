@@ -1,13 +1,14 @@
 package co.edu.unbosque.marketplace.usuario.application;
 
+import java.time.Duration;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.OffsetDateTime;
 import java.util.HexFormat;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import co.edu.unbosque.marketplace.usuario.application.port.AlmacenTemporal;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.application.port.VerificacionCorreoRepository;
@@ -27,8 +28,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -46,10 +45,8 @@ class VerificacionCorreoServiceTest {
     @Mock private VerificacionCorreoRepository verificacionRepository;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private ServicioCorreo servicioCorreo;
-    @Mock private StringRedisTemplate redisTemplate;
-    @Mock private CorreoOutboxService correoOutboxService;
-    @Mock private ValueOperations<String, String> valores;
-    @InjectMocks private VerificacionCorreoService service;
+    @Mock private AlmacenTemporal almacenTemporal;
+    @Mock private CorreoOutboxService correoOutboxService;    @InjectMocks private VerificacionCorreoService service;
 
     private Usuario encontrarUsuario() {
         Usuario u = new Usuario();
@@ -60,9 +57,7 @@ class VerificacionCorreoServiceTest {
         return u;
     }
 
-    private void usarRedis() {
-        when(redisTemplate.opsForValue()).thenReturn(valores);
-    }
+    private void usarRedis() {    }
 
     private VerificacionCorreo codigoPendiente(Usuario u) {
         VerificacionCorreo v = new VerificacionCorreo();
@@ -79,8 +74,8 @@ class VerificacionCorreoServiceTest {
 
     private void permitirReenvio(long numero) {
         usarRedis();
-        when(valores.setIfAbsent(ULTIMO, "1", 60L, TimeUnit.SECONDS)).thenReturn(true);
-        when(valores.increment(CONTADOR)).thenReturn(numero);
+        when(almacenTemporal.guardarSiAusente(ULTIMO, "1", Duration.ofSeconds(60L))).thenReturn(true);
+        when(almacenTemporal.incrementar(CONTADOR)).thenReturn(numero);
     }
 
     private void verificarSinEnvio() {
@@ -101,7 +96,7 @@ class VerificacionCorreoServiceTest {
                 () -> assertEquals("Debes proporcionar un correo electrónico.",
                         assertThrows(DatosInvalidosException.class,
                                 () -> service.confirmarCodigo(correo, CODIGO)).getMessage()));
-        verifyNoInteractions(usuarioRepository, redisTemplate, verificacionRepository, servicioCorreo);
+        verifyNoInteractions(usuarioRepository, almacenTemporal, verificacionRepository, servicioCorreo);
     }
 
     @Test
@@ -118,7 +113,7 @@ class VerificacionCorreoServiceTest {
                         assertThrows(DatosInvalidosException.class,
                                 () -> service.confirmarCodigo(CORREO, CODIGO)).getMessage()));
         verificarSinEnvio();
-        verifyNoInteractions(redisTemplate);
+        verifyNoInteractions(almacenTemporal);
     }
 
     @Test
@@ -136,7 +131,7 @@ class VerificacionCorreoServiceTest {
                         assertThrows(DatosInvalidosException.class,
                                 () -> service.confirmarCodigo(CORREO, CODIGO)).getMessage()));
         verificarSinEnvio();
-        verifyNoInteractions(redisTemplate);
+        verifyNoInteractions(almacenTemporal);
     }
 
     // Envío inicial: código de seis dígitos, hash y vigencia de diez minutos.
@@ -166,8 +161,8 @@ class VerificacionCorreoServiceTest {
                 () -> assertEquals(fecha.getValue().plusMinutes(10), v.getFechaExpiracion()),
                 () -> assertFalse(v.isVerificado()),
                 () -> assertEquals(0, v.getIntentos()));
-        verify(valores).set(ULTIMO, "1", 60L, TimeUnit.SECONDS);
-        verify(valores, never()).increment(anyString());
+        verify(almacenTemporal).guardar(ULTIMO, "1", Duration.ofSeconds(60L));
+        verify(almacenTemporal, never()).incrementar(anyString());
     }
 
     @Test
@@ -181,7 +176,7 @@ class VerificacionCorreoServiceTest {
 
         service.enviarCodigo("  ANA@EJEMPLO.COM  ");
 
-        verify(valores).set(ULTIMO, "1", 60L, TimeUnit.SECONDS);
+        verify(almacenTemporal).guardar(ULTIMO, "1", Duration.ofSeconds(60L));
         verify(correoOutboxService).encolarCodigoVerificacion(eq(CORREO), anyString());
     }
 
@@ -194,7 +189,7 @@ class VerificacionCorreoServiceTest {
 
         assertSame(fallo, assertThrows(RuntimeException.class, () -> service.enviarCodigo(CORREO)));
 
-        verify(redisTemplate).delete(ULTIMO);
+        verify(almacenTemporal).eliminar(ULTIMO);
     }
 
     // Reenvíos: espera de 60 segundos y máximo tres por hora.
@@ -210,9 +205,9 @@ class VerificacionCorreoServiceTest {
         verify(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), anyString());
         verify(verificacionRepository).save(any(VerificacionCorreo.class));
         if (numero == 1) {
-            verify(redisTemplate).expire(CONTADOR, 60L, TimeUnit.MINUTES);
+            verify(almacenTemporal).asignarVigencia(CONTADOR, Duration.ofMinutes(60L));
         } else {
-            verify(redisTemplate, never()).expire(anyString(), anyLong(), any(TimeUnit.class));
+            verify(almacenTemporal, never()).asignarVigencia(anyString(), any(Duration.class));
         }
     }
 
@@ -229,14 +224,15 @@ class VerificacionCorreoServiceTest {
     void reenviarCodigoRechazaMientrasHayEspera(Boolean permiso, Long ttl, long esperado) {
         encontrarUsuario();
         usarRedis();
-        when(valores.setIfAbsent(ULTIMO, "1", 60L, TimeUnit.SECONDS)).thenReturn(permiso);
-        when(redisTemplate.getExpire(ULTIMO, TimeUnit.SECONDS)).thenReturn(ttl);
+        when(almacenTemporal.guardarSiAusente(ULTIMO, "1", Duration.ofSeconds(60L)))
+                .thenReturn(Boolean.TRUE.equals(permiso));
+        when(almacenTemporal.segundosRestantes(ULTIMO)).thenReturn(ttl);
 
         var error = assertThrows(DatosInvalidosException.class, () -> service.reenviarCodigo(CORREO));
 
         assertEquals("Debes esperar " + esperado + " segundos antes de solicitar otro código.",
                 error.getMessage());
-        verify(valores, never()).increment(anyString());
+        verify(almacenTemporal, never()).incrementar(anyString());
         verificarSinEnvio();
     }
 
@@ -244,13 +240,13 @@ class VerificacionCorreoServiceTest {
     void reenviarCodigoLiberaEsperaSiContadorEsNulo() {
         encontrarUsuario();
         usarRedis();
-        when(valores.setIfAbsent(ULTIMO, "1", 60L, TimeUnit.SECONDS)).thenReturn(true);
-        when(valores.increment(CONTADOR)).thenReturn(null);
+        when(almacenTemporal.guardarSiAusente(ULTIMO, "1", Duration.ofSeconds(60L))).thenReturn(true);
+        when(almacenTemporal.incrementar(CONTADOR)).thenReturn(null);
 
         var error = assertThrows(DatosInvalidosException.class, () -> service.reenviarCodigo(CORREO));
 
         assertEquals("No se pudo verificar el límite de reenvíos.", error.getMessage());
-        verify(redisTemplate).delete(ULTIMO);
+        verify(almacenTemporal).eliminar(ULTIMO);
         verificarSinEnvio();
     }
 
@@ -262,7 +258,7 @@ class VerificacionCorreoServiceTest {
         var error = assertThrows(DatosInvalidosException.class, () -> service.reenviarCodigo(CORREO));
 
         assertEquals("Has alcanzado el máximo de 3 reenvíos por hora.", error.getMessage());
-        verify(valores).decrement(CONTADOR);
+        verify(almacenTemporal).decrementar(CONTADOR);
         verificarSinEnvio();
     }
 
@@ -275,18 +271,18 @@ class VerificacionCorreoServiceTest {
     void reenviarCodigoDevuelveCupoYLiberaEsperaSiFallaEnvio(Long contadorActual) {
         encontrarUsuario();
         permitirReenvio(2);
-        when(valores.decrement(CONTADOR)).thenReturn(contadorActual);
+        when(almacenTemporal.decrementar(CONTADOR)).thenReturn(contadorActual);
         RuntimeException fallo = new RuntimeException("Error de correo");
         doThrow(fallo).when(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), anyString());
 
         assertSame(fallo, assertThrows(RuntimeException.class, () -> service.reenviarCodigo(CORREO)));
 
-        verify(redisTemplate).delete(ULTIMO);
-        verify(valores).decrement(CONTADOR);
+        verify(almacenTemporal).eliminar(ULTIMO);
+        verify(almacenTemporal).decrementar(CONTADOR);
         if (contadorActual != null && contadorActual <= 0) {
-            verify(redisTemplate).delete(CONTADOR);
+            verify(almacenTemporal).eliminar(CONTADOR);
         } else {
-            verify(redisTemplate, never()).delete(CONTADOR);
+            verify(almacenTemporal, never()).eliminar(CONTADOR);
         }
     }
 
@@ -302,7 +298,7 @@ class VerificacionCorreoServiceTest {
                 () -> service.confirmarCodigo(CORREO, codigo));
 
         assertEquals("El código debe contener exactamente 6 dígitos.", error.getMessage());
-        verifyNoInteractions(verificacionRepository, redisTemplate);
+        verifyNoInteractions(verificacionRepository, almacenTemporal);
     }
 
     @Test
@@ -366,7 +362,7 @@ class VerificacionCorreoServiceTest {
         assertEquals(EstadoUsuario.PENDIENTE_VERIFICACION, u.getEstado());
         verify(verificacionRepository).save(v);
         verify(usuarioRepository, never()).save(any(Usuario.class));
-        verifyNoInteractions(redisTemplate);
+        verifyNoInteractions(almacenTemporal);
     }
 
     @ParameterizedTest
@@ -387,11 +383,11 @@ class VerificacionCorreoServiceTest {
                 () -> assertNotNull(u.getFechaActualizacion()),
                 () -> assertFalse(u.getFechaActualizacion().isBefore(antes)),
                 () -> assertFalse(u.getFechaActualizacion().isAfter(OffsetDateTime.now())));
-        var orden = inOrder(verificacionRepository, usuarioRepository, redisTemplate);
+        var orden = inOrder(verificacionRepository, usuarioRepository, almacenTemporal);
         orden.verify(verificacionRepository).save(v);
         orden.verify(usuarioRepository).save(u);
-        orden.verify(redisTemplate).delete(ULTIMO);
-        orden.verify(redisTemplate).delete(CONTADOR);
+        orden.verify(almacenTemporal).eliminar(ULTIMO);
+        orden.verify(almacenTemporal).eliminar(CONTADOR);
     }
 }
 

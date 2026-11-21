@@ -1,18 +1,18 @@
 
 package co.edu.unbosque.marketplace.usuario.application;
 
+import java.time.Duration;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.HexFormat;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.usuario.application.port.AlmacenTemporal;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
@@ -28,7 +28,7 @@ public class VerificacionCorreoService {
     private final VerificacionCorreoRepository verificacionRepository;
     private final UsuarioRepository usuarioRepository;
     private final ServicioCorreo servicioCorreo;
-    private final StringRedisTemplate redisTemplate;
+    private final AlmacenTemporal almacenTemporal;
     private final CorreoOutboxService correoOutboxService;
 
     private final SecureRandom random = new SecureRandom();
@@ -42,13 +42,13 @@ public class VerificacionCorreoService {
             VerificacionCorreoRepository verificacionRepository,
             UsuarioRepository usuarioRepository,
             ServicioCorreo servicioCorreo,
-            StringRedisTemplate redisTemplate,
+            AlmacenTemporal almacenTemporal,
             CorreoOutboxService correoOutboxService) {
 
         this.verificacionRepository = verificacionRepository;
         this.usuarioRepository = usuarioRepository;
         this.servicioCorreo = servicioCorreo;
-        this.redisTemplate = redisTemplate;
+        this.almacenTemporal = almacenTemporal;
         this.correoOutboxService = correoOutboxService;
     }
 
@@ -67,12 +67,7 @@ public class VerificacionCorreoService {
 
         // El primer envío establece la espera de 60 segundos.
         // No consume uno de los tres reenvíos permitidos.
-        redisTemplate.opsForValue().set(
-                claveUltimoEnvio,
-                "1",
-                ESPERA_REENVIO,
-                TimeUnit.SECONDS
-        );
+        almacenTemporal.guardar(claveUltimoEnvio, "1", Duration.ofSeconds(ESPERA_REENVIO));
 
         try {
 
@@ -80,7 +75,7 @@ public class VerificacionCorreoService {
 
         } catch (RuntimeException e) {
 
-            redisTemplate.delete(claveUltimoEnvio);
+            almacenTemporal.eliminar(claveUltimoEnvio);
 
             throw e;
         }
@@ -102,19 +97,11 @@ public class VerificacionCorreoService {
 
         // Controlar espera de 60 segundos.
         Boolean puedeReenviar =
-                redisTemplate.opsForValue().setIfAbsent(
-                        claveUltimoEnvio,
-                        "1",
-                        ESPERA_REENVIO,
-                        TimeUnit.SECONDS
-                );
+                almacenTemporal.guardarSiAusente(claveUltimoEnvio, "1", Duration.ofSeconds(ESPERA_REENVIO));
 
         if (!Boolean.TRUE.equals(puedeReenviar)) {
 
-            Long segundosRestantes = redisTemplate.getExpire(
-                    claveUltimoEnvio,
-                    TimeUnit.SECONDS
-            );
+            Long segundosRestantes = almacenTemporal.segundosRestantes(claveUltimoEnvio);
 
             throw new DatosInvalidosException(
                     "Debes esperar "
@@ -128,11 +115,11 @@ public class VerificacionCorreoService {
 
         // Incrementar contador de reenvíos.
         Long reenvios =
-                redisTemplate.opsForValue().increment(claveContador);
+                almacenTemporal.incrementar(claveContador);
 
         if (reenvios == null) {
 
-            redisTemplate.delete(claveUltimoEnvio);
+            almacenTemporal.eliminar(claveUltimoEnvio);
 
             throw new DatosInvalidosException(
                     "No se pudo verificar el límite de reenvíos."
@@ -142,17 +129,13 @@ public class VerificacionCorreoService {
         // La ventana de una hora comienza con el primer reenvío.
         if (reenvios == 1) {
 
-            redisTemplate.expire(
-                    claveContador,
-                    VENTANA_REENVIO,
-                    TimeUnit.MINUTES
-            );
+            almacenTemporal.asignarVigencia(claveContador, Duration.ofMinutes(VENTANA_REENVIO));
         }
 
         // Máximo tres reenvíos por hora.
         if (reenvios > MAX_REENVIOS) {
 
-            redisTemplate.opsForValue().decrement(claveContador);
+            almacenTemporal.decrementar(claveContador);
 
             throw new DatosInvalidosException(
                     "Has alcanzado el máximo de 3 reenvíos por hora."
@@ -167,13 +150,13 @@ public class VerificacionCorreoService {
 
             // Liberar el intervalo y devolver el cupo
             // si el envío del correo falla.
-            redisTemplate.delete(claveUltimoEnvio);
+            almacenTemporal.eliminar(claveUltimoEnvio);
 
             Long contadorActual =
-                    redisTemplate.opsForValue().decrement(claveContador);
+                    almacenTemporal.decrementar(claveContador);
 
             if (contadorActual != null && contadorActual <= 0) {
-                redisTemplate.delete(claveContador);
+                almacenTemporal.eliminar(claveContador);
             }
 
             throw e;
@@ -396,13 +379,9 @@ public class VerificacionCorreoService {
         // Limpiar controles de reenvío.
         String correoNormalizado = normalizarCorreo(correo);
 
-        redisTemplate.delete(
-                claveUltimoEnvio(correoNormalizado)
-        );
+        almacenTemporal.eliminar(claveUltimoEnvio(correoNormalizado));
 
-        redisTemplate.delete(
-                claveContadorReenvios(correoNormalizado)
-        );
+        almacenTemporal.eliminar(claveContadorReenvios(correoNormalizado));
     }
 
 }
