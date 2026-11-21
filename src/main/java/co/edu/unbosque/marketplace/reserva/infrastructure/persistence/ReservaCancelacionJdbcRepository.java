@@ -24,18 +24,9 @@ public class ReservaCancelacionJdbcRepository implements ReservaCancelacionRepos
                    r.estado AS "estado",
                    r.id_politica_aplicada AS "idPoliticaAplicada",
                    c.fecha_entrada AS "fechaEntrada",
-                   ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
-                    + c.tarifa_limpieza
-                    + ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
-                       * ct.porcentaje_servicio / 100)
-                    - ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
-                       * ct.porcentaje_descuento / 100)
-                    + COALESCE((SELECT SUM(ca.cantidad * ca.precio_aplicado)
-                                FROM public.cotizacion_adicional ca
-                                WHERE ca.id_cotizacion = c.id_cotizacion), 0)) AS "montoTotal"
+                   c.monto_total AS "montoTotal"
             FROM public.reserva r
-            JOIN public.cotizacion c ON c.id_cotizacion = r.id_cotizacion
-            JOIN public.configuracion_tarifa ct ON ct.id_configuracion = c.id_configuracion
+            JOIN public.vista_cotizacion c ON c.id_cotizacion = r.id_cotizacion
             WHERE r.id_reserva = ?
             FOR UPDATE OF r
             """;

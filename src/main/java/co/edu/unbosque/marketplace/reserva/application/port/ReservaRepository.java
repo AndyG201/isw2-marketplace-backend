@@ -23,7 +23,7 @@ public interface ReservaRepository
     @Query(value = """
             SELECT r.*
             FROM public.reserva r
-            INNER JOIN public.cotizacion c
+            INNER JOIN public.vista_cotizacion c
                 ON c.id_cotizacion = r.id_cotizacion
             WHERE r.estado = 'CONFIRMADA'
               AND c.fecha_salida <= :hoy

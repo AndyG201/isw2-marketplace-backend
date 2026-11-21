@@ -24,7 +24,7 @@ public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRep
 
     private static final String FILTROS = """
             FROM public.publicacion p
-            INNER JOIN public.alojamiento a
+            INNER JOIN public.vista_alojamiento a
                 ON a.id_alojamiento = p.id_alojamiento
             WHERE p.estado = 'ACTIVA'
               AND (CAST(:ciudad AS text) IS NULL
@@ -56,26 +56,16 @@ public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRep
                        ) AS noche(fecha)
                        WHERE NOT EXISTS (
                            SELECT 1
-                           FROM public.periodo_disponibilidad pd
+                           FROM public.vista_periodo_habilitado pd
                            WHERE pd.id_alojamiento = a.id_alojamiento
-                             AND pd.habilitado = true
                              AND pd.fecha_inicio <= CAST(noche.fecha AS date)
                              AND pd.fecha_fin > CAST(noche.fecha AS date)
                        )
                        OR EXISTS (
                            SELECT 1
-                           FROM public.noche_reservada nr
-                           INNER JOIN public.reserva_noche rn
-                               ON rn.id_noche = nr.id_noche
-                           INNER JOIN public.reserva r
-                               ON r.id_reserva = rn.id_reserva
+                           FROM public.vista_noche_ocupada nr
                            WHERE nr.id_alojamiento = a.id_alojamiento
                              AND nr.fecha = CAST(noche.fecha AS date)
-                             AND (
-                                 r.estado IN ('PENDIENTE_APROBACION', 'CONFIRMADA', 'COMPLETADA')
-                                 OR (r.estado = 'PENDIENTE_PAGO'
-                                     AND r.retencion_hasta > CURRENT_TIMESTAMP)
-                             )
                        )
                    ))
             """;

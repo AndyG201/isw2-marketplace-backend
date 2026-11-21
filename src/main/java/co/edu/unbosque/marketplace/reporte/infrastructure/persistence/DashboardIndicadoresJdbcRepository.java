@@ -38,13 +38,12 @@ public class DashboardIndicadoresJdbcRepository implements DashboardIndicadoresR
                              AND u.restringido = FALSE
                        ) AS activos,
                        COUNT(u.id_usuario) FILTER (
-                           WHERE UPPER(BTRIM(r.nombre)) = 'HUESPED'
+                           WHERE UPPER(BTRIM(u.rol)) = 'HUESPED'
                        ) AS huespedes,
                        COUNT(u.id_usuario) FILTER (
-                           WHERE UPPER(BTRIM(r.nombre)) = 'ANFITRION'
+                           WHERE UPPER(BTRIM(u.rol)) = 'ANFITRION'
                        ) AS anfitriones
-                FROM usuario u
-                LEFT JOIN rol r ON r.id_rol = u.id_rol
+                FROM public.vista_usuario u
                 """;
         return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> new IndicadoresUsuarios(
                 rs.getLong("total"),
@@ -56,7 +55,7 @@ public class DashboardIndicadoresJdbcRepository implements DashboardIndicadoresR
     @Override
     public long contarPublicacionesActivas() {
         Long cantidad = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM publicacion WHERE estado = 'ACTIVA'",
+                "SELECT COUNT(*) FROM public.vista_publicacion WHERE estado = 'ACTIVA'",
                 Long.class);
         return cantidad == null ? 0L : cantidad;
     }
@@ -67,7 +66,7 @@ public class DashboardIndicadoresJdbcRepository implements DashboardIndicadoresR
         ESTADOS_RESERVA.forEach(estado -> resultados.put(estado, 0L));
 
         jdbcTemplate.query(
-                "SELECT estado, COUNT(*) AS cantidad FROM reserva GROUP BY estado",
+                "SELECT estado, COUNT(*) AS cantidad FROM public.vista_reserva GROUP BY estado",
                 rs -> {
                     String estado = rs.getString("estado");
                     if (resultados.containsKey(estado)) {
@@ -81,7 +80,7 @@ public class DashboardIndicadoresJdbcRepository implements DashboardIndicadoresR
     public BigDecimal calcularIngresosEstimados() {
         BigDecimal total = jdbcTemplate.queryForObject("""
                 SELECT COALESCE(SUM(monto), 0)
-                FROM pago
+                FROM public.vista_pago
                 WHERE estado = 'PAGADO'
                   AND fecha_pago IS NOT NULL
                 """, BigDecimal.class);
@@ -93,9 +92,9 @@ public class DashboardIndicadoresJdbcRepository implements DashboardIndicadoresR
         return jdbcTemplate.query("""
                 SELECT COALESCE(NULLIF(BTRIM(a.ciudad), ''), 'Sin ciudad') AS ciudad,
                        COUNT(c.id_cotizacion) AS solicitudes
-                FROM cotizacion c
-                JOIN publicacion p ON p.id_publicacion = c.id_publicacion
-                JOIN alojamiento a ON a.id_alojamiento = p.id_alojamiento
+                FROM public.vista_cotizacion c
+                JOIN public.vista_publicacion p ON p.id_publicacion = c.id_publicacion
+                JOIN public.vista_alojamiento a ON a.id_alojamiento = p.id_alojamiento
                 GROUP BY COALESCE(NULLIF(BTRIM(a.ciudad), ''), 'Sin ciudad')
                 ORDER BY solicitudes DESC, ciudad ASC
                 LIMIT 10

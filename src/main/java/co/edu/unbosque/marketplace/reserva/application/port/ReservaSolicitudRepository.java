@@ -31,10 +31,10 @@ public interface ReservaSolicitudRepository
                 c.fecha_entrada AS "fechaEntrada",
                 c.fecha_salida AS "fechaSalida",
                 c.cantidad_huespedes AS "cantidadHuespedes"
-            FROM public.cotizacion c
-            INNER JOIN public.publicacion p
+            FROM public.vista_cotizacion c
+            INNER JOIN public.vista_publicacion p
                 ON p.id_publicacion = c.id_publicacion
-            INNER JOIN public.alojamiento a
+            INNER JOIN public.vista_alojamiento a
                 ON a.id_alojamiento = p.id_alojamiento
             WHERE c.id_cotizacion = :idCotizacion
             """, nativeQuery = true)

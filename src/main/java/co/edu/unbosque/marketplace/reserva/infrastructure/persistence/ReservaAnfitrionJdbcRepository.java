@@ -26,28 +26,17 @@ public class ReservaAnfitrionJdbcRepository implements ReservaAnfitrionRepositor
                    concat_ws(' ', NULLIF(trim(h.nombre), ''), NULLIF(trim(h.apellido), '')) AS "huesped",
                    c.fecha_entrada AS "fechaEntrada",
                    c.fecha_salida AS "fechaSalida",
-                   ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
-                    + c.tarifa_limpieza
-                    + ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
-                       * ct.porcentaje_servicio / 100)
-                    - ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
-                       * ct.porcentaje_descuento / 100)
-                    + COALESCE((SELECT SUM(ca.cantidad * ca.precio_aplicado)
-                                FROM public.cotizacion_adicional ca
-                                WHERE ca.id_cotizacion = c.id_cotizacion), 0))
-                       AS "montoTotal",
+                   c.monto_total AS "montoTotal",
                    r.estado AS "estado",
                    r.retencion_hasta AS "retencionHasta"
             FROM public.reserva r
-            INNER JOIN public.cotizacion c
+            INNER JOIN public.vista_cotizacion c
                 ON c.id_cotizacion = r.id_cotizacion
-            INNER JOIN public.publicacion p
+            INNER JOIN public.vista_publicacion p
                 ON p.id_publicacion = c.id_publicacion
-            INNER JOIN public.alojamiento a
+            INNER JOIN public.vista_alojamiento a
                 ON a.id_alojamiento = p.id_alojamiento
-            INNER JOIN public.configuracion_tarifa ct
-                ON ct.id_configuracion = c.id_configuracion
-            INNER JOIN public.usuario h
+            INNER JOIN public.vista_usuario h
                 ON h.id_usuario = r.id_huesped
             """;
 
