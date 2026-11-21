@@ -1,7 +1,11 @@
 package co.edu.unbosque.marketplace.cancelacion.application;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -17,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo;
 import co.edu.unbosque.marketplace.cancelacion.domain.PoliticaCancelacion;
 import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.PoliticaCancelacionRepository;
-import co.edu.unbosque.marketplace.cancelacion.api.response.*;
 
 @ExtendWith(MockitoExtension.class)
 class PoliticaCancelacionQueryServiceTest {
@@ -169,3 +172,4 @@ class PoliticaCancelacionQueryServiceTest {
         assertFalse(resultado.get().activa());
     }
 }
+
