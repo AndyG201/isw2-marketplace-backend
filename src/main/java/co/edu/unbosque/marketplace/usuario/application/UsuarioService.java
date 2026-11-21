@@ -15,8 +15,8 @@ import co.edu.unbosque.marketplace.usuario.api.request.ActualizarContrasenaReque
 import co.edu.unbosque.marketplace.usuario.api.request.RegistrarUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Rol;
+import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
-import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.RolRepository;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionContrasena;
@@ -43,7 +43,7 @@ public class UsuarioService {
 	private final ProteccionContrasena proteccionContrasena;
 	private final VerificacionCorreoService verificacionCorreoService;
 	private final StringRedisTemplate redisTemplate;
-	private final ExternalHTTPRequestMapping correoExterno;
+	private final ServicioCorreo servicioCorreo;
 	private final ApplicationEventPublisher eventPublisher;
     private final UbicacionRegistroQuery ubicacionRegistroQuery;
 
@@ -61,7 +61,7 @@ public class UsuarioService {
 	        ProteccionContrasena proteccionContrasena,
 	        VerificacionCorreoService verificacionCorreoService,
 	        StringRedisTemplate redisTemplate,
-	        ExternalHTTPRequestMapping correoExterno,
+	        ServicioCorreo servicioCorreo,
 	        ApplicationEventPublisher eventPublisher,
             UbicacionRegistroQuery ubicacionRegistroQuery) {
 
@@ -72,16 +72,16 @@ public class UsuarioService {
 	    this.proteccionContrasena = proteccionContrasena;
 	    this.verificacionCorreoService = verificacionCorreoService;
 	    this.redisTemplate = redisTemplate;
-	    this.correoExterno = correoExterno;
+	    this.servicioCorreo = servicioCorreo;
 	    this.eventPublisher = eventPublisher;
         this.ubicacionRegistroQuery = ubicacionRegistroQuery;
 	}
     public UsuarioService(JwtUtil jwtUtil, UsuarioRepository usuarioRepository, RolRepository rolRepository,
             ProteccionDocumento proteccionDocumento, ProteccionContrasena proteccionContrasena,
             VerificacionCorreoService verificacionCorreoService, StringRedisTemplate redisTemplate,
-            ExternalHTTPRequestMapping correoExterno, ApplicationEventPublisher eventPublisher) {
+            ServicioCorreo servicioCorreo, ApplicationEventPublisher eventPublisher) {
         this(jwtUtil, usuarioRepository, rolRepository, proteccionDocumento, proteccionContrasena,
-                verificacionCorreoService, redisTemplate, correoExterno, eventPublisher, null);
+                verificacionCorreoService, redisTemplate, servicioCorreo, eventPublisher, null);
     }
 
 	public int registrar(RegistrarUsuarioRequest nuevoUsuario) {
@@ -223,7 +223,7 @@ public class UsuarioService {
 		redisTemplate.opsForValue().set(clave, calcularHashCodigo(codigo), 5, TimeUnit.MINUTES);
 
 		try {
-			correoExterno.enviarCodigoRecuperacion(correoUsuario, codigo);
+			servicioCorreo.enviarCodigoRecuperacion(correoUsuario, codigo);
 			return true;
 
 		} catch (Exception e) {
@@ -387,7 +387,7 @@ public class UsuarioService {
 
 			try {
 
-				correoExterno.enviarCodigoVerificacion(correoNuevo, codigo);
+				servicioCorreo.enviarCodigoVerificacion(correoNuevo, codigo);
 
 			} catch (RuntimeException e) {
 
