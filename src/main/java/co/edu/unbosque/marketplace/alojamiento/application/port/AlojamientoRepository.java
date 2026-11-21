@@ -1,17 +1,13 @@
-
 package co.edu.unbosque.marketplace.alojamiento.application.port;
 
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
+import co.edu.unbosque.marketplace.compartido.domain.RepositorioBasico;
 import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
 
-@Repository
-public interface AlojamientoRepository
-        extends JpaRepository<Alojamiento, UUID> {
+public interface AlojamientoRepository extends RepositorioBasico<Alojamiento, UUID> {
+    List<Alojamiento> findAllById(Iterable<UUID> ids);
 
     List<Alojamiento> findByIdAnfitrion(UUID idAnfitrion);
 }

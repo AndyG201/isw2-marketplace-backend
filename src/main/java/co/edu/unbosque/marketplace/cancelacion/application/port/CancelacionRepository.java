@@ -3,13 +3,9 @@ package co.edu.unbosque.marketplace.cancelacion.application.port;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
+import co.edu.unbosque.marketplace.compartido.domain.RepositorioBasico;
 import co.edu.unbosque.marketplace.cancelacion.domain.Cancelacion;
 
-@Repository
-public interface CancelacionRepository extends JpaRepository<Cancelacion, UUID> {
-
+public interface CancelacionRepository extends RepositorioBasico<Cancelacion, UUID> {
     Optional<Cancelacion> findByIdReserva(UUID idReserva);
 }

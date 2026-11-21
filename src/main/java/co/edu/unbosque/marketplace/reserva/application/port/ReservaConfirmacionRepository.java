@@ -5,37 +5,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.persistence.LockModeType;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
+import co.edu.unbosque.marketplace.compartido.domain.RepositorioBasico;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 
-@Repository
-public interface ReservaConfirmacionRepository extends JpaRepository<Reserva, UUID> {
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select r from Reserva r where r.idReserva = :id")
-    Optional<Reserva> bloquearPorId(@Param("id") UUID id);
-
-    @Query(value = """
-            SELECT p.id_alojamiento AS "idAlojamiento",
-                   c.fecha_entrada AS "fechaEntrada",
-                   c.fecha_salida AS "fechaSalida",
-                   c.monto_total AS "montoTotal"
-            FROM public.vista_cotizacion c
-            JOIN public.vista_publicacion p ON p.id_publicacion = c.id_publicacion
-            WHERE c.id_cotizacion = :idCotizacion
-            """, nativeQuery = true)
-    Optional<ReservaConfirmacionDatos> consultarDatos(@Param("idCotizacion") UUID idCotizacion);
-
-    @Query(value = """
-            SELECT r.id_reserva FROM public.reserva r
-            WHERE r.estado = 'PENDIENTE_PAGO'
-              AND r.retencion_hasta IS NOT NULL
-              AND r.retencion_hasta <= :ahora
-            """, nativeQuery = true)
-    List<UUID> buscarRetencionesVencidas(@Param("ahora") OffsetDateTime ahora);
+public interface ReservaConfirmacionRepository extends RepositorioBasico<Reserva, UUID> {
+    Optional<Reserva> bloquearPorId(UUID id);
+    Optional<ReservaConfirmacionDatos> consultarDatos(UUID idCotizacion);
+    List<UUID> buscarRetencionesVencidas(OffsetDateTime ahora);
 }

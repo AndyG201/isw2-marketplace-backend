@@ -5,28 +5,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
+import co.edu.unbosque.marketplace.compartido.domain.RepositorioBasico;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 
-@Repository
-public interface ReservaRepository
-        extends JpaRepository<Reserva, UUID> {
+public interface ReservaRepository extends RepositorioBasico<Reserva, UUID> {
+    <S extends Reserva> List<S> saveAllAndFlush(Iterable<S> entidades);
 
-    List<Reserva> findByIdCotizacionIn(
-            Collection<UUID> idsCotizaciones
-    );
-
-    @Query(value = """
-            SELECT r.*
-            FROM public.reserva r
-            INNER JOIN public.vista_cotizacion c
-                ON c.id_cotizacion = r.id_cotizacion
-            WHERE r.estado = 'CONFIRMADA'
-              AND c.fecha_salida <= :hoy
-            """, nativeQuery = true)
-    List<Reserva> buscarConfirmadasFinalizadas(@Param("hoy") LocalDate hoy);
+    List<Reserva> findByIdCotizacionIn(Collection<UUID> idsCotizaciones);
+    List<Reserva> buscarConfirmadasFinalizadas(LocalDate hoy);
 }

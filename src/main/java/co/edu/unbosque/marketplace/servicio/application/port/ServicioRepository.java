@@ -1,15 +1,14 @@
-
 package co.edu.unbosque.marketplace.servicio.application.port;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-import co.edu.unbosque.marketplace.servicio.domain.Servicio;
-
+import java.util.List;
 import java.util.UUID;
 
-@Repository
-public interface ServicioRepository
-        extends JpaRepository<Servicio, UUID> {
+import org.springframework.data.domain.Sort;
 
+import co.edu.unbosque.marketplace.compartido.domain.RepositorioBasico;
+import co.edu.unbosque.marketplace.servicio.domain.Servicio;
+
+public interface ServicioRepository extends RepositorioBasico<Servicio, UUID> {
+    List<Servicio> findAllById(Iterable<UUID> ids);
+    List<Servicio> findAll(Sort sort);
 }

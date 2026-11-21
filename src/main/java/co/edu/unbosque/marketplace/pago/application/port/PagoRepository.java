@@ -3,13 +3,10 @@ package co.edu.unbosque.marketplace.pago.application.port;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
+import co.edu.unbosque.marketplace.compartido.domain.RepositorioBasico;
 import co.edu.unbosque.marketplace.pago.domain.Pago;
 
-@Repository
-public interface PagoRepository extends JpaRepository<Pago, UUID> {
+public interface PagoRepository extends RepositorioBasico<Pago, UUID> {
     Optional<Pago> findByClaveIdempotencia(String claveIdempotencia);
     Optional<Pago> findFirstByIdReservaOrderByFechaCreacionDesc(UUID idReserva);
 }
