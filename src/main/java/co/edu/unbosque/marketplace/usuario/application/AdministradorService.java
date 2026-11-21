@@ -2,7 +2,9 @@
 package co.edu.unbosque.marketplace.usuario.application;
 
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,20 +17,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
+import co.edu.unbosque.marketplace.usuario.api.request.ModificarDocumentoRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.RestringirUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.api.response.AdministradorUsuarioResponse;
 import co.edu.unbosque.marketplace.usuario.contracts.CuentaRestringidaEvent;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.security.JwtUtil;
+import co.edu.unbosque.marketplace.usuario.security.ProteccionDocumento;
 
 @Service
 public class AdministradorService {
+
+	private static final String[] TIPOS_DOCUMENTO = { "CC", "CE", "TI", "PASAPORTE" };
 
 	private final UsuarioRepository usuarioRepository;
 	private final JwtUtil jwtUtil;
 	private final ApplicationEventPublisher eventPublisher;
 	private AuditoriaEventoCommand auditoria;
+	private ProteccionDocumento proteccionDocumento;
 
 	public AdministradorService(UsuarioRepository usuarioRepository, JwtUtil jwtUtil,
 			ApplicationEventPublisher eventPublisher) {
@@ -41,6 +48,53 @@ public class AdministradorService {
 	@Autowired
 	public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
 		this.auditoria = auditoria;
+	}
+
+	@Autowired
+	public void configurarProteccionDocumento(ProteccionDocumento proteccionDocumento) {
+		this.proteccionDocumento = proteccionDocumento;
+	}
+
+	@Transactional
+	public void modificarDocumento(UUID idUsuario, ModificarDocumentoRequest solicitud) {
+
+		if (idUsuario == null || solicitud == null || solicitud.tipoDocumento() == null
+				|| solicitud.documentoIdentidad() == null || solicitud.documentoIdentidad().isBlank()) {
+			throw new IllegalArgumentException("Debes proporcionar el tipo y el número de documento.");
+		}
+
+		String tipo = solicitud.tipoDocumento().trim().toUpperCase(Locale.ROOT);
+		if (Arrays.stream(TIPOS_DOCUMENTO).noneMatch(tipo::equals)) {
+			throw new IllegalArgumentException("El tipo de documento debe ser CC, CE, TI o PASAPORTE.");
+		}
+
+		Usuario usuario = usuarioRepository.findById(idUsuario)
+				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+		ProteccionDocumento.DatosDocumento datos = proteccionDocumento
+				.protegerDocumento(tipo, solicitud.documentoIdentidad());
+
+		if (Arrays.equals(datos.documentoHash(), usuario.getDocumentoHash())) {
+			throw new IllegalStateException("La cuenta ya tiene registrado ese documento.");
+		}
+
+		if (usuarioRepository.existsByDocumentoHash(datos.documentoHash())) {
+			throw new IllegalStateException("Ya existe otra cuenta con ese documento.");
+		}
+
+		String tipoAnterior = usuario.getTipoDocumento();
+		OffsetDateTime ahora = OffsetDateTime.now();
+
+		usuario.setTipoDocumento(tipo);
+		usuario.setDocumentoCifrado(datos.documentoCifrado());
+		usuario.setDocumentoNonce(datos.documentoNonce());
+		usuario.setDocumentoHash(datos.documentoHash());
+		usuario.setFechaActualizacion(ahora);
+
+		usuarioRepository.save(usuario);
+		registrarAuditoria(actorActual(), idUsuario, "MODIFICAR_DOCUMENTO_USUARIO", ahora,
+				"{\"campo\":\"DOCUMENTO\",\"tipoAnterior\":\"" + tipoAnterior
+						+ "\",\"tipoNuevo\":\"" + tipo + "\"}");
 	}
 
 	@Transactional
@@ -128,10 +182,14 @@ public class AdministradorService {
 	}
 
 	private void registrarAuditoria(UUID actor, UUID usuarioAfectado, String accion, OffsetDateTime fecha) {
+		registrarAuditoria(actor, usuarioAfectado, accion, fecha, "{\"resultado\":\"COMPLETADO\"}");
+	}
+
+	private void registrarAuditoria(UUID actor, UUID usuarioAfectado, String accion, OffsetDateTime fecha,
+			String detalle) {
 		if (auditoria != null) {
 			auditoria.registrarEvento(new RegistrarEventoAuditoria(
-					actor, fecha, accion, "EXITOSO", "USUARIO", usuarioAfectado,
-					"{\"resultado\":\"COMPLETADO\"}", null));
+					actor, fecha, accion, "EXITOSO", "USUARIO", usuarioAfectado, detalle, null));
 		}
 	}
 

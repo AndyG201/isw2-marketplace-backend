@@ -7,8 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -24,9 +28,11 @@ import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionI
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
+import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAdministracionResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionPublicaResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.ServicioAdicionalPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.api.response.SolicitudCambioResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 
@@ -52,12 +58,15 @@ class PublicacionDetallePublicoServiceTest {
     @Mock
     private PoliticaCancelacionQuery politicaQuery;
 
+    @Mock
+    private CambiosPublicacionService cambios;
+
     private PublicacionDetallePublicoService servicio;
 
     @BeforeEach
     void preparar() {
         servicio = new PublicacionDetallePublicoService(
-                publicacionRepository, alojamientoQuery, consultaService, adicionalesService, politicaQuery);
+                publicacionRepository, alojamientoQuery, consultaService, adicionalesService, politicaQuery, cambios);
     }
 
     private Publicacion publicacion(String estado) {
@@ -88,6 +97,7 @@ class PublicacionDetallePublicoServiceTest {
         PublicacionPublicaResponse respuesta = servicio.consultar(PUBLICACION);
 
         assertSame(detalle, respuesta.publicacion());
+        verify(detalle, never()).conPropietario(any());
         assertEquals(adicionales, respuesta.serviciosAdicionales());
         assertEquals("Flexible", respuesta.politica().getNombre());
         assertEquals(PUBLICACION, respuesta.politica().getIdPublicacion());
@@ -135,7 +145,7 @@ class PublicacionDetallePublicoServiceTest {
         when(publicacion.getIdAlojamiento()).thenReturn(ALOJAMIENTO);
         when(publicacion.getIdPolitica()).thenReturn(POLITICA);
         AlojamientoPublicacionInfo alojamiento = new AlojamientoPublicacionInfo(
-                ALOJAMIENTO, UUID.randomUUID(), "Calle 1", "Bogotá", "Casa", 4);
+                ALOJAMIENTO, UUID.randomUUID(), "Calle 1", "Bogotá", "Casa", 4, 1, 1, 1, "Ana Gómez");
         PublicacionDetalleResponse detalle = mock(PublicacionDetalleResponse.class);
         List<ServicioAdicionalPublicacionResponse> adicionales = List.of(
                 new ServicioAdicionalPublicacionResponse(
@@ -147,11 +157,17 @@ class PublicacionDetallePublicoServiceTest {
         when(adicionalesService.consultarRegistrados(PUBLICACION)).thenReturn(adicionales);
         when(politicaQuery.consultarPorId(POLITICA)).thenReturn(Optional.empty());
 
-        PublicacionPublicaResponse respuesta = servicio.consultarParaAdministracion(PUBLICACION);
+        SolicitudCambioResponse solicitud = new SolicitudCambioResponse(
+                "Cambié las fotos", List.of("Fotos"), "ACTIVA", OffsetDateTime.now());
+        when(cambios.pendiente(PUBLICACION)).thenReturn(Optional.of(solicitud));
+
+        PublicacionAdministracionResponse respuesta = servicio.consultarParaAdministracion(PUBLICACION);
 
         assertSame(detalle, respuesta.publicacion());
+        verify(detalle).conPropietario("Ana Gómez");
         assertEquals(adicionales, respuesta.serviciosAdicionales());
         assertNull(respuesta.politica());
+        assertSame(solicitud, respuesta.solicitudCambios());
     }
 
     @Test

@@ -13,6 +13,8 @@ import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQ
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.publicacion.api.response.PoliticaCancelacionPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAdministracionResponse;
+import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionPublicaResponse;
 import co.edu.unbosque.marketplace.publicacion.api.response.ServicioAdicionalPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
@@ -28,19 +30,22 @@ public class PublicacionDetallePublicoService {
     private final PublicacionConsultaService consultaService;
     private final PublicacionServiciosAdicionalesSeleccionService adicionalesService;
     private final PoliticaCancelacionQuery politicaQuery;
+    private final CambiosPublicacionService cambios;
 
     public PublicacionDetallePublicoService(
             PublicacionRepository publicacionRepository,
             AlojamientoPublicacionQuery alojamientoQuery,
             PublicacionConsultaService consultaService,
             PublicacionServiciosAdicionalesSeleccionService adicionalesService,
-            PoliticaCancelacionQuery politicaQuery) {
+            PoliticaCancelacionQuery politicaQuery,
+            CambiosPublicacionService cambios) {
 
         this.publicacionRepository = publicacionRepository;
         this.alojamientoQuery = alojamientoQuery;
         this.consultaService = consultaService;
         this.adicionalesService = adicionalesService;
         this.politicaQuery = politicaQuery;
+        this.cambios = cambios;
     }
 
     @Transactional(readOnly = true)
@@ -55,12 +60,19 @@ public class PublicacionDetallePublicoService {
     }
 
     @Transactional(readOnly = true)
-    public PublicacionPublicaResponse consultarParaAdministracion(UUID idPublicacion) {
+    public PublicacionAdministracionResponse consultarParaAdministracion(UUID idPublicacion) {
 
         Publicacion publicacion = buscar(idPublicacion)
                 .orElseThrow(() -> new NoSuchElementException("La publicación no existe."));
 
-        return armar(idPublicacion, publicacion, adicionalesService.consultarRegistrados(idPublicacion));
+        PublicacionPublicaResponse detalle =
+                armar(idPublicacion, publicacion, adicionalesService.consultarRegistrados(idPublicacion), true);
+
+        return new PublicacionAdministracionResponse(
+                detalle.publicacion(),
+                detalle.serviciosAdicionales(),
+                detalle.politica(),
+                cambios.pendiente(idPublicacion).orElse(null));
     }
 
     private Optional<Publicacion> buscar(UUID idPublicacion) {
@@ -75,6 +87,15 @@ public class PublicacionDetallePublicoService {
             Publicacion publicacion,
             List<ServicioAdicionalPublicacionResponse> adicionales) {
 
+        return armar(idPublicacion, publicacion, adicionales, false);
+    }
+
+    private PublicacionPublicaResponse armar(
+            UUID idPublicacion,
+            Publicacion publicacion,
+            List<ServicioAdicionalPublicacionResponse> adicionales,
+            boolean incluirPropietario) {
+
         AlojamientoPublicacionInfo alojamiento = alojamientoQuery
                 .consultarDatosParaPublicacion(publicacion.getIdAlojamiento())
                 .orElseThrow(() -> new IllegalStateException(
@@ -85,10 +106,12 @@ public class PublicacionDetallePublicoService {
                 .map(info -> convertirPolitica(idPublicacion, info))
                 .orElse(null);
 
-        return new PublicacionPublicaResponse(
-                consultaService.armarDetalle(publicacion, alojamiento),
-                adicionales,
-                politica);
+        PublicacionDetalleResponse detalle = consultaService.armarDetalle(publicacion, alojamiento);
+        if (incluirPropietario && detalle != null) {
+            detalle.conPropietario(alojamiento.propietarioInmueble());
+        }
+
+        return new PublicacionPublicaResponse(detalle, adicionales, politica);
     }
 
     private static PoliticaCancelacionPublicacionResponse convertirPolitica(

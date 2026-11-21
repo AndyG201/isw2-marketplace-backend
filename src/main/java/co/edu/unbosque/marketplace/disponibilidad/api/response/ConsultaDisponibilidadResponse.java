@@ -10,10 +10,12 @@ public record ConsultaDisponibilidadResponse(
         LocalDate fechaFin,
         boolean disponible,
         boolean cubiertoPorPeriodosDisponibles,
-        List<LocalDate> nochesOcupadas
+        List<LocalDate> nochesOcupadas,
+        List<RangoDisponibleResponse> periodosDisponibles
 ) {
 
     public ConsultaDisponibilidadResponse {
         nochesOcupadas = List.copyOf(nochesOcupadas);
+        periodosDisponibles = List.copyOf(periodosDisponibles);
     }
 }

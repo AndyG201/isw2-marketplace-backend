@@ -152,7 +152,8 @@ public class PublicacionConsultaService {
                         new IllegalStateException(
                                 "No se encontró el alojamiento asociado."));
 
-        return armarDetalle(publicacion, alojamiento);
+        return armarDetalle(publicacion, alojamiento)
+                .conPropietario(alojamiento.propietarioInmueble());
     }
 
     PublicacionDetalleResponse armarDetalle(

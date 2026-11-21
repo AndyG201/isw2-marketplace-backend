@@ -2,6 +2,7 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,6 +46,9 @@ import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 @Service
 public class PublicacionEdicionService {
 
+    private static final String EN_REVISION = "PENDIENTE_REVISION";
+    private static final Set<String> ESTADOS_SIN_EDICION = Set.of(EN_REVISION, "BLOQUEADA");
+
     private static final Logger logger =
             LoggerFactory.getLogger(PublicacionEdicionService.class);
 
@@ -60,6 +64,7 @@ public class PublicacionEdicionService {
     private final PoliticaCancelacionQuery politicaCancelacionQuery;
 
     private final AlmacenamientoImagenService almacenamientoImagenService;
+    private final CambiosPublicacionService cambios;
     private AuditoriaEventoCommand auditoria;
 
     public PublicacionEdicionService(
@@ -72,7 +77,8 @@ public class PublicacionEdicionService {
             UsuarioPublicacionQuery usuarioPublicacionQuery,
             ServicioPublicacionQuery servicioPublicacionQuery,
             PoliticaCancelacionQuery politicaCancelacionQuery,
-            AlmacenamientoImagenService almacenamientoImagenService) {
+            AlmacenamientoImagenService almacenamientoImagenService,
+            CambiosPublicacionService cambios) {
 
         this.publicacionRepository = publicacionRepository;
         this.publicacionServicioRepository = publicacionServicioRepository;
@@ -84,6 +90,7 @@ public class PublicacionEdicionService {
         this.servicioPublicacionQuery = servicioPublicacionQuery;
         this.politicaCancelacionQuery = politicaCancelacionQuery;
         this.almacenamientoImagenService = almacenamientoImagenService;
+        this.cambios = cambios;
     }
 
     @Autowired
@@ -113,6 +120,25 @@ public class PublicacionEdicionService {
                                 "No se encontró el alojamiento asociado."));
 
         validarPermisos(idActor, alojamiento);
+
+        String estadoAnterior = publicacion.getEstado();
+        if (estadoAnterior != null && ESTADOS_SIN_EDICION.contains(estadoAnterior)) {
+            throw new IllegalStateException(
+                    "No puedes editar una publicación en revisión o bloqueada.");
+        }
+
+        List<String> camposEnRevision =
+                !usuarioAdministracionQuery.esAdministrador(idActor)
+                        && cambios.requiereRevision(estadoAnterior)
+                        ? cambios.camposSensiblesModificados(publicacion, alojamiento, solicitud)
+                        : List.of();
+        String mensajeCambios = camposEnRevision.isEmpty()
+                ? null
+                : cambios.validarMensaje(solicitud.getMensajeCambios());
+
+        if (solicitud.getCapacidad() < alojamiento.capacidad()) {
+            cambios.validarCapacidad(idPublicacion, solicitud.getCapacidad(), LocalDate.now());
+        }
 
         if (!politicaCancelacionQuery.existePoliticaActiva(
                 solicitud.getIdPolitica())) {
@@ -148,7 +174,10 @@ public class PublicacionEdicionService {
                         solicitud.getCapacidad(),
                         solicitud.getHabitaciones(),
                         solicitud.getCamas(),
-                        solicitud.getBanos()
+                        solicitud.getBanos(),
+                        solicitud.getPropietarioInmueble(),
+                        solicitud.getPais(),
+                        solicitud.getCodigoPais()
                 )
         );
 
@@ -165,6 +194,12 @@ public class PublicacionEdicionService {
                         .toUpperCase(Locale.ROOT));
         publicacion.setIdPolitica(solicitud.getIdPolitica());
         publicacion.setFechaActualizacion(ahora);
+
+        if (!camposEnRevision.isEmpty()) {
+            publicacion.setEstado(EN_REVISION);
+            cambios.registrarSolicitud(
+                    idPublicacion, idActor, mensajeCambios, camposEnRevision, estadoAnterior, ahora);
+        }
 
         publicacionRepository.save(publicacion);
 

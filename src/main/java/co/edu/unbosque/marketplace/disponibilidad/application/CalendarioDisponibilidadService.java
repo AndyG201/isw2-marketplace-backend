@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.disponibilidad.api.response.CalendarioDisponibilidadResponse;
 import co.edu.unbosque.marketplace.disponibilidad.api.response.ConsultaDisponibilidadResponse;
+import co.edu.unbosque.marketplace.disponibilidad.api.response.RangoDisponibleResponse;
 import co.edu.unbosque.marketplace.disponibilidad.api.response.PeriodoDisponibilidadResponse;
 import co.edu.unbosque.marketplace.disponibilidad.domain.NocheReservada;
 import co.edu.unbosque.marketplace.disponibilidad.domain.PeriodoDisponibilidad;
@@ -103,7 +104,12 @@ public class CalendarioDisponibilidadService {
                 fechaFin,
                 disponible,
                 cubierto,
-                nochesOcupadas
+                nochesOcupadas,
+                periodosDisponibles.stream()
+                        .map(periodo -> new RangoDisponibleResponse(
+                                periodo.getFechaInicio(),
+                                periodo.getFechaFin()))
+                        .toList()
         );
     }
 

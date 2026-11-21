@@ -17,6 +17,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import co.edu.unbosque.marketplace.usuario.api.request.ModificarDocumentoRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.RestringirUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.api.response.AdministradorUsuarioResponse;
 import co.edu.unbosque.marketplace.usuario.application.AdministradorService;
@@ -210,6 +211,58 @@ public class AdministradorUsuarioController {
         }
     }
 
+
+    @Operation(
+        operationId = "modificarDocumentoUsuario",
+        summary = "Modificar documento de usuario",
+        description = "Permite al administrador actualizar la información del documento de identificación de un usuario."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Documento actualizado correctamente.",
+            content = @Content(
+                mediaType = "text/plain",
+                schema = @Schema(implementation = String.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Los datos del documento no son válidos."
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Existe un conflicto que impide actualizar el documento."
+        )
+    })
+    @PatchMapping("/{idUsuario}/documento")
+    public ResponseEntity<String> modificarDocumento(
+            @Parameter(
+                description = "Identificador UUID del usuario.",
+                required = true
+            )
+            @PathVariable UUID idUsuario,
+
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Información del documento que se desea actualizar.",
+                required = true
+            )
+            @Valid @RequestBody ModificarDocumentoRequest solicitud) {
+
+        try {
+            administradorService.modificarDocumento(idUsuario, solicitud);
+
+            return ResponseEntity.ok(
+                    "El documento de la cuenta se actualizó correctamente.");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
+        }
+    }
+
     @Operation(
         operationId = "consultarUsuariosAdministracion",
         summary = "Consultar usuarios",
@@ -229,6 +282,16 @@ public class AdministradorUsuarioController {
             )
         )
     })
+    @GetMapping
+    public ResponseEntity<List<AdministradorUsuarioResponse>> consultarUsuarios() {
+
+        List<AdministradorUsuarioResponse> usuarios =
+                administradorService.consultarUsuarios();
+
+        return ResponseEntity.ok(usuarios);
+    }
+}
+
     @GetMapping
     public ResponseEntity<List<AdministradorUsuarioResponse>> consultarUsuarios() {
 

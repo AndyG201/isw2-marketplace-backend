@@ -46,7 +46,8 @@ final class ResumenesPublicacion {
                 publicacion.getPrecioPorNoche(),
                 publicacion.getEstado(),
                 publicacion.getFechaCreacion(),
-                portadas.get(publicacion.getIdPublicacion()));
+                portadas.get(publicacion.getIdPublicacion()))
+                .conPais(alojamiento.pais(), alojamiento.codigoPais());
     }
 
     static Map<UUID, String> consultar(

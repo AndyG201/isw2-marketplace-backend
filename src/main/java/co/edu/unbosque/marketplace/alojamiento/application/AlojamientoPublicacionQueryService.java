@@ -74,6 +74,7 @@ public class AlojamientoPublicacionQueryService implements AlojamientoPublicacio
 		return new AlojamientoPublicacionInfo(alojamiento.getIdAlojamiento(), alojamiento.getIdAnfitrion(),
 				alojamiento.getUbicacion(), alojamiento.getCiudad(), alojamiento.getTipoAlojamiento(),
 				alojamiento.getCapacidad(), alojamiento.getHabitaciones(), alojamiento.getCamas(),
-				alojamiento.getBanos());
+				alojamiento.getBanos(), alojamiento.getPropietarioInmueble(), alojamiento.getPais(),
+				alojamiento.getCodigoPais());
 	}
 }

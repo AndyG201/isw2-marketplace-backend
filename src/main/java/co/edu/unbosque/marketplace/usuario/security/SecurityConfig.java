@@ -78,6 +78,10 @@ public class SecurityConfig {
 
 						// Administración de usuarios.
 
+						.requestMatchers(HttpMethod.GET, "/administracion/usuarios", "/administracion/publicaciones",
+								"/administracion/dashboard/indicadores")
+						.hasAnyAuthority("ROLE_ADMINISTRADOR", "ROLE_AUDITOR_OPERACION")
+
 						.requestMatchers("/administracion/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
 				.requestMatchers("/administracion/reportes/**").hasAuthority("ROLE_ADMINISTRADOR")
 				.requestMatchers("/administracion/auditoria/**")

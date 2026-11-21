@@ -44,6 +44,9 @@ import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 class PublicacionEdicionServiceTest {
 
     @Mock
+    private CambiosPublicacionService cambios;
+
+    @Mock
     private PublicacionRepository publicacionRepository;
 
     @Mock
@@ -94,7 +97,8 @@ class PublicacionEdicionServiceTest {
                 usuarioPublicacionQuery,
                 servicioPublicacionQuery,
                 politicaCancelacionQuery,
-                almacenamientoImagenService
+                almacenamientoImagenService,
+                cambios
         );
     }
 
@@ -396,5 +400,96 @@ class PublicacionEdicionServiceTest {
                 .findByIdPublicacionOrderByOrdenAsc(idPublicacion);
 
         verifyNoInteractions(almacenamientoImagenService);
+    }
+
+    private void configurarEdicionValida(Publicacion publicacion, AlojamientoPublicacionInfo alojamiento) {
+        configurarPublicacionYPermisos(publicacion, alojamiento);
+        when(politicaCancelacionQuery.existePoliticaActiva(idPolitica)).thenReturn(true);
+        when(servicioPublicacionQuery.consultarPorIds(anySet())).thenReturn(List.of(mock(ServicioInfo.class)));
+        when(publicacionServicioRepository.findByIdPublicacion(idPublicacion)).thenReturn(List.of());
+        when(imagenRepository.findByIdPublicacionOrderByOrdenAsc(idPublicacion)).thenReturn(List.of());
+    }
+
+    @Test
+    void cambiarDatosRevisadosDeUnaPublicacionActivaLaEnviaARevisionConElMensaje() {
+        EditarPublicacionRequest solicitud = crearSolicitudValida();
+        when(solicitud.getMensajeCambios()).thenReturn("Cambié el título para ser más claro");
+        Publicacion publicacion = crearPublicacion();
+        when(publicacion.getEstado()).thenReturn("PAUSADA");
+        AlojamientoPublicacionInfo alojamiento = crearAlojamiento();
+        configurarEdicionValida(publicacion, alojamiento);
+        when(cambios.requiereRevision("PAUSADA")).thenReturn(true);
+        when(cambios.camposSensiblesModificados(publicacion, alojamiento, solicitud))
+                .thenReturn(List.of("Título"));
+        when(cambios.validarMensaje("Cambié el título para ser más claro"))
+                .thenReturn("Cambié el título para ser más claro");
+
+        service.actualizarPublicacion(idAnfitrion, idPublicacion, solicitud);
+
+        verify(publicacion).setEstado("PENDIENTE_REVISION");
+        verify(cambios).registrarSolicitud(eq(idPublicacion), eq(idAnfitrion),
+                eq("Cambié el título para ser más claro"), eq(List.of("Título")), eq("PAUSADA"), any());
+    }
+
+    @Test
+    void sinCambiosRevisadosNoPideMensajeNiCambiaElEstado() {
+        EditarPublicacionRequest solicitud = crearSolicitudValida();
+        Publicacion publicacion = crearPublicacion();
+        when(publicacion.getEstado()).thenReturn("ACTIVA");
+        AlojamientoPublicacionInfo alojamiento = crearAlojamiento();
+        configurarEdicionValida(publicacion, alojamiento);
+        when(cambios.requiereRevision("ACTIVA")).thenReturn(true);
+        when(cambios.camposSensiblesModificados(publicacion, alojamiento, solicitud)).thenReturn(List.of());
+
+        service.actualizarPublicacion(idAnfitrion, idPublicacion, solicitud);
+
+        verify(publicacion, never()).setEstado(anyString());
+        verify(cambios, never()).validarMensaje(any());
+        verify(cambios, never()).registrarSolicitud(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void elAdministradorPuedeEditarSinEnviarARevision() {
+        EditarPublicacionRequest solicitud = crearSolicitudValida();
+        Publicacion publicacion = crearPublicacion();
+        when(publicacion.getEstado()).thenReturn("ACTIVA");
+        AlojamientoPublicacionInfo alojamiento = crearAlojamiento();
+        configurarEdicionValida(publicacion, alojamiento);
+        when(usuarioAdministracionQuery.esAdministrador(idAnfitrion)).thenReturn(true);
+
+        service.actualizarPublicacion(idAnfitrion, idPublicacion, solicitud);
+
+        verify(cambios, never()).camposSensiblesModificados(any(), any(), any());
+        verify(publicacion, never()).setEstado(anyString());
+    }
+
+    @Test
+    void noPermiteEditarUnaPublicacionEnRevisionOBloqueada() {
+        for (String estado : List.of("PENDIENTE_REVISION", "BLOQUEADA")) {
+            EditarPublicacionRequest solicitud = crearSolicitudValida();
+            Publicacion publicacion = crearPublicacion();
+            when(publicacion.getEstado()).thenReturn(estado);
+            configurarPublicacionYPermisos(publicacion, crearAlojamiento());
+
+            assertThrows(IllegalStateException.class,
+                    () -> service.actualizarPublicacion(idAnfitrion, idPublicacion, solicitud));
+        }
+        verifyNoInteractions(alojamientoCommand);
+    }
+
+    @Test
+    void alBajarLaCapacidadRevisaLasReservasFuturas() {
+        EditarPublicacionRequest solicitud = crearSolicitudValida();
+        Publicacion publicacion = crearPublicacion();
+        AlojamientoPublicacionInfo alojamiento = crearAlojamiento();
+        when(alojamiento.capacidad()).thenReturn(6);
+        configurarEdicionValida(publicacion, alojamiento);
+        doThrow(new IllegalArgumentException("No puedes bajar la capacidad."))
+                .when(cambios).validarCapacidad(eq(idPublicacion), eq(3), any());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.actualizarPublicacion(idAnfitrion, idPublicacion, solicitud));
+
+        verifyNoInteractions(alojamientoCommand);
     }
 }

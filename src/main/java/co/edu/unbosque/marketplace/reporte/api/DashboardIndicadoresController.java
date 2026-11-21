@@ -1,6 +1,7 @@
 package co.edu.unbosque.marketplace.reporte.api;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 @SecurityRequirement(name = "bearerAuth")
 public class DashboardIndicadoresController {
 
+    private static final Set<String> ROLES_CON_ACCESO =
+            Set.of("ROLE_ADMINISTRADOR", "ROLE_AUDITOR_OPERACION");
+
     private final DashboardIndicadoresService dashboard;
 
     public DashboardIndicadoresController(DashboardIndicadoresService dashboard) {
@@ -26,13 +30,14 @@ public class DashboardIndicadoresController {
 
     @GetMapping("/indicadores")
     public ResponseEntity<?> consultar(Authentication autenticacion) {
-        boolean esAdministrador = autenticacion != null
+        boolean autorizado = autenticacion != null
                 && autenticacion.getAuthorities().stream()
-                        .anyMatch(autoridad -> "ROLE_ADMINISTRADOR".equals(autoridad.getAuthority()));
+                        .anyMatch(autoridad -> ROLES_CON_ACCESO.contains(autoridad.getAuthority()));
 
-        if (!esAdministrador) {
+        if (!autorizado) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("mensaje", "Solo un administrador puede consultar el dashboard."));
+                    .body(Map.of("mensaje",
+                            "Solo un administrador o un auditor de operación puede consultar el dashboard."));
         }
 
         DashboardIndicadoresResponse respuesta = dashboard.consultar();
