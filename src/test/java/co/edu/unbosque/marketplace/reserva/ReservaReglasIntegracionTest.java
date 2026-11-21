@@ -284,6 +284,22 @@ class ReservaReglasIntegracionTest {
     }
 
     @Test
+    void unEventoRepetidoDespuesDelVencimientoNoDebeVolverARetenerLaSolicitud() throws Exception {
+        EscenarioReservaPrueba escenario = escenario("APROBACION");
+        UUID solicitud = escenario.solicitarReserva(
+                escenario.idHuesped,
+                escenario.nuevaCotizacion(30, 2));
+
+        assertEquals(2, escenario.nochesOcupadas());
+        escenario.vencerRetencion(solicitud);
+
+        retenciones.retenerSolicitud(evento(escenario, solicitud));
+
+        assertEquals("RECHAZADA", escenario.estadoReserva(solicitud));
+        assertEquals(0, escenario.nochesOcupadas());
+    }
+
+    @Test
     void consultarReservasValidaSesionYPropietario() throws Exception {
         EscenarioReservaPrueba escenario = escenario("INMEDIATA");
         UUID reserva = escenario.solicitarReserva(escenario.idHuesped, escenario.nuevaCotizacion(30, 2));
