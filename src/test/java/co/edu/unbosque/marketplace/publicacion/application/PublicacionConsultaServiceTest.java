@@ -266,6 +266,25 @@ class PublicacionConsultaServiceTest {
     }
 
     @Test
+    void consultarDetalleFallaSiElAlojamientoAsociadoNoEstaEntreLosDelAnfitrion() {
+
+        AlojamientoPublicacionInfo alojamiento = crearAlojamientoInfo();
+        when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
+                .thenReturn(List.of(alojamiento));
+
+        Publicacion publicacion = mock(Publicacion.class);
+        when(publicacion.getIdAlojamiento()).thenReturn(UUID.randomUUID());
+        when(publicacionRepository.findByIdPublicacionAndIdAlojamientoIn(
+                idPublicacion, List.of(idAlojamiento)))
+                .thenReturn(Optional.of(publicacion));
+
+        assertThrows(
+                co.edu.unbosque.marketplace.compartido.domain.FallaInternaException.class,
+                () -> service.consultarDetalle(idAnfitrion, idPublicacion)
+        );
+    }
+
+    @Test
     void consultarDetalleCorrectamente() {
 
         AlojamientoPublicacionInfo alojamiento =
