@@ -43,3 +43,5 @@ uploads/
 # Logs
 *.log
 logs/
+
+/application-local.properties

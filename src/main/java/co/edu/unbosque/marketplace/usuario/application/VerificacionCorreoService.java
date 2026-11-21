@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
-import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
+import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.VerificacionCorreoRepository;
 
@@ -25,7 +25,7 @@ public class VerificacionCorreoService {
 
     private final VerificacionCorreoRepository verificacionRepository;
     private final UsuarioRepository usuarioRepository;
-    private final ExternalHTTPRequestMapping correoExterno;
+    private final ServicioCorreo servicioCorreo;
     private final StringRedisTemplate redisTemplate;
 
     private final SecureRandom random = new SecureRandom();
@@ -38,12 +38,12 @@ public class VerificacionCorreoService {
     public VerificacionCorreoService(
             VerificacionCorreoRepository verificacionRepository,
             UsuarioRepository usuarioRepository,
-            ExternalHTTPRequestMapping correoExterno,
+            ServicioCorreo servicioCorreo,
             StringRedisTemplate redisTemplate) {
 
         this.verificacionRepository = verificacionRepository;
         this.usuarioRepository = usuarioRepository;
-        this.correoExterno = correoExterno;
+        this.servicioCorreo = servicioCorreo;
         this.redisTemplate = redisTemplate;
     }
 
@@ -213,8 +213,7 @@ public class VerificacionCorreoService {
 
         verificacionRepository.save(verificacion);
 
-        // Enviar el código al correo del usuario.
-        correoExterno.enviarCodigoVerificacion(
+        servicioCorreo.enviarCodigoVerificacion(
                 usuario.getCorreo(),
                 codigo
         );

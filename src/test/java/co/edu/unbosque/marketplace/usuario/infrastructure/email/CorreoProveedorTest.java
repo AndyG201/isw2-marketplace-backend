@@ -1,3 +1,4 @@
+
 package co.edu.unbosque.marketplace.usuario.infrastructure.email;
 
 import java.util.Properties;
@@ -12,16 +13,15 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class ExternalHTTPRequestMappingTest {
+class CorreoProveedorTest {
 
-    private ExternalHTTPRequestMapping servicio;
+    private CorreoProveedor servicio;
     private JavaMailSender mailSender;
     private MimeMessage mensaje;
 
@@ -40,14 +40,12 @@ class ExternalHTTPRequestMappingTest {
 
         when(mailSender.createMimeMessage()).thenReturn(mensaje);
 
-        servicio = new ExternalHTTPRequestMapping(mailSender);
-
-        ReflectionTestUtils.setField(
-                servicio,
-                "remitente",
-                REMITENTE
-        );
+        servicio = new CorreoProveedor(mailSender, REMITENTE);
     }
+
+    // =====================================================
+    // PRUEBAS DE ENVÍO DE VERIFICACIÓN
+    // =====================================================
 
     @Test
     void enviarCodigoVerificacionConstruyeYEnviaCorreo() throws Exception {
@@ -69,30 +67,30 @@ class ExternalHTTPRequestMappingTest {
                 + "puedes ignorar este mensaje.</p>";
 
         assertAll(
-            () -> assertEquals(
-                    REMITENTE,
-                    ((InternetAddress) enviado.getFrom()[0]).getAddress()
-            ),
-            () -> assertEquals(
-                    CORREO,
-                    ((InternetAddress) enviado.getRecipients(
-                            Message.RecipientType.TO
-                    )[0]).getAddress()
-            ),
-            () -> assertEquals(
-                    "Verificacion de correo - Marketplace",
-                    enviado.getSubject()
-            ),
-            () -> assertEquals(
-                    contenidoEsperado,
-                    enviado.getContent()
-            ),
-            () -> assertTrue(enviado.isMimeType("text/html"))
+                () -> assertEquals(
+                        REMITENTE,
+                        ((InternetAddress) enviado.getFrom()[0]).getAddress()
+                ),
+                () -> assertEquals(
+                        CORREO,
+                        ((InternetAddress) enviado.getRecipients(
+                                Message.RecipientType.TO
+                        )[0]).getAddress()
+                ),
+                () -> assertEquals(
+                        "Verificacion de correo - Marketplace",
+                        enviado.getSubject()
+                ),
+                () -> assertEquals(
+                        contenidoEsperado,
+                        enviado.getContent()
+                ),
+                () -> assertTrue(enviado.isMimeType("text/html"))
         );
     }
 
     @Test
-    void enviarCodigoVerificacionEnvuelveExcepcionDeGmail() {
+    void enviarCodigoVerificacionEnvuelveExcepcionSMTP() {
 
         MailSendException fallo =
                 new MailSendException("Fallo en el servidor SMTP");
@@ -107,18 +105,22 @@ class ExternalHTTPRequestMappingTest {
         );
 
         assertAll(
-            () -> assertEquals(
-                    "No se pudo enviar el correo de verificacion",
-                    error.getMessage()
-            ),
-            () -> assertSame(
-                    fallo,
-                    error.getCause()
-            )
+                () -> assertEquals(
+                        "No se pudo enviar el correo de verificacion",
+                        error.getMessage()
+                ),
+                () -> assertSame(
+                        fallo,
+                        error.getCause()
+                )
         );
 
         verify(mailSender).send(any(MimeMessage.class));
     }
+
+    // =====================================================
+    // PRUEBAS DE ENVÍO DE RECUPERACIÓN
+    // =====================================================
 
     @Test
     void enviarCodigoRecuperacionConstruyeYEnviaCorreo() throws Exception {
@@ -142,30 +144,30 @@ class ExternalHTTPRequestMappingTest {
                 + "ignora este mensaje.</p>";
 
         assertAll(
-            () -> assertEquals(
-                    REMITENTE,
-                    ((InternetAddress) enviado.getFrom()[0]).getAddress()
-            ),
-            () -> assertEquals(
-                    CORREO,
-                    ((InternetAddress) enviado.getRecipients(
-                            Message.RecipientType.TO
-                    )[0]).getAddress()
-            ),
-            () -> assertEquals(
-                    "Recuperación de contraseña - Marketplace",
-                    enviado.getSubject()
-            ),
-            () -> assertEquals(
-                    contenidoEsperado,
-                    enviado.getContent()
-            ),
-            () -> assertTrue(enviado.isMimeType("text/html"))
+                () -> assertEquals(
+                        REMITENTE,
+                        ((InternetAddress) enviado.getFrom()[0]).getAddress()
+                ),
+                () -> assertEquals(
+                        CORREO,
+                        ((InternetAddress) enviado.getRecipients(
+                                Message.RecipientType.TO
+                        )[0]).getAddress()
+                ),
+                () -> assertEquals(
+                        "Recuperación de contraseña - Marketplace",
+                        enviado.getSubject()
+                ),
+                () -> assertEquals(
+                        contenidoEsperado,
+                        enviado.getContent()
+                ),
+                () -> assertTrue(enviado.isMimeType("text/html"))
         );
     }
 
     @Test
-    void enviarCodigoRecuperacionEnvuelveExcepcionDeGmail() {
+    void enviarCodigoRecuperacionEnvuelveExcepcionSMTP() {
 
         MailSendException fallo =
                 new MailSendException("Fallo en el servidor SMTP");
@@ -180,14 +182,14 @@ class ExternalHTTPRequestMappingTest {
         );
 
         assertAll(
-            () -> assertEquals(
-                    "No se pudo enviar el correo de recuperación",
-                    error.getMessage()
-            ),
-            () -> assertSame(
-                    fallo,
-                    error.getCause()
-            )
+                () -> assertEquals(
+                        "No se pudo enviar el correo de recuperación",
+                        error.getMessage()
+                ),
+                () -> assertSame(
+                        fallo,
+                        error.getCause()
+                )
         );
 
         verify(mailSender).send(any(MimeMessage.class));

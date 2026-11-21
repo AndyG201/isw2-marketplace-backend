@@ -8,7 +8,7 @@ import co.edu.unbosque.marketplace.usuario.api.request.*;
 import co.edu.unbosque.marketplace.ubicacion.contracts.CiudadUbicacionInfo;
 import co.edu.unbosque.marketplace.ubicacion.contracts.UbicacionRegistroQuery;
 import co.edu.unbosque.marketplace.usuario.domain.*;
-import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
+import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
 import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.*;
 import co.edu.unbosque.marketplace.usuario.security.*;
 
@@ -42,7 +42,7 @@ class UsuarioServiceTest {
     @Mock private ProteccionDocumento proteccionDocumento;
     @Mock private ProteccionContrasena proteccionContrasena;
     @Mock private VerificacionCorreoService verificacionCorreoService;
-    @Mock private ExternalHTTPRequestMapping correoExterno;
+    @Mock private ServicioCorreo servicioCorreo;
     @Mock private JwtUtil jwtUtil;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private UbicacionRegistroQuery ubicacionRegistroQuery;
@@ -125,7 +125,7 @@ class UsuarioServiceTest {
         assertTrue(service.generarCodigoRecuperacion("  " + CORREO + "  "));
 
         var codigo = ArgumentCaptor.forClass(String.class);
-        verify(correoExterno).enviarCodigoRecuperacion(eq(CORREO), codigo.capture());
+        verify(servicioCorreo).enviarCodigoRecuperacion(eq(CORREO), codigo.capture());
         assertTrue(codigo.getValue().matches("\\d{6}"));
         verify(redisTemplate.opsForValue()).set(
                 eq(CLAVE_CODIGO), matches("[0-9a-f]{64}"), eq(5L), eq(TimeUnit.MINUTES));
@@ -241,7 +241,7 @@ class UsuarioServiceTest {
         assertEquals("Carlos", u.getNombre());
         assertEquals("Lopez", u.getApellido());
         verify(usuarioRepository).save(u);
-        verifyNoInteractions(correoExterno, redisTemplate);
+        verifyNoInteractions(servicioCorreo, redisTemplate);
     }
 
     @Test
@@ -372,14 +372,14 @@ class UsuarioServiceTest {
     void generarCodigoRetornaFalseSiNoExisteUsuario() {
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO)).thenReturn(Optional.empty());
         assertFalse(service.generarCodigoRecuperacion(CORREO));
-        verifyNoInteractions(redisTemplate, correoExterno);
+        verifyNoInteractions(redisTemplate, servicioCorreo);
     }
 
     @Test
     void generarCodigoLimpiaRedisSiFallaElEnvio() {
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO)).thenReturn(Optional.of(usuario()));
         RuntimeException fallo = new RuntimeException("Error de correo");
-        doThrow(fallo).when(correoExterno).enviarCodigoRecuperacion(eq(CORREO), anyString());
+        doThrow(fallo).when(servicioCorreo).enviarCodigoRecuperacion(eq(CORREO), anyString());
 
         assertSame(fallo, assertThrows(RuntimeException.class,
                 () -> service.generarCodigoRecuperacion(CORREO)));
@@ -441,7 +441,7 @@ class UsuarioServiceTest {
 
         assertEquals(CORREO, u.getCorreo());
         var codigo = ArgumentCaptor.forClass(String.class);
-        verify(correoExterno).enviarCodigoVerificacion(eq("nuevo@ejemplo.com"), codigo.capture());
+        verify(servicioCorreo).enviarCodigoVerificacion(eq("nuevo@ejemplo.com"), codigo.capture());
         assertTrue(codigo.getValue().matches("\\d{6}"));
         verify(redisTemplate.opsForValue()).set(
                 PREFIJO + ":correo", "nuevo@ejemplo.com", 5L, TimeUnit.MINUTES);
@@ -460,7 +460,7 @@ class UsuarioServiceTest {
                 () -> service.actualizarPerfil(ID, perfilConNuevoCorreo()));
         assertEquals("El correo electrónico ya está asociado a otra cuenta.", error.getMessage());
         verify(usuarioRepository, never()).save(any(Usuario.class));
-        verifyNoInteractions(redisTemplate, correoExterno);
+        verifyNoInteractions(redisTemplate, servicioCorreo);
     }
 
     private void verificarLimpiezaCambioCorreo() {
@@ -473,7 +473,7 @@ class UsuarioServiceTest {
     void actualizarPerfilLimpiaSolicitudSiFallaElEnvio() {
         encontrar(usuario());
         RuntimeException fallo = new RuntimeException("Error de correo");
-        doThrow(fallo).when(correoExterno).enviarCodigoVerificacion(eq("nuevo@ejemplo.com"), anyString());
+        doThrow(fallo).when(servicioCorreo).enviarCodigoVerificacion(eq("nuevo@ejemplo.com"), anyString());
 
         var error = assertThrows(IllegalStateException.class,
                 () -> service.actualizarPerfil(ID, perfilConNuevoCorreo()));

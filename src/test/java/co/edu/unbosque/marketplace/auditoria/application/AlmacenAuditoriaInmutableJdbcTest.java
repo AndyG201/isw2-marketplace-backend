@@ -1,116 +1,99 @@
 package co.edu.unbosque.marketplace.auditoria.application;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.MockedStatic;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
+import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAuditoria;
+import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.AuditoriaIndiceJdbcRepository;
 
+@ExtendWith(MockitoExtension.class)
 class AlmacenAuditoriaInmutableJdbcTest {
 
-    private static final String URL = "jdbc:postgresql://auditoria-test/eventos";
-    private static final String USER = "auditoria_writer";
-    private static final String PASSWORD = "clave-test";
+    @Mock
+    private AlmacenamientoInmutableAuditoria backblaze;
+
+    @Mock
+    private AuditoriaIndiceJdbcRepository indiceRepository;
+
+    @InjectMocks
+    private AlmacenAuditoriaInmutableJdbc almacen;
 
     @Test
-    void rechazaLaConexionSiNoSeConfiguroUrl() {
-        AlmacenAuditoriaInmutableJdbc almacen = new AlmacenAuditoriaInmutableJdbc(" ", USER, PASSWORD);
+    void almacenaEnBackblazeYRegistraElIndice() {
 
-        IllegalStateException error = assertThrows(IllegalStateException.class,
-                () -> almacen.anexar(evento()));
+        BandejaSalidaAuditoria evento = evento();
 
-        assertTrue(error.getMessage().contains("APP_AUDITORIA_ALMACEN_URL"));
+        ResultadoAlmacenamientoAuditoria resultado =
+                new ResultadoAlmacenamientoAuditoria(
+                        "eventos/2026/11/20/" + evento.getIdEvento() + ".json",
+                        "a".repeat(64),
+                        "COMPLIANCE",
+                        OffsetDateTime.now().plusDays(365),
+                        "version-123"
+                );
+
+        when(backblaze.almacenar(evento)).thenReturn(resultado);
+
+        almacen.anexar(evento);
+
+        verify(backblaze).almacenar(evento);
+        verify(indiceRepository).registrar(evento, resultado);
     }
 
     @Test
-    void insertaEventoConParametrosYJsonb() throws Exception {
-        UUID eventId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID entityId = UUID.randomUUID();
-        Connection connection = mock(Connection.class);
-        PreparedStatement statement = mock(PreparedStatement.class);
-        when(connection.prepareStatement(anyString())).thenReturn(statement);
+    void noRegistraElIndiceSiFallaBackblaze() {
 
-        try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class)) {
-            driverManager.when(() -> DriverManager.getConnection(URL, USER, PASSWORD)).thenReturn(connection);
-            AlmacenAuditoriaInmutableJdbc almacen = new AlmacenAuditoriaInmutableJdbc(URL, USER, PASSWORD);
-            almacen.anexar(evento(eventId, userId, entityId));
+        BandejaSalidaAuditoria evento = evento();
 
-            ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
-            verify(connection).prepareStatement(sql.capture());
-            assertTrue(sql.getValue().contains("INSERT INTO public.evento_auditoria"));
-            assertTrue(sql.getValue().contains("CAST(? AS jsonb)"));
-            verify(statement).setObject(1, eventId);
-            verify(statement).setObject(2, userId);
-            verify(statement).setString(4, "PUBLICACION_APROBADA");
-            verify(statement).setString(5, "EXITOSO");
-            verify(statement).setString(6, "PUBLICACION");
-            verify(statement).setObject(7, entityId);
-            verify(statement).setString(8, "{\"estado\":\"ACTIVA\"}");
-            verify(statement).setString(9, "corr-1");
-            verify(statement).executeUpdate();
-        }
+        IllegalStateException error =
+                new IllegalStateException("Backblaze no disponible");
+
+        when(backblaze.almacenar(evento)).thenThrow(error);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> almacen.anexar(evento)
+        );
+
+        verifyNoInteractions(indiceRepository);
     }
 
     @Test
-    void insertaNulosEnIdentificadoresOpcionales() throws Exception {
-        Connection connection = mock(Connection.class);
-        PreparedStatement statement = mock(PreparedStatement.class);
-        when(connection.prepareStatement(anyString())).thenReturn(statement);
+    void rechazaEventoNulo() {
 
-        try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class)) {
-            driverManager.when(() -> DriverManager.getConnection(URL, USER, PASSWORD)).thenReturn(connection);
-            new AlmacenAuditoriaInmutableJdbc(URL, USER, PASSWORD).anexar(evento(
-                    UUID.randomUUID(), null, null));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> almacen.anexar(null)
+        );
 
-            verify(statement).setNull(2, java.sql.Types.OTHER);
-            verify(statement).setNull(7, java.sql.Types.OTHER);
-            verify(statement).executeUpdate();
-        }
-    }
-
-    @Test
-    void transformaFalloSqlEnErrorDeAlmacen() throws Exception {
-        SQLException causa = new SQLException("base no disponible");
-        try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class)) {
-            driverManager.when(() -> DriverManager.getConnection(URL, USER, PASSWORD)).thenThrow(causa);
-            IllegalStateException error = assertThrows(IllegalStateException.class,
-                    () -> new AlmacenAuditoriaInmutableJdbc(URL, USER, PASSWORD).anexar(evento()));
-            assertEquals(causa, error.getCause());
-        }
+        verifyNoInteractions(backblaze, indiceRepository);
     }
 
     private BandejaSalidaAuditoria evento() {
-        return evento(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
-    }
 
-    private BandejaSalidaAuditoria evento(UUID eventId, UUID userId, UUID entityId) {
-        BandejaSalidaAuditoria event = new BandejaSalidaAuditoria();
-        event.setIdEvento(eventId);
-        event.setIdUsuario(userId);
-        event.setFechaEvento(OffsetDateTime.parse("2026-11-20T10:15:30Z"));
-        event.setAccion("PUBLICACION_APROBADA");
-        event.setResultado("EXITOSO");
-        event.setEntidadAfectada("PUBLICACION");
-        event.setIdEntidadAfectada(entityId);
-        event.setDetalle("{\"estado\":\"ACTIVA\"}");
-        event.setIdCorrelacion("corr-1");
-        return event;
+        BandejaSalidaAuditoria evento = new BandejaSalidaAuditoria();
+
+        evento.setIdEvento(UUID.randomUUID());
+        evento.setIdUsuario(UUID.randomUUID());
+        evento.setFechaEvento(OffsetDateTime.now());
+        evento.setAccion("PUBLICACION_APROBADA");
+        evento.setResultado("EXITOSO");
+        evento.setEntidadAfectada("PUBLICACION");
+        evento.setIdEntidadAfectada(UUID.randomUUID());
+        evento.setDetalle("{\"estado\":\"ACTIVA\"}");
+        evento.setIdCorrelacion("corr-test");
+
+        return evento;
     }
 }
