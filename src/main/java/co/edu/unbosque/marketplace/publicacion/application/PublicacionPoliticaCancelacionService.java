@@ -2,13 +2,15 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import java.time.OffsetDateTime;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo;
@@ -49,7 +51,7 @@ public class PublicacionPoliticaCancelacionService {
         PoliticaCancelacionInfo politica = politicaQuery
                 .consultarPoliticaSeleccionable(idPolitica)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new DatosInvalidosException(
                                 "La política seleccionada no existe, está inactiva o no es una opción permitida."
                         ));
 
@@ -78,7 +80,7 @@ public class PublicacionPoliticaCancelacionService {
         PoliticaCancelacionInfo politica = politicaQuery
                 .consultarPorId(publicacion.getIdPolitica())
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new ConflictoNegocioException(
                                 "La política asociada a la publicación no existe."
                         ));
 
@@ -92,7 +94,7 @@ public class PublicacionPoliticaCancelacionService {
 
         return publicacionRepository.findById(idPublicacion)
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no existe."
                         ));
     }
@@ -106,13 +108,13 @@ public class PublicacionPoliticaCancelacionService {
                         publicacion.getIdAlojamiento()
                 )
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "No se encontró el alojamiento asociado a la publicación."
                         ));
 
         if (!idAnfitrion.equals(alojamiento.idAnfitrion())) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "No tienes permisos para modificar esta publicación."
             );
         }
@@ -123,13 +125,13 @@ public class PublicacionPoliticaCancelacionService {
             UUID idPublicacion) {
 
         if (idAnfitrion == null) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Debes iniciar sesión para configurar la política de cancelación."
             );
         }
 
         if (idPublicacion == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El identificador de la publicación es obligatorio."
             );
         }

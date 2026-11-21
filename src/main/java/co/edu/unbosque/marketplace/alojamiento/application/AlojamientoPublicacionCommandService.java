@@ -7,6 +7,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.alojamiento.application.port.AlojamientoRepository;
 import co.edu.unbosque.marketplace.alojamiento.contracts.ActualizarAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
@@ -67,7 +69,7 @@ public class AlojamientoPublicacionCommandService
             ActualizarAlojamientoParaPublicacion solicitud) {
 
         if (idAlojamiento == null || solicitud == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Los datos para actualizar el alojamiento son obligatorios.");
         }
 
@@ -83,7 +85,7 @@ public class AlojamientoPublicacionCommandService
         Alojamiento alojamiento = alojamientoRepository
                 .findById(idAlojamiento)
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new ConflictoNegocioException(
                                 "No se encontró el alojamiento asociado a la publicación."));
 
         alojamiento.setUbicacion(solicitud.ubicacion().trim());
@@ -119,7 +121,7 @@ public class AlojamientoPublicacionCommandService
             CrearAlojamientoParaPublicacion solicitud) {
 
         if (solicitud == null || solicitud.idAnfitrion() == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes proporcionar un anfitrión válido.");
         }
 
@@ -140,7 +142,7 @@ public class AlojamientoPublicacionCommandService
 
     private void validarPropietario(String propietario) {
         if (propietario != null && propietario.trim().length() > MAXIMO_PROPIETARIO) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El nombre del propietario del inmueble no puede superar "
                             + MAXIMO_PROPIETARIO + " caracteres.");
         }
@@ -173,7 +175,7 @@ public class AlojamientoPublicacionCommandService
     private void validarCantidad(Integer cantidad, String nombre) {
 
         if (cantidad != null && (cantidad < MINIMO || cantidad > MAXIMO)) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El número de " + nombre + " debe estar entre "
                             + MINIMO + " y " + MAXIMO + ".");
         }
@@ -193,12 +195,12 @@ public class AlojamientoPublicacionCommandService
                 || ciudad == null || ciudad.isBlank()
                 || tipoAlojamiento == null || tipoAlojamiento.isBlank()) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Los datos del alojamiento son obligatorios.");
         }
 
         if (capacidad <= 0) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La capacidad debe ser mayor que cero.");
         }
     }

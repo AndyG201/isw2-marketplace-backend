@@ -2,13 +2,14 @@ package co.edu.unbosque.marketplace.disponibilidad.application;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.CalendarioDisponibilidadResponse;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.ConsultaDisponibilidadResponse;
@@ -55,7 +56,7 @@ public class CalendarioDisponibilidadService {
         if (!publicacionQuery.existePublicacionActivaPorAlojamiento(
                 idAlojamiento)) {
 
-            throw new NoSuchElementException(
+            throw new RecursoNoEncontradoException(
                     "El alojamiento no tiene una publicación activa y consultable."
             );
         }
@@ -147,19 +148,19 @@ public class CalendarioDisponibilidadService {
             LocalDate fechaFin) {
 
         if (idAlojamiento == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El identificador del alojamiento es obligatorio."
             );
         }
 
         if (fechaInicio == null || fechaFin == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Las fechas de inicio y fin son obligatorias."
             );
         }
 
         if (!fechaFin.isAfter(fechaInicio)) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La fecha de salida debe ser posterior a la fecha de llegada."
             );
         }
@@ -170,13 +171,13 @@ public class CalendarioDisponibilidadService {
             UUID idAlojamiento) {
 
         if (idAnfitrion == null) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Debes iniciar sesión para consultar el calendario completo."
             );
         }
 
         if (idAlojamiento == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El identificador del alojamiento es obligatorio."
             );
         }
@@ -189,7 +190,7 @@ public class CalendarioDisponibilidadService {
         UsuarioPublicacionInfo anfitrion = usuarioQuery
                 .consultarParaPublicacion(idAnfitrion)
                 .orElseThrow(() ->
-                        new AccessDeniedException(
+                        new AccesoNoPermitidoException(
                                 "No tienes permisos para consultar este calendario."
                         )
                 );
@@ -197,7 +198,7 @@ public class CalendarioDisponibilidadService {
         if (!anfitrion.esAnfitrion()
                 || !anfitrion.cuentaHabilitadaParaPublicar()) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Solo un anfitrión con cuenta habilitada puede consultar el calendario completo."
             );
         }
@@ -205,13 +206,13 @@ public class CalendarioDisponibilidadService {
         UUID idPropietario = alojamientoQuery
                 .consultarIdAnfitrion(idAlojamiento)
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "El alojamiento no existe."
                         )
                 );
 
         if (!idAnfitrion.equals(idPropietario)) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "No puedes consultar el calendario de un alojamiento que no te pertenece."
             );
         }

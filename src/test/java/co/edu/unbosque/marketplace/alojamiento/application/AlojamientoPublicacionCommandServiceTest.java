@@ -15,6 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.alojamiento.application.port.AlojamientoRepository;
 import co.edu.unbosque.marketplace.alojamiento.contracts.ActualizarAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.alojamiento.contracts.CrearAlojamientoParaPublicacion;
@@ -81,8 +83,8 @@ class AlojamientoPublicacionCommandServiceTest {
 
     @Test
     void debeRechazarSolicitudDeCreacionNula() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException exception = assertThrows(
+                DatosInvalidosException.class,
                 () -> servicio.crearAlojamiento(null)
         );
 
@@ -102,7 +104,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.crearAlojamiento(solicitud)
         );
 
@@ -117,7 +119,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.crearAlojamiento(solicitud)
         );
 
@@ -132,7 +134,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.crearAlojamiento(solicitud)
         );
 
@@ -147,7 +149,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.crearAlojamiento(solicitud)
         );
 
@@ -215,8 +217,8 @@ class AlojamientoPublicacionCommandServiceTest {
                         2, 1, 51, 1
                 );
 
-        IllegalArgumentException error = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException error = assertThrows(
+                DatosInvalidosException.class,
                 () -> servicio.crearAlojamiento(sinHabitaciones)
         );
 
@@ -226,7 +228,7 @@ class AlojamientoPublicacionCommandServiceTest {
         );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.crearAlojamiento(muchasCamas)
         );
 
@@ -274,7 +276,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.actualizarAlojamiento(null, solicitud)
         );
 
@@ -285,7 +287,7 @@ class AlojamientoPublicacionCommandServiceTest {
     @Test
     void debeRechazarSolicitudNulaAlActualizar() {
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.actualizarAlojamiento(idAlojamiento, null)
         );
 
@@ -302,7 +304,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.actualizarAlojamiento(idAlojamiento, solicitud)
         );
 
@@ -319,7 +321,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.actualizarAlojamiento(idAlojamiento, solicitud)
         );
 
@@ -336,7 +338,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.actualizarAlojamiento(idAlojamiento, solicitud)
         );
 
@@ -353,7 +355,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> servicio.actualizarAlojamiento(idAlojamiento, solicitud)
         );
 
@@ -372,8 +374,8 @@ class AlojamientoPublicacionCommandServiceTest {
                         null, null, null
                 );
 
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
+        ConflictoNegocioException exception = assertThrows(
+                ConflictoNegocioException.class,
                 () -> servicio.actualizarAlojamiento(idAlojamiento, solicitud)
         );
 
@@ -426,8 +428,8 @@ class AlojamientoPublicacionCommandServiceTest {
                         null, null, 0
                 );
 
-        IllegalArgumentException error = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException error = assertThrows(
+                DatosInvalidosException.class,
                 () -> servicio.actualizarAlojamiento(id, solicitud)
         );
 
@@ -475,8 +477,8 @@ class AlojamientoPublicacionCommandServiceTest {
                         2, 1, 1, 1, "x".repeat(121)
                 );
 
-        IllegalArgumentException error = assertThrows(
-                IllegalArgumentException.class,
+        DatosInvalidosException error = assertThrows(
+                DatosInvalidosException.class,
                 () -> servicio.crearAlojamiento(solicitud)
         );
 

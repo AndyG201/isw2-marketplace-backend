@@ -4,13 +4,14 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.tarifa.application.dto.ConfiguracionTarifaResponse;
 import co.edu.unbosque.marketplace.tarifa.application.dto.ConfigurarPorcentajesTarifaRequest;
 import co.edu.unbosque.marketplace.tarifa.application.port.ConfiguracionTarifaRepository;
@@ -47,7 +48,7 @@ public class ConfiguracionTarifaService
         ConfiguracionTarifa vigente = repository
                 .findFirstByVigenteHastaIsNullAndVigenteDesdeLessThanEqualOrderByVigenteDesdeDesc(
                         ahora)
-                .orElseThrow(() -> new NoSuchElementException(
+                .orElseThrow(() -> new RecursoNoEncontradoException(
                         "No hay una configuración de tarifas vigente."
                 ));
 
@@ -60,13 +61,13 @@ public class ConfiguracionTarifaService
             ConfigurarPorcentajesTarifaRequest solicitud) {
 
         if (idAdministrador == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "No se pudo identificar al administrador."
             );
         }
 
         if (solicitud == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La configuración de tarifas es obligatoria."
             );
         }
@@ -114,7 +115,7 @@ public class ConfiguracionTarifaService
                 || porcentaje.compareTo(BigDecimal.ZERO) < 0
                 || porcentaje.compareTo(new BigDecimal("100.00")) > 0
                 || porcentaje.scale() > 2) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     nombre + " debe estar entre 0 y 100, con máximo dos decimales."
             );
         }

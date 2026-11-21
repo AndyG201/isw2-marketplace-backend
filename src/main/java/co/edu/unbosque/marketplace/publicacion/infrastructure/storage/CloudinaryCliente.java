@@ -23,6 +23,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 
 @Component
 public class CloudinaryCliente {
@@ -107,7 +108,7 @@ public class CloudinaryCliente {
             String url = respuesta == null ? "" : respuesta.path("secure_url").asText("");
 
             if (url.isBlank()) {
-                throw new IllegalStateException(
+                throw new ConflictoNegocioException(
                         "Cloudinary no devolvió la dirección de la imagen.");
             }
 
@@ -115,7 +116,7 @@ public class CloudinaryCliente {
 
         } catch (RestClientException e) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No fue posible almacenar la imagen.", e);
         }
     }
@@ -142,7 +143,7 @@ public class CloudinaryCliente {
 
         } catch (RestClientException e) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No fue posible eliminar la imagen.", e);
         }
     }

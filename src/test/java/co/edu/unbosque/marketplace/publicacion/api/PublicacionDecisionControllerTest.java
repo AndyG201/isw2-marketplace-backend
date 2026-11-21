@@ -1,6 +1,7 @@
 
 package co.edu.unbosque.marketplace.publicacion.api;
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
@@ -9,7 +10,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,10 +20,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.publicacion.api.request.RechazarPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.application.RevisionAdministrativaService;
 import co.edu.unbosque.marketplace.publicacion.application.dto.DecisionPublicacionResponse;
@@ -52,8 +55,8 @@ class PublicacionDecisionControllerTest {
     @Test
     void aprobarPublicacionSinAdministradorRetorna401() {
 
-        ResponseEntity<?> respuesta =
-                controller.aprobarPublicacion(null, idPublicacion);
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.aprobarPublicacion(null, idPublicacion));
 
         assertEquals(HttpStatus.UNAUTHORIZED, respuesta.getStatusCode());
 
@@ -70,9 +73,9 @@ class PublicacionDecisionControllerTest {
                 idAdministrador, idPublicacion))
                 .thenReturn(esperado);
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.aprobarPublicacion(
-                        idAdministrador, idPublicacion);
+                        idAdministrador, idPublicacion));
 
         assertEquals(HttpStatus.OK, respuesta.getStatusCode());
         assertSame(esperado, respuesta.getBody());
@@ -86,11 +89,11 @@ class PublicacionDecisionControllerTest {
 
         when(revisionService.aprobarPublicacion(
                 idAdministrador, idPublicacion))
-                .thenThrow(new AccessDeniedException("Acceso denegado."));
+                .thenThrow(new AccesoNoPermitidoException("Acceso denegado."));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.aprobarPublicacion(
-                        idAdministrador, idPublicacion);
+                        idAdministrador, idPublicacion));
 
         assertEquals(HttpStatus.FORBIDDEN, respuesta.getStatusCode());
     }
@@ -100,12 +103,12 @@ class PublicacionDecisionControllerTest {
 
         when(revisionService.aprobarPublicacion(
                 idAdministrador, idPublicacion))
-                .thenThrow(new NoSuchElementException(
+                .thenThrow(new RecursoNoEncontradoException(
                         "Publicación no encontrada."));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.aprobarPublicacion(
-                        idAdministrador, idPublicacion);
+                        idAdministrador, idPublicacion));
 
         assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
     }
@@ -115,11 +118,11 @@ class PublicacionDecisionControllerTest {
 
         when(revisionService.aprobarPublicacion(
                 idAdministrador, idPublicacion))
-                .thenThrow(new IllegalArgumentException("Datos inválidos."));
+                .thenThrow(new DatosInvalidosException("Datos inválidos."));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.aprobarPublicacion(
-                        idAdministrador, idPublicacion);
+                        idAdministrador, idPublicacion));
 
         assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
     }
@@ -129,12 +132,12 @@ class PublicacionDecisionControllerTest {
 
         when(revisionService.aprobarPublicacion(
                 idAdministrador, idPublicacion))
-                .thenThrow(new IllegalStateException(
+                .thenThrow(new ConflictoNegocioException(
                         "La publicación no puede aprobarse."));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.aprobarPublicacion(
-                        idAdministrador, idPublicacion);
+                        idAdministrador, idPublicacion));
 
         assertEquals(HttpStatus.CONFLICT, respuesta.getStatusCode());
     }
@@ -142,13 +145,13 @@ class PublicacionDecisionControllerTest {
     @Test
     void rechazarPublicacionSinAdministradorRetorna401() {
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.rechazarPublicacion(
                         null,
                         idPublicacion,
                         new RechazarPublicacionRequest(),
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.UNAUTHORIZED, respuesta.getStatusCode());
 
@@ -171,13 +174,13 @@ class PublicacionDecisionControllerTest {
                 ))
         );
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
 
@@ -203,13 +206,13 @@ class PublicacionDecisionControllerTest {
                 solicitud.getMotivo()
         )).thenReturn(esperado);
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.OK, respuesta.getStatusCode());
         assertSame(esperado, respuesta.getBody());
@@ -235,15 +238,15 @@ class PublicacionDecisionControllerTest {
                 idAdministrador,
                 idPublicacion,
                 solicitud.getMotivo()
-        )).thenThrow(new AccessDeniedException("Acceso denegado."));
+        )).thenThrow(new AccesoNoPermitidoException("Acceso denegado."));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.FORBIDDEN, respuesta.getStatusCode());
     }
@@ -262,16 +265,16 @@ class PublicacionDecisionControllerTest {
                 idAdministrador,
                 idPublicacion,
                 solicitud.getMotivo()
-        )).thenThrow(new NoSuchElementException(
+        )).thenThrow(new RecursoNoEncontradoException(
                 "Publicación no encontrada."));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
     }
@@ -290,15 +293,15 @@ class PublicacionDecisionControllerTest {
                 idAdministrador,
                 idPublicacion,
                 solicitud.getMotivo()
-        )).thenThrow(new IllegalArgumentException("Motivo inválido."));
+        )).thenThrow(new DatosInvalidosException("Motivo inválido."));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
     }
@@ -317,16 +320,16 @@ class PublicacionDecisionControllerTest {
                 idAdministrador,
                 idPublicacion,
                 solicitud.getMotivo()
-        )).thenThrow(new IllegalStateException(
+        )).thenThrow(new ConflictoNegocioException(
                 "La publicación no puede rechazarse."));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.rechazarPublicacion(
                         idAdministrador,
                         idPublicacion,
                         solicitud,
                         resultadoValidacion
-                );
+                ));
 
         assertEquals(HttpStatus.CONFLICT, respuesta.getStatusCode());
     }

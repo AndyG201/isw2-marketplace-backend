@@ -1,12 +1,12 @@
 package co.edu.unbosque.marketplace.publicacion.api;
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +17,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionRevisionService;
 import co.edu.unbosque.marketplace.publicacion.application.dto.EnviarRevisionResponse;
 
@@ -43,8 +46,8 @@ class PublicacionRevisionControllerTest {
     @Test
     void enviarRevisionSinUsuarioRetorna401() {
 
-        ResponseEntity<?> respuesta =
-                controller.enviarRevision(null, idPublicacion);
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.enviarRevision(null, idPublicacion));
 
         assertEquals(HttpStatus.UNAUTHORIZED, respuesta.getStatusCode());
     }
@@ -59,9 +62,9 @@ class PublicacionRevisionControllerTest {
                 idAnfitrion, idPublicacion))
                 .thenReturn(esperado);
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.enviarRevision(
-                        idAnfitrion, idPublicacion);
+                        idAnfitrion, idPublicacion));
 
         assertEquals(HttpStatus.OK, respuesta.getStatusCode());
         assertSame(esperado, respuesta.getBody());
@@ -75,13 +78,13 @@ class PublicacionRevisionControllerTest {
 
         when(revisionService.enviarRevision(
                 idAnfitrion, idPublicacion))
-                .thenThrow(new AccessDeniedException(
+                .thenThrow(new AccesoNoPermitidoException(
                         "No tienes permiso para enviar esta publicación a revisión."
                 ));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.enviarRevision(
-                        idAnfitrion, idPublicacion);
+                        idAnfitrion, idPublicacion));
 
         assertEquals(HttpStatus.FORBIDDEN, respuesta.getStatusCode());
     }
@@ -91,13 +94,13 @@ class PublicacionRevisionControllerTest {
 
         when(revisionService.enviarRevision(
                 idAnfitrion, idPublicacion))
-                .thenThrow(new NoSuchElementException(
+                .thenThrow(new RecursoNoEncontradoException(
                         "Publicación no encontrada."
                 ));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.enviarRevision(
-                        idAnfitrion, idPublicacion);
+                        idAnfitrion, idPublicacion));
 
         assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
     }
@@ -107,13 +110,13 @@ class PublicacionRevisionControllerTest {
 
         when(revisionService.enviarRevision(
                 idAnfitrion, idPublicacion))
-                .thenThrow(new IllegalArgumentException(
+                .thenThrow(new DatosInvalidosException(
                         "Datos inválidos."
                 ));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.enviarRevision(
-                        idAnfitrion, idPublicacion);
+                        idAnfitrion, idPublicacion));
 
         assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
     }
@@ -123,13 +126,13 @@ class PublicacionRevisionControllerTest {
 
         when(revisionService.enviarRevision(
                 idAnfitrion, idPublicacion))
-                .thenThrow(new IllegalStateException(
+                .thenThrow(new ConflictoNegocioException(
                         "La publicación no puede enviarse a revisión en su estado actual."
                 ));
 
-        ResponseEntity<?> respuesta =
+        ResponseEntity<?> respuesta = traducir(() ->
                 controller.enviarRevision(
-                        idAnfitrion, idPublicacion);
+                        idAnfitrion, idPublicacion));
 
         assertEquals(HttpStatus.CONFLICT, respuesta.getStatusCode());
     }

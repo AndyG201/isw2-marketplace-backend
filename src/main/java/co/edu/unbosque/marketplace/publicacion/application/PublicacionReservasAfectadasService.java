@@ -6,12 +6,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaInfo;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.ReservaAfectadaResponse;
@@ -55,7 +57,7 @@ public class PublicacionReservasAfectadasService {
             UUID idPublicacion) {
 
         if (idPublicacion == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes proporcionar el identificador de la publicación."
             );
         }
@@ -63,12 +65,12 @@ public class PublicacionReservasAfectadasService {
         Publicacion publicacion = publicacionRepository
                 .findById(idPublicacion)
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no existe."
                         ));
 
         if (!BLOQUEADA.equals(publicacion.getEstado())) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "Solamente puedes consultar reservas afectadas "
                     + "de publicaciones BLOQUEADAS."
             );

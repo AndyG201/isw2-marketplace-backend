@@ -15,12 +15,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.ActualizarAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
@@ -109,21 +112,21 @@ public class PublicacionEdicionService {
         Publicacion publicacion = publicacionRepository
                 .findById(idPublicacion)
                 .orElseThrow(() ->
-                        new java.util.NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no existe."));
 
         AlojamientoPublicacionInfo alojamiento = alojamientoQuery
                 .consultarDatosParaPublicacion(
                         publicacion.getIdAlojamiento())
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new ConflictoNegocioException(
                                 "No se encontró el alojamiento asociado."));
 
         validarPermisos(idActor, alojamiento);
 
         String estadoAnterior = publicacion.getEstado();
         if (estadoAnterior != null && ESTADOS_SIN_EDICION.contains(estadoAnterior)) {
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "No puedes editar una publicación en revisión o bloqueada.");
         }
 
@@ -143,7 +146,7 @@ public class PublicacionEdicionService {
         if (!politicaCancelacionQuery.existePoliticaActiva(
                 solicitud.getIdPolitica())) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La política seleccionada no existe o está inactiva.");
         }
 
@@ -151,7 +154,7 @@ public class PublicacionEdicionService {
                 new HashSet<>(solicitud.getIdsServicios());
 
         if (idsServicios.size() != solicitud.getIdsServicios().size()) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "No puedes seleccionar un mismo servicio varias veces.");
         }
 
@@ -159,7 +162,7 @@ public class PublicacionEdicionService {
                 servicioPublicacionQuery.consultarPorIds(idsServicios);
 
         if (servicios.size() != idsServicios.size()) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Uno o varios servicios seleccionados no existen.");
         }
 
@@ -253,13 +256,13 @@ public class PublicacionEdicionService {
         UsuarioPublicacionInfo usuario = usuarioPublicacionQuery
                 .consultarParaPublicacion(idActor)
                 .orElseThrow(() ->
-                        new AccessDeniedException(
+                        new AccesoNoPermitidoException(
                                 "No tienes permisos para modificar esta publicación."));
 
         if (!usuario.esAnfitrion()
                 || !idActor.equals(alojamiento.idAnfitrion())) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "No tienes permisos para modificar esta publicación.");
         }
     }
@@ -270,33 +273,33 @@ public class PublicacionEdicionService {
             EditarPublicacionRequest solicitud) {
 
         if (idActor == null) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Debes iniciar sesión para modificar publicaciones.");
         }
 
         if (idPublicacion == null || solicitud == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La solicitud de actualización no es válida.");
         }
 
         if (solicitud.getCapacidad() == null
                 || solicitud.getCapacidad() <= 0) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La capacidad debe ser mayor que cero.");
         }
 
         if (solicitud.getPrecioPorNoche() == null
                 || solicitud.getPrecioPorNoche().signum() <= 0) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El precio por noche debe ser mayor que cero.");
         }
 
         if (solicitud.getTarifaLimpieza() != null
                 && solicitud.getTarifaLimpieza().signum() < 0) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La tarifa de limpieza no puede ser negativa.");
         }
 
@@ -305,19 +308,19 @@ public class PublicacionEdicionService {
                 || solicitud.getIdsServicios().size() > 20
                 || solicitud.getIdsServicios().contains(null)) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes seleccionar entre 1 y 20 servicios válidos.");
         }
 
         if (solicitud.getIdPolitica() == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes seleccionar una política de cancelación.");
         }
 
         if (solicitud.getImagenes() != null
                 && solicitud.getImagenes().size() > 10) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "No puedes cargar más de 10 imágenes.");
         }
     }

@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PaginaPublicacionesResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.CacheBusquedaPublicaciones;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionBusquedaRepository;
@@ -64,20 +65,20 @@ public class PublicacionBusquedaService {
 
         if ((entrada.fechaInicio() == null)
                 != (entrada.fechaFin() == null)) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes indicar las fechas de llegada y salida juntas."
             );
         }
 
         if (entrada.fechaInicio() != null
                 && !entrada.fechaFin().isAfter(entrada.fechaInicio())) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La fecha de salida debe ser posterior a la fecha de llegada."
             );
         }
 
         if (entrada.capacidad() != null && entrada.capacidad() < 1) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La capacidad debe ser mayor que cero."
             );
         }
@@ -95,20 +96,20 @@ public class PublicacionBusquedaService {
                 && entrada.precioMaximo() != null
                 && entrada.precioMinimo()
                         .compareTo(entrada.precioMaximo()) > 0) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El precio mínimo no puede superar el precio máximo."
             );
         }
 
         if (entrada.pagina() < 0) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La página debe ser cero o un número positivo."
             );
         }
 
         if (entrada.tamano() < 1
                 || entrada.tamano() > TAMANO_MAXIMO) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El tamaño de página debe estar entre 1 y "
                             + TAMANO_MAXIMO + "."
             );
@@ -152,7 +153,7 @@ public class PublicacionBusquedaService {
             BigDecimal precio,
             String nombre) {
         if (precio != null && precio.signum() < 0) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     nombre + " no puede ser negativo."
             );
         }

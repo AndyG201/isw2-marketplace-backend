@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.MisPublicacionesResponse;
@@ -79,7 +81,7 @@ class PublicacionConsultaServiceTest {
     void consultarMisPublicacionesConAnfitrionNulo() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.consultarMisPublicaciones(null)
         );
 
@@ -214,12 +216,12 @@ class PublicacionConsultaServiceTest {
     void consultarDetalleConIdentificadoresNulos() {
 
         assertThrows(
-                IllegalArgumentException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.consultarDetalle(null, idPublicacion)
         );
 
         assertThrows(
-                IllegalArgumentException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.consultarDetalle(idAnfitrion, null)
         );
 
@@ -233,7 +235,7 @@ class PublicacionConsultaServiceTest {
                 .thenReturn(List.of());
 
         assertThrows(
-                IllegalArgumentException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.consultarDetalle(idAnfitrion, idPublicacion)
         );
 
@@ -254,13 +256,32 @@ class PublicacionConsultaServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                IllegalArgumentException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.consultarDetalle(idAnfitrion, idPublicacion)
         );
 
         verifyNoInteractions(imagenRepository);
         verifyNoInteractions(publicacionServicioRepository);
         verifyNoInteractions(servicioPublicacionQuery);
+    }
+
+    @Test
+    void consultarDetalleFallaSiElAlojamientoAsociadoNoEstaEntreLosDelAnfitrion() {
+
+        AlojamientoPublicacionInfo alojamiento = crearAlojamientoInfo();
+        when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
+                .thenReturn(List.of(alojamiento));
+
+        Publicacion publicacion = mock(Publicacion.class);
+        when(publicacion.getIdAlojamiento()).thenReturn(UUID.randomUUID());
+        when(publicacionRepository.findByIdPublicacionAndIdAlojamientoIn(
+                idPublicacion, List.of(idAlojamiento)))
+                .thenReturn(Optional.of(publicacion));
+
+        assertThrows(
+                co.edu.unbosque.marketplace.compartido.domain.FallaInternaException.class,
+                () -> service.consultarDetalle(idAnfitrion, idPublicacion)
+        );
     }
 
     @Test

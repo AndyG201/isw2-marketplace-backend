@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionResumenResponse;
@@ -77,7 +78,7 @@ public class PublicacionCatalogoService {
                             );
 
                     if (alojamiento == null) {
-                        throw new IllegalStateException(
+                        throw new ConflictoNegocioException(
                                 "No se encontró el alojamiento asociado "
                                 + "a la publicación "
                                 + publicacion.getIdPublicacion()

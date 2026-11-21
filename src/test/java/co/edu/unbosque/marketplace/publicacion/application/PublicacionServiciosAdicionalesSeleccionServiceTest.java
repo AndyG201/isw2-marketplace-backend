@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.publicacion.application.dto.ServicioAdicionalPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
@@ -78,7 +78,7 @@ class PublicacionServiciosAdicionalesSeleccionServiceTest {
         when(enRevision.getEstado()).thenReturn("PENDIENTE_REVISION");
         when(publicacionRepository.findById(PUBLICACION)).thenReturn(Optional.of(enRevision));
 
-        assertThrows(NoSuchElementException.class, () -> servicio.consultarDisponibles(PUBLICACION));
+        assertThrows(RecursoNoEncontradoException.class, () -> servicio.consultarDisponibles(PUBLICACION));
         verifyNoInteractions(servicioAdicionalQuery);
     }
 }

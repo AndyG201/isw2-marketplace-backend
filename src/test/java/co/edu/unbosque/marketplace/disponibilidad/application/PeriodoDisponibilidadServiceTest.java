@@ -6,14 +6,16 @@ import static org.mockito.Mockito.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.access.AccessDeniedException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadRequest;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadResponse;
@@ -157,7 +159,7 @@ class PeriodoDisponibilidadServiceTest {
     @Test
     void debeRechazarRegistroConAnfitrionNulo() {
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.registrarPeriodo(
                         null, idAlojamiento, solicitud
                 )
@@ -169,7 +171,7 @@ class PeriodoDisponibilidadServiceTest {
     @Test
     void debeRechazarRegistroConAlojamientoNulo() {
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.registrarPeriodo(
                         idAnfitrion, null, solicitud
                 )
@@ -181,7 +183,7 @@ class PeriodoDisponibilidadServiceTest {
     @Test
     void debeRechazarRegistroConSolicitudNula() {
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.registrarPeriodo(
                         idAnfitrion, idAlojamiento, null
                 )
@@ -191,7 +193,7 @@ class PeriodoDisponibilidadServiceTest {
     @Test
     void debeRechazarRegistroConFechasNulas() {
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.registrarPeriodo(
                         idAnfitrion,
                         idAlojamiento,
@@ -200,7 +202,7 @@ class PeriodoDisponibilidadServiceTest {
         );
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.registrarPeriodo(
                         idAnfitrion,
                         idAlojamiento,
@@ -212,7 +214,7 @@ class PeriodoDisponibilidadServiceTest {
     @Test
     void debeRechazarRegistroConRangoDeFechasInvalido() {
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.registrarPeriodo(
                         idAnfitrion,
                         idAlojamiento,
@@ -228,7 +230,7 @@ class PeriodoDisponibilidadServiceTest {
         )).thenReturn(true);
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.registrarPeriodo(
                         idAnfitrion, idAlojamiento, solicitud
                 )
@@ -244,7 +246,7 @@ class PeriodoDisponibilidadServiceTest {
         )).thenReturn(true);
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.registrarPeriodo(
                         idAnfitrion, idAlojamiento, solicitud
                 )
@@ -293,7 +295,7 @@ class PeriodoDisponibilidadServiceTest {
     @Test
     void debeRechazarConsultaConAnfitrionNulo() {
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.consultarPeriodos(
                         null, idAlojamiento
                 )
@@ -305,7 +307,7 @@ class PeriodoDisponibilidadServiceTest {
     @Test
     void debeRechazarConsultaConAlojamientoNulo() {
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.consultarPeriodos(
                         idAnfitrion, null
                 )
@@ -349,7 +351,7 @@ class PeriodoDisponibilidadServiceTest {
     @Test
     void debeRechazarActualizacionConPeriodoNulo() {
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.actualizarPeriodo(
                         idAnfitrion,
                         idAlojamiento,
@@ -368,7 +370,7 @@ class PeriodoDisponibilidadServiceTest {
         )).thenReturn(Optional.empty());
 
         assertThrows(
-                NoSuchElementException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.actualizarPeriodo(
                         idAnfitrion,
                         idAlojamiento,
@@ -391,7 +393,7 @@ class PeriodoDisponibilidadServiceTest {
         )).thenReturn(true);
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.actualizarPeriodo(
                         idAnfitrion,
                         idAlojamiento,
@@ -416,7 +418,7 @@ class PeriodoDisponibilidadServiceTest {
         )).thenReturn(true);
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.actualizarPeriodo(
                         idAnfitrion,
                         idAlojamiento,
@@ -496,7 +498,7 @@ class PeriodoDisponibilidadServiceTest {
     @Test
     void debeRechazarDeshabilitacionConPeriodoNulo() {
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.deshabilitarPeriodo(
                         idAnfitrion, idAlojamiento, null
                 )
@@ -510,7 +512,7 @@ class PeriodoDisponibilidadServiceTest {
         )).thenReturn(Optional.empty());
 
         assertThrows(
-                NoSuchElementException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.deshabilitarPeriodo(
                         idAnfitrion, idAlojamiento, idPeriodo
                 )
@@ -530,7 +532,7 @@ class PeriodoDisponibilidadServiceTest {
         )).thenReturn(true);
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.deshabilitarPeriodo(
                         idAnfitrion, idAlojamiento, idPeriodo
                 )
@@ -547,7 +549,7 @@ class PeriodoDisponibilidadServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.consultarPeriodos(
                         idAnfitrion, idAlojamiento
                 )
@@ -566,7 +568,7 @@ class PeriodoDisponibilidadServiceTest {
                 ));
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.consultarPeriodos(
                         idAnfitrion, idAlojamiento
                 )
@@ -585,7 +587,7 @@ class PeriodoDisponibilidadServiceTest {
                 ));
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.consultarPeriodos(
                         idAnfitrion, idAlojamiento
                 )
@@ -600,7 +602,7 @@ class PeriodoDisponibilidadServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                NoSuchElementException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.consultarPeriodos(
                         idAnfitrion, idAlojamiento
                 )
@@ -615,7 +617,7 @@ class PeriodoDisponibilidadServiceTest {
                 .thenReturn(Optional.of(otroAnfitrion));
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.consultarPeriodos(
                         idAnfitrion, idAlojamiento
                 )

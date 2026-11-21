@@ -2,13 +2,11 @@ package co.edu.unbosque.marketplace.publicacion.api;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,30 +49,12 @@ public class PublicacionPoliticaCancelacionController {
                     ));
         }
 
-        try {
-
-            return ResponseEntity.ok(
-                    politicaService.consultarPolitica(
-                            idAnfitrion,
-                            idPublicacion
-                    )
-            );
-
-        } catch (AccessDeniedException e) {
-
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (NoSuchElementException e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(
+                politicaService.consultarPolitica(
+                        idAnfitrion,
+                        idPublicacion
+                )
+        );
     }
 
     @PatchMapping("/{idPublicacion}/politica-cancelacion")
@@ -105,35 +85,12 @@ public class PublicacionPoliticaCancelacionController {
                     .body(Map.of("mensaje", mensaje));
         }
 
-        try {
-
-            return ResponseEntity.ok(
-                    politicaService.seleccionarPolitica(
-                            idAnfitrion,
-                            idPublicacion,
-                            solicitud.getIdPolitica()
-                    )
-            );
-
-        } catch (AccessDeniedException e) {
-
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (NoSuchElementException e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(
+                politicaService.seleccionarPolitica(
+                        idAnfitrion,
+                        idPublicacion,
+                        solicitud.getIdPolitica()
+                )
+        );
     }
 }

@@ -2,7 +2,6 @@
 package co.edu.unbosque.marketplace.publicacion.api;
 
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -80,31 +79,13 @@ public class PublicacionModeracionController {
                     .body(Map.of("mensaje", mensaje));
         }
 
-        try {
-
-            return ResponseEntity.ok(
-                    moderacionService.bloquearPublicacion(
-                            idAdministrador,
-                            idPublicacion,
-                            solicitud.getMotivo()
-                    )
-            );
-
-        } catch (NoSuchElementException e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(
+                moderacionService.bloquearPublicacion(
+                        idAdministrador,
+                        idPublicacion,
+                        solicitud.getMotivo()
+                )
+        );
     }
 
     // DESBLOQUEAR PUBLICACION
@@ -138,31 +119,13 @@ public class PublicacionModeracionController {
                     .body(Map.of("mensaje", mensaje));
         }
 
-        try {
-
-            return ResponseEntity.ok(
-                    moderacionService.desbloquearPublicacion(
-                            idAdministrador,
-                            idPublicacion,
-                            solicitud.getMotivo()
-                    )
-            );
-
-        } catch (NoSuchElementException e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(
+                moderacionService.desbloquearPublicacion(
+                        idAdministrador,
+                        idPublicacion,
+                        solicitud.getMotivo()
+                )
+        );
     }
 
     // CONSTRUIR MENSAJES DE VALIDACION

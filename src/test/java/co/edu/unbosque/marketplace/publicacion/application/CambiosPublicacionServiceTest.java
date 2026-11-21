@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaInfo;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaQuery;
@@ -140,9 +141,9 @@ class CambiosPublicacionServiceTest {
     @Test
     void exigeUnMensajeParaElAdministrador() {
         assertEquals("Cambié las fotos", servicio.validarMensaje("  Cambié las fotos "));
-        assertThrows(IllegalArgumentException.class, () -> servicio.validarMensaje(" "));
-        assertThrows(IllegalArgumentException.class, () -> servicio.validarMensaje(null));
-        assertThrows(IllegalArgumentException.class, () -> servicio.validarMensaje("x".repeat(1001)));
+        assertThrows(DatosInvalidosException.class, () -> servicio.validarMensaje(" "));
+        assertThrows(DatosInvalidosException.class, () -> servicio.validarMensaje(null));
+        assertThrows(DatosInvalidosException.class, () -> servicio.validarMensaje("x".repeat(1001)));
     }
 
     @Test
@@ -158,7 +159,7 @@ class CambiosPublicacionServiceTest {
                 new ReservaAfectadaInfo(UUID.randomUUID(), UUID.randomUUID(), futura, "CONFIRMADA"),
                 new ReservaAfectadaInfo(UUID.randomUUID(), UUID.randomUUID(), cancelada, "CANCELADA")));
 
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        DatosInvalidosException error = assertThrows(DatosInvalidosException.class,
                 () -> servicio.validarCapacidad(PUBLICACION, 2, HOY));
 
         assertTrue(error.getMessage().contains("3 huéspedes"));

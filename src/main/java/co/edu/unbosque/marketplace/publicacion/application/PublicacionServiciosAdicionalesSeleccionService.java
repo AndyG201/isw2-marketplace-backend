@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -14,6 +13,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.publicacion.application.dto.SeleccionServiciosAdicionalesResponse;
 import co.edu.unbosque.marketplace.publicacion.application.dto.ServicioAdicionalPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
@@ -65,7 +66,7 @@ public class PublicacionServiciosAdicionalesSeleccionService {
         validarPublicacionVisible(idPublicacion);
 
         if (idsAdicionales == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes enviar la lista de servicios seleccionados."
             );
         }
@@ -88,13 +89,13 @@ public class PublicacionServiciosAdicionalesSeleccionService {
 
         for (UUID idAdicional : idsAdicionales) {
             if (idAdicional == null) {
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "El identificador de cada servicio es obligatorio."
                 );
             }
 
             if (!identificadoresUnicos.add(idAdicional)) {
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "No puedes seleccionar el mismo servicio más de una vez."
                 );
             }
@@ -103,7 +104,7 @@ public class PublicacionServiciosAdicionalesSeleccionService {
                     disponiblesPorId.get(idAdicional);
 
             if (servicio == null) {
-                throw new IllegalArgumentException(
+                throw new DatosInvalidosException(
                         "Uno de los servicios no está disponible para esta publicación."
                 );
             }
@@ -121,18 +122,18 @@ public class PublicacionServiciosAdicionalesSeleccionService {
 
     private void validarPublicacionVisible(UUID idPublicacion) {
         if (idPublicacion == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El identificador de la publicación es obligatorio."
             );
         }
 
         Publicacion publicacion = publicacionRepository.findById(idPublicacion)
-                .orElseThrow(() -> new NoSuchElementException(
+                .orElseThrow(() -> new RecursoNoEncontradoException(
                         "La publicación no existe."
                 ));
 
         if (!ESTADO_ACTIVA.equals(publicacion.getEstado())) {
-            throw new NoSuchElementException(
+            throw new RecursoNoEncontradoException(
                     "La publicación no está disponible en el marketplace."
             );
         }

@@ -2,7 +2,6 @@
 package co.edu.unbosque.marketplace.publicacion.api;
 
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -44,28 +43,10 @@ public class PublicacionReservasAfectadasController {
                     ));
         }
 
-        try {
-
-            return ResponseEntity.ok(
-                    consultaService.consultarReservasAfectadas(
-                            idPublicacion
-                    )
-            );
-
-        } catch (NoSuchElementException e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(
+                consultaService.consultarReservasAfectadas(
+                        idPublicacion
+                )
+        );
     }
 }

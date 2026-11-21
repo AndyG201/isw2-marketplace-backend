@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplace.publicacion.api;
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -17,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionConsultaService;
 import co.edu.unbosque.marketplace.publicacion.application.dto.MisPublicacionesResponse;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionDetalleResponse;
@@ -33,8 +35,8 @@ class PublicacionConsultaControllerTest {
     @Test
     void testConsultarMisPublicacionesSinUsuario() {
 
-        ResponseEntity<?> respuesta =
-                controller.consultarMisPublicaciones(null);
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.consultarMisPublicaciones(null));
 
         assertEquals(
                 HttpStatus.UNAUTHORIZED,
@@ -63,8 +65,8 @@ class PublicacionConsultaControllerTest {
         when(consultaService.consultarMisPublicaciones(idUsuario))
                 .thenReturn(publicaciones);
 
-        ResponseEntity<?> respuesta =
-                controller.consultarMisPublicaciones(idUsuario);
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.consultarMisPublicaciones(idUsuario));
 
         assertEquals(
                 HttpStatus.OK,
@@ -84,8 +86,8 @@ class PublicacionConsultaControllerTest {
 
         UUID idPublicacion = UUID.randomUUID();
 
-        ResponseEntity<?> respuesta =
-                controller.consultarDetalle(null, idPublicacion);
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.consultarDetalle(null, idPublicacion));
 
         assertEquals(
                 HttpStatus.UNAUTHORIZED,
@@ -111,8 +113,8 @@ class PublicacionConsultaControllerTest {
         when(consultaService.consultarDetalle(idUsuario, idPublicacion))
                 .thenReturn(detalle);
 
-        ResponseEntity<?> respuesta =
-                controller.consultarDetalle(idUsuario, idPublicacion);
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.consultarDetalle(idUsuario, idPublicacion));
 
         assertEquals(
                 HttpStatus.OK,
@@ -138,13 +140,13 @@ class PublicacionConsultaControllerTest {
 
         when(consultaService.consultarDetalle(idUsuario, idPublicacion))
                 .thenThrow(
-                        new IllegalArgumentException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no fue encontrada."
                         )
                 );
 
-        ResponseEntity<?> respuesta =
-                controller.consultarDetalle(idUsuario, idPublicacion);
+        ResponseEntity<?> respuesta = traducir(() ->
+                controller.consultarDetalle(idUsuario, idPublicacion));
 
         assertEquals(
                 HttpStatus.NOT_FOUND,

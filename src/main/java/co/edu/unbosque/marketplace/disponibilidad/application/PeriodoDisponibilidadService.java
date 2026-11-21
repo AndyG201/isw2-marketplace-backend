@@ -2,13 +2,15 @@ package co.edu.unbosque.marketplace.disponibilidad.application;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadRequest;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadResponse;
@@ -105,7 +107,7 @@ public class PeriodoDisponibilidadService {
         validarIdentificadores(idAnfitrion, idAlojamiento);
 
         if (idPeriodo == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El identificador del periodo es obligatorio."
             );
         }
@@ -165,7 +167,7 @@ public class PeriodoDisponibilidadService {
         validarIdentificadores(idAnfitrion, idAlojamiento);
 
         if (idPeriodo == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El identificador del periodo es obligatorio."
             );
         }
@@ -202,13 +204,13 @@ public class PeriodoDisponibilidadService {
             UUID idAlojamiento) {
 
         if (idAnfitrion == null) {
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Debes iniciar sesión para administrar la disponibilidad."
             );
         }
 
         if (idAlojamiento == null) {
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "El identificador del alojamiento es obligatorio."
             );
         }
@@ -221,7 +223,7 @@ public class PeriodoDisponibilidadService {
                 || solicitud.getFechaInicio() == null
                 || solicitud.getFechaFin() == null) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes proporcionar las fechas de inicio y fin."
             );
         }
@@ -229,7 +231,7 @@ public class PeriodoDisponibilidadService {
         if (!solicitud.getFechaFin().isAfter(
                 solicitud.getFechaInicio())) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "La fecha de salida debe ser posterior a la fecha de llegada."
             );
         }
@@ -242,14 +244,14 @@ public class PeriodoDisponibilidadService {
         UsuarioPublicacionInfo anfitrion = usuarioQuery
                 .consultarParaPublicacion(idAnfitrion)
                 .orElseThrow(() ->
-                        new AccessDeniedException(
+                        new AccesoNoPermitidoException(
                                 "No tienes permisos para administrar periodos."
                         ));
 
         if (!anfitrion.esAnfitrion()
                 || !anfitrion.cuentaHabilitadaParaPublicar()) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Solamente un anfitrión con cuenta habilitada puede administrar periodos."
             );
         }
@@ -257,13 +259,13 @@ public class PeriodoDisponibilidadService {
         UUID idPropietario = alojamientoQuery
                 .consultarIdAnfitrion(idAlojamiento)
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "El alojamiento no existe."
                         ));
 
         if (!idAnfitrion.equals(idPropietario)) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "No puedes administrar la disponibilidad de un alojamiento que no te pertenece."
             );
         }
@@ -279,7 +281,7 @@ public class PeriodoDisponibilidadService {
                         idAlojamiento
                 )
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "El periodo de disponibilidad no existe para este alojamiento."
                         ));
     }
@@ -298,7 +300,7 @@ public class PeriodoDisponibilidadService {
 
         if (ocupado) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "El periodo contiene noches asociadas a reservas vigentes o confirmadas y no puede modificarse."
             );
         }
@@ -334,7 +336,7 @@ public class PeriodoDisponibilidadService {
 
         if (existeSolapamiento) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "El periodo solicitado se superpone con otro periodo disponible del alojamiento."
             );
         }

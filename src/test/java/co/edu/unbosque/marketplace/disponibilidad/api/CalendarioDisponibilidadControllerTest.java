@@ -1,21 +1,23 @@
 package co.edu.unbosque.marketplace.disponibilidad.api;
 
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.CalendarioDisponibilidadResponse;
 import co.edu.unbosque.marketplace.disponibilidad.application.dto.ConsultaDisponibilidadResponse;
 import co.edu.unbosque.marketplace.disponibilidad.application.CalendarioDisponibilidadService;
@@ -59,9 +61,10 @@ class CalendarioDisponibilidadControllerTest {
                 idAlojamiento, fechaInicio, fechaFin
         )).thenReturn(respuesta);
 
-        ResponseEntity<?> resultado = controller.consultarPorFechas(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.consultarPorFechas(
                 idAlojamiento, fechaInicio, fechaFin
-        );
+        ));
 
         assertEquals(HttpStatus.OK, resultado.getStatusCode());
         assertEquals(respuesta, resultado.getBody());
@@ -75,11 +78,12 @@ class CalendarioDisponibilidadControllerTest {
     void debeRetornarNotFoundCuandoNoExisteElAlojamiento() {
         when(calendarioService.consultarPorFechas(
                 idAlojamiento, fechaInicio, fechaFin
-        )).thenThrow(new NoSuchElementException("Alojamiento no encontrado."));
+        )).thenThrow(new RecursoNoEncontradoException("Alojamiento no encontrado."));
 
-        ResponseEntity<?> resultado = controller.consultarPorFechas(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.consultarPorFechas(
                 idAlojamiento, fechaInicio, fechaFin
-        );
+        ));
 
         assertEquals(HttpStatus.NOT_FOUND, resultado.getStatusCode());
         assertEquals(
@@ -92,11 +96,12 @@ class CalendarioDisponibilidadControllerTest {
     void debeRetornarBadRequestCuandoLosParametrosSonInvalidos() {
         when(calendarioService.consultarPorFechas(
                 idAlojamiento, fechaInicio, fechaFin
-        )).thenThrow(new IllegalArgumentException("Rango de fechas inválido."));
+        )).thenThrow(new DatosInvalidosException("Rango de fechas inválido."));
 
-        ResponseEntity<?> resultado = controller.consultarPorFechas(
+        ResponseEntity<?> resultado = traducir(() ->
+                controller.consultarPorFechas(
                 idAlojamiento, fechaInicio, fechaFin
-        );
+        ));
 
         assertEquals(HttpStatus.BAD_REQUEST, resultado.getStatusCode());
         assertEquals(
@@ -107,10 +112,10 @@ class CalendarioDisponibilidadControllerTest {
 
     @Test
     void debeRetornarUnauthorizedCuandoElAnfitrionEsNulo() {
-        ResponseEntity<?> resultado =
+        ResponseEntity<?> resultado = traducir(() ->
                 controller.consultarCalendarioCompleto(
                         null, idAlojamiento
-                );
+                ));
 
         assertEquals(HttpStatus.UNAUTHORIZED, resultado.getStatusCode());
         assertEquals(
@@ -137,10 +142,10 @@ class CalendarioDisponibilidadControllerTest {
                 idAnfitrion, idAlojamiento
         )).thenReturn(respuesta);
 
-        ResponseEntity<?> resultado =
+        ResponseEntity<?> resultado = traducir(() ->
                 controller.consultarCalendarioCompleto(
                         idAnfitrion, idAlojamiento
-                );
+                ));
 
         assertEquals(HttpStatus.OK, resultado.getStatusCode());
         assertEquals(respuesta, resultado.getBody());
@@ -154,12 +159,12 @@ class CalendarioDisponibilidadControllerTest {
     void debeRetornarForbiddenCuandoElAnfitrionNoTienePermiso() {
         when(calendarioService.consultarCalendarioCompleto(
                 idAnfitrion, idAlojamiento
-        )).thenThrow(new AccessDeniedException("Acceso denegado."));
+        )).thenThrow(new AccesoNoPermitidoException("Acceso denegado."));
 
-        ResponseEntity<?> resultado =
+        ResponseEntity<?> resultado = traducir(() ->
                 controller.consultarCalendarioCompleto(
                         idAnfitrion, idAlojamiento
-                );
+                ));
 
         assertEquals(HttpStatus.FORBIDDEN, resultado.getStatusCode());
         assertEquals(
@@ -172,12 +177,12 @@ class CalendarioDisponibilidadControllerTest {
     void debeRetornarNotFoundCuandoNoExisteElCalendario() {
         when(calendarioService.consultarCalendarioCompleto(
                 idAnfitrion, idAlojamiento
-        )).thenThrow(new NoSuchElementException("Calendario no encontrado."));
+        )).thenThrow(new RecursoNoEncontradoException("Calendario no encontrado."));
 
-        ResponseEntity<?> resultado =
+        ResponseEntity<?> resultado = traducir(() ->
                 controller.consultarCalendarioCompleto(
                         idAnfitrion, idAlojamiento
-                );
+                ));
 
         assertEquals(HttpStatus.NOT_FOUND, resultado.getStatusCode());
         assertEquals(
@@ -190,12 +195,12 @@ class CalendarioDisponibilidadControllerTest {
     void debeRetornarBadRequestCuandoLosDatosDelCalendarioSonInvalidos() {
         when(calendarioService.consultarCalendarioCompleto(
                 idAnfitrion, idAlojamiento
-        )).thenThrow(new IllegalArgumentException("Datos inválidos."));
+        )).thenThrow(new DatosInvalidosException("Datos inválidos."));
 
-        ResponseEntity<?> resultado =
+        ResponseEntity<?> resultado = traducir(() ->
                 controller.consultarCalendarioCompleto(
                         idAnfitrion, idAlojamiento
-                );
+                ));
 
         assertEquals(HttpStatus.BAD_REQUEST, resultado.getStatusCode());
         assertEquals(

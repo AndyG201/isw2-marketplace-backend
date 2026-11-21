@@ -21,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionResumenResponse;
@@ -181,7 +182,7 @@ class PublicacionCatalogoServiceTest {
                 .thenReturn(List.of());
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.consultarCatalogo()
         );
 
@@ -199,7 +200,7 @@ class PublicacionCatalogoServiceTest {
                 .thenReturn(List.of(alojamientoInfo));
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.consultarCatalogo()
         );
     }

@@ -1,13 +1,14 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo;
@@ -53,7 +54,7 @@ public class PublicacionDetallePublicoService {
 
         Publicacion publicacion = buscar(idPublicacion)
                 .filter(encontrada -> ESTADO_ACTIVA.equals(encontrada.getEstado()))
-                .orElseThrow(() -> new NoSuchElementException(
+                .orElseThrow(() -> new RecursoNoEncontradoException(
                         "La publicación no existe o no está disponible."));
 
         return armar(idPublicacion, publicacion, adicionalesService.consultarDisponibles(idPublicacion));
@@ -63,7 +64,7 @@ public class PublicacionDetallePublicoService {
     public PublicacionAdministracionResponse consultarParaAdministracion(UUID idPublicacion) {
 
         Publicacion publicacion = buscar(idPublicacion)
-                .orElseThrow(() -> new NoSuchElementException("La publicación no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("La publicación no existe."));
 
         PublicacionPublicaResponse detalle =
                 armar(idPublicacion, publicacion, adicionalesService.consultarRegistrados(idPublicacion), true);
@@ -98,7 +99,7 @@ public class PublicacionDetallePublicoService {
 
         AlojamientoPublicacionInfo alojamiento = alojamientoQuery
                 .consultarDatosParaPublicacion(publicacion.getIdAlojamiento())
-                .orElseThrow(() -> new IllegalStateException(
+                .orElseThrow(() -> new ConflictoNegocioException(
                         "No se encontró el alojamiento asociado."));
 
         PoliticaCancelacionPublicacionResponse politica = politicaQuery

@@ -60,20 +60,12 @@ public class PublicacionConsultaController {
                     ));
         }
 
-        try {
+        PublicacionDetalleResponse respuesta =
+                consultaService.consultarDetalle(
+                        idUsuario,
+                        idPublicacion
+                );
 
-            PublicacionDetalleResponse respuesta =
-                    consultaService.consultarDetalle(
-                            idUsuario,
-                            idPublicacion
-                    );
-
-            return ResponseEntity.ok(respuesta);
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(respuesta);
     }
 }

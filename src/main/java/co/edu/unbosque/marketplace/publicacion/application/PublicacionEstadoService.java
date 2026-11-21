@@ -2,15 +2,17 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import java.time.OffsetDateTime;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
@@ -58,7 +60,7 @@ public class PublicacionEstadoService {
 
         if (!"ACTIVA".equals(publicacion.getEstado())) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "Solamente puedes pausar publicaciones que se encuentren ACTIVA."
             );
         }
@@ -97,7 +99,7 @@ public class PublicacionEstadoService {
 
         if (!"PAUSADA".equals(publicacion.getEstado())) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "Solamente puedes reactivar publicaciones que se encuentren PAUSADA."
             );
         }
@@ -137,7 +139,7 @@ public class PublicacionEstadoService {
 
         if (idAnfitrion == null) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Debes iniciar sesión para realizar esta operación."
             );
         }
@@ -145,20 +147,20 @@ public class PublicacionEstadoService {
         UsuarioPublicacionInfo anfitrion =
                 usuarioPublicacionQuery.consultarParaPublicacion(idAnfitrion)
                         .orElseThrow(() ->
-                                new AccessDeniedException(
+                                new AccesoNoPermitidoException(
                                         "Debes iniciar sesión para realizar esta operación."
                                 ));
 
         if (!anfitrion.esAnfitrion()) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Solamente un anfitrión puede pausar o reactivar publicaciones."
             );
         }
 
         if (!anfitrion.cuentaHabilitadaParaPublicar()) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "Tu cuenta no está habilitada para administrar publicaciones."
             );
         }
@@ -168,14 +170,14 @@ public class PublicacionEstadoService {
 
         if (idPublicacion == null) {
 
-            throw new IllegalArgumentException(
+            throw new DatosInvalidosException(
                     "Debes proporcionar el identificador de la publicación."
             );
         }
 
         return publicacionRepository.findById(idPublicacion)
                 .orElseThrow(() ->
-                        new NoSuchElementException(
+                        new RecursoNoEncontradoException(
                                 "La publicación no existe."
                         ));
     }
@@ -187,13 +189,13 @@ public class PublicacionEstadoService {
         UUID idPropietario = alojamientoPublicacionQuery
                 .consultarIdAnfitrion(publicacion.getIdAlojamiento())
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new ConflictoNegocioException(
                                 "No se encontró el alojamiento asociado a la publicación."
                         ));
 
         if (!idAnfitrion.equals(idPropietario)) {
 
-            throw new AccessDeniedException(
+            throw new AccesoNoPermitidoException(
                     "No puedes modificar una publicación que no te pertenece."
             );
         }
@@ -203,7 +205,7 @@ public class PublicacionEstadoService {
 
         if ("BLOQUEADA".equals(publicacion.getEstado())) {
 
-            throw new IllegalStateException(
+            throw new ConflictoNegocioException(
                     "La publicación está BLOQUEADA por un Administrador "
                     + "y no puede pausarse ni reactivarse."
             );

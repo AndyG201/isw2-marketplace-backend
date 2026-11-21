@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -69,36 +68,13 @@ public class PublicacionEdicionController {
                     .body(Map.of("mensaje", mensaje));
         }
 
-        try {
+        PublicacionAlojamientoResponse respuesta =
+                edicionService.actualizarPublicacion(
+                        idActor,
+                        idPublicacion,
+                        solicitud
+                );
 
-            PublicacionAlojamientoResponse respuesta =
-                    edicionService.actualizarPublicacion(
-                            idActor,
-                            idPublicacion,
-                            solicitud
-                    );
-
-            return ResponseEntity.ok(respuesta);
-
-        } catch (AccessDeniedException e) {
-
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (java.util.NoSuchElementException e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of("mensaje", e.getMessage()));
-
-        } catch (IllegalStateException e) {
-
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("mensaje", e.getMessage()));
-        }
+        return ResponseEntity.ok(respuesta);
     }
 }

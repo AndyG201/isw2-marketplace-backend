@@ -17,8 +17,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.security.access.AccessDeniedException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.alojamiento.contracts.ActualizarAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
@@ -191,7 +194,7 @@ class PublicacionEdicionServiceTest {
         EditarPublicacionRequest solicitud = crearSolicitudValida();
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.actualizarPublicacion(
                         null, idPublicacion, solicitud)
         );
@@ -207,7 +210,7 @@ class PublicacionEdicionServiceTest {
         when(solicitud.getCapacidad()).thenReturn(0);
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.actualizarPublicacion(
                         idAnfitrion, idPublicacion, solicitud)
         );
@@ -224,7 +227,7 @@ class PublicacionEdicionServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                java.util.NoSuchElementException.class,
+                RecursoNoEncontradoException.class,
                 () -> service.actualizarPublicacion(
                         idAnfitrion, idPublicacion, solicitud)
         );
@@ -247,7 +250,7 @@ class PublicacionEdicionServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                IllegalStateException.class,
+                ConflictoNegocioException.class,
                 () -> service.actualizarPublicacion(
                         idAnfitrion, idPublicacion, solicitud)
         );
@@ -278,7 +281,7 @@ class PublicacionEdicionServiceTest {
                 .thenReturn(Optional.of(usuario));
 
         assertThrows(
-                AccessDeniedException.class,
+                AccesoNoPermitidoException.class,
                 () -> service.actualizarPublicacion(
                         idAnfitrion, idPublicacion, solicitud)
         );
@@ -301,7 +304,7 @@ class PublicacionEdicionServiceTest {
                 .thenReturn(false);
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.actualizarPublicacion(
                         idAnfitrion, idPublicacion, solicitud)
         );
@@ -333,7 +336,7 @@ class PublicacionEdicionServiceTest {
                 .thenReturn(true);
 
         assertThrows(
-                IllegalArgumentException.class,
+                DatosInvalidosException.class,
                 () -> service.actualizarPublicacion(
                         idAnfitrion, idPublicacion, solicitud)
         );
@@ -471,7 +474,7 @@ class PublicacionEdicionServiceTest {
             when(publicacion.getEstado()).thenReturn(estado);
             configurarPublicacionYPermisos(publicacion, crearAlojamiento());
 
-            assertThrows(IllegalStateException.class,
+            assertThrows(ConflictoNegocioException.class,
                     () -> service.actualizarPublicacion(idAnfitrion, idPublicacion, solicitud));
         }
         verifyNoInteractions(alojamientoCommand);
@@ -484,10 +487,10 @@ class PublicacionEdicionServiceTest {
         AlojamientoPublicacionInfo alojamiento = crearAlojamiento();
         when(alojamiento.capacidad()).thenReturn(6);
         configurarEdicionValida(publicacion, alojamiento);
-        doThrow(new IllegalArgumentException("No puedes bajar la capacidad."))
+        doThrow(new DatosInvalidosException("No puedes bajar la capacidad."))
                 .when(cambios).validarCapacidad(eq(idPublicacion), eq(3), any());
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(DatosInvalidosException.class,
                 () -> service.actualizarPublicacion(idAnfitrion, idPublicacion, solicitud));
 
         verifyNoInteractions(alojamientoCommand);
