@@ -3,10 +3,10 @@ package co.edu.unbosque.marketplace.auditoria.application;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
+import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.AuditoriaIndiceJdbcRepository;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.storage.BackblazeAuditoriaService;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.storage.ResultadoAlmacenamientoAuditoria;
 
 /**
  * Coordina el almacenamiento de eventos de auditoría.
@@ -21,14 +21,14 @@ import co.edu.unbosque.marketplace.auditoria.infrastructure.storage.ResultadoAlm
 @Profile("worker")
 public class AlmacenAuditoriaInmutableJdbc {
 
-    private final BackblazeAuditoriaService backblazeAuditoriaService;
+    private final AlmacenamientoInmutableAuditoria almacenamiento;
     private final AuditoriaIndiceJdbcRepository indiceRepository;
 
     public AlmacenAuditoriaInmutableJdbc(
-            BackblazeAuditoriaService backblazeAuditoriaService,
+            AlmacenamientoInmutableAuditoria almacenamiento,
             AuditoriaIndiceJdbcRepository indiceRepository) {
 
-        this.backblazeAuditoriaService = backblazeAuditoriaService;
+        this.almacenamiento = almacenamiento;
         this.indiceRepository = indiceRepository;
     }
 
@@ -45,7 +45,7 @@ public class AlmacenAuditoriaInmutableJdbc {
         }
 
         ResultadoAlmacenamientoAuditoria resultado =
-                backblazeAuditoriaService.almacenar(evento);
+                almacenamiento.almacenar(evento);
 
         indiceRepository.registrar(evento, resultado);
     }

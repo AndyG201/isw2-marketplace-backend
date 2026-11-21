@@ -21,10 +21,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import co.edu.unbosque.marketplace.auditoria.api.response.EventoAuditoriaResponse;
 import co.edu.unbosque.marketplace.auditoria.api.response.PaginaAuditoriaResponse;
+import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
 import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.AuditoriaConsultaJdbcRepository;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.storage.BackblazeAuditoriaService;
 
 @ExtendWith(MockitoExtension.class)
 class AuditoriaConsultaServiceTest {
@@ -33,10 +33,10 @@ class AuditoriaConsultaServiceTest {
     private AuditoriaConsultaJdbcRepository repository;
 
     @Mock
-    private ObjectProvider<BackblazeAuditoriaService> backblazeProvider;
+    private ObjectProvider<AlmacenamientoInmutableAuditoria> backblazeProvider;
 
     @Mock
-    private BackblazeAuditoriaService backblaze;
+    private AlmacenamientoInmutableAuditoria backblaze;
 
     @InjectMocks
     private AuditoriaConsultaService service;

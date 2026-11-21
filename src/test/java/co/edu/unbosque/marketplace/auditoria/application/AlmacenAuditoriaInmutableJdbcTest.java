@@ -12,16 +12,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
+import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.AuditoriaIndiceJdbcRepository;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.storage.BackblazeAuditoriaService;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.storage.ResultadoAlmacenamientoAuditoria;
 
 @ExtendWith(MockitoExtension.class)
 class AlmacenAuditoriaInmutableJdbcTest {
 
     @Mock
-    private BackblazeAuditoriaService backblaze;
+    private AlmacenamientoInmutableAuditoria backblaze;
 
     @Mock
     private AuditoriaIndiceJdbcRepository indiceRepository;

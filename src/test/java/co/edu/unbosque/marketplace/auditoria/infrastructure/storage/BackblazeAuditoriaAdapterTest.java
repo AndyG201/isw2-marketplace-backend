@@ -20,22 +20,23 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
+import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAuditoria;
 
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 @ExtendWith(MockitoExtension.class)
-class BackblazeAuditoriaServiceTest {
+class BackblazeAuditoriaAdapterTest {
 
     @Mock
     private S3Client s3Client;
 
-    private BackblazeAuditoriaService service;
+    private BackblazeAuditoriaAdapter adapter;
 
     @BeforeEach
     void setUp() {
-        service = new BackblazeAuditoriaService(
+        adapter = new BackblazeAuditoriaAdapter(
                 s3Client,
                 new ObjectMapper(),
                 "marketplace-auditoria",
@@ -82,7 +83,7 @@ class BackblazeAuditoriaServiceTest {
         );
 
         ResultadoAlmacenamientoAuditoria resultado =
-                service.almacenar(evento);
+                adapter.almacenar(evento);
 
         assertNotNull(resultado);
         assertEquals("COMPLIANCE", resultado.modoRetencion());
@@ -116,7 +117,7 @@ class BackblazeAuditoriaServiceTest {
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> service.almacenar(null)
+                () -> adapter.almacenar(null)
         );
 
         verifyNoInteractions(s3Client);

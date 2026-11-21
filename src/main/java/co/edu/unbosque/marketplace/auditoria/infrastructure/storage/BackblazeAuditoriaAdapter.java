@@ -22,8 +22,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoria;
+import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAuditoria;
 
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkException;
@@ -37,7 +39,7 @@ import software.amazon.awssdk.services.s3.model.*;
     name = "enabled",
     havingValue = "true"
 )
-public class BackblazeAuditoriaService {
+public class BackblazeAuditoriaAdapter implements AlmacenamientoInmutableAuditoria {
 
     private static final DateTimeFormatter FORMATO_RUTA =
             DateTimeFormatter.ofPattern("yyyy/MM/dd")
@@ -48,7 +50,7 @@ public class BackblazeAuditoriaService {
     private final String bucket;
     private final long retentionDays;
 
-    public BackblazeAuditoriaService(
+    public BackblazeAuditoriaAdapter(
             S3Client s3Client,
             ObjectMapper objectMapper,
             @Value("${app.auditoria.b2.bucket}") String bucket,
@@ -63,6 +65,7 @@ public class BackblazeAuditoriaService {
     /**
      * Almacena un evento como objeto JSON inmutable.
      */
+    @Override
     public ResultadoAlmacenamientoAuditoria almacenar(
             BandejaSalidaAuditoria evento) {
 
@@ -144,6 +147,7 @@ public class BackblazeAuditoriaService {
     /**
      * Recupera el evento original y verifica su SHA-256.
      */
+    @Override
     public EventoAuditoria obtenerEvento(
             String claveObjeto,
             String versionId,

@@ -1,5 +1,5 @@
 
-package co.edu.unbosque.marketplace.auditoria.infrastructure.storage;
+package co.edu.unbosque.marketplace.auditoria.domain;
 
 import java.time.OffsetDateTime;
 
