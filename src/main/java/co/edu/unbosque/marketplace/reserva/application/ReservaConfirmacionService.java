@@ -4,12 +4,16 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.PlazoVencidoException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
 import co.edu.unbosque.marketplace.pago.domain.Pago;
@@ -52,7 +56,7 @@ public class ReservaConfirmacionService {
         }
         if (!noches.reservarRango(datos.getIdAlojamiento(), idReserva,
                 datos.getFechaEntrada(), datos.getFechaSalida())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "El alojamiento dejó de estar disponible para las fechas indicadas.");
         }
         reserva.setRetencionHasta(ahora.plusMinutes(20));
@@ -63,7 +67,7 @@ public class ReservaConfirmacionService {
     @Transactional
     public ConfirmacionReservaResponse confirmar(UUID idUsuario, UUID idReserva, String clave) {
         if (clave == null || clave.isBlank() || clave.trim().length() > 100) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw new DatosInvalidosException(
                     "Debes enviar Idempotency-Key de máximo 100 caracteres.");
         }
         String idempotencia = clave.trim();
@@ -74,7 +78,7 @@ public class ReservaConfirmacionService {
         if (pagoPrevio.isPresent()) {
             Pago existente = pagoPrevio.get();
             if (!idReserva.equals(existente.getIdReserva())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                throw new ConflictoNegocioException(
                         "La clave de idempotencia ya corresponde a otra operación.");
             }
             return respuesta(reserva, existente, existente.getMonto(), "Resultado de pago idempotente.");
@@ -82,7 +86,7 @@ public class ReservaConfirmacionService {
         validarReservaInmediata(reserva);
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
         if (reserva.getRetencionHasta() == null || !reserva.getRetencionHasta().isAfter(ahora)) {
-            throw new ResponseStatusException(HttpStatus.GONE,
+            throw new PlazoVencidoException(
                     "La retención expiró; solicita una nueva reserva.");
         }
         ReservaConfirmacionDatos datos = datos(reserva);
@@ -133,29 +137,29 @@ public class ReservaConfirmacionService {
 
     private Reserva bloquearYValidarPropietario(UUID usuario, UUID idReserva) {
         if (usuario == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Debes iniciar sesión.");
+            throw new SesionRequeridaException("Debes iniciar sesión.");
         }
         Reserva reserva = reservas.bloquearPorId(idReserva).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "La reserva no existe."));
+                new RecursoNoEncontradoException("La reserva no existe."));
         if (!usuario.equals(reserva.getIdHuesped())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "La reserva pertenece a otro usuario.");
+            throw new AccesoNoPermitidoException("La reserva pertenece a otro usuario.");
         }
         return reserva;
     }
 
     private void validarReservaInmediata(Reserva reserva) {
         if (!"INMEDIATA".equals(reserva.getModoAceptacion())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "La confirmación inmediata solo aplica a reservas de aceptación inmediata.");
         }
         if (!PENDIENTE_PAGO.equals(reserva.getEstado())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva no está pendiente de pago.");
+            throw new ConflictoNegocioException("La reserva no está pendiente de pago.");
         }
     }
 
     private ReservaConfirmacionDatos datos(Reserva reserva) {
         return reservas.consultarDatos(reserva.getIdCotizacion()).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.CONFLICT, "No fue posible recuperar la cotización."));
+                new ConflictoNegocioException("No fue posible recuperar la cotización."));
     }
 
     private ConfirmacionReservaResponse respuesta(Reserva reserva, Pago pago,

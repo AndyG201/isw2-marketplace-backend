@@ -6,9 +6,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessException;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import co.edu.unbosque.marketplace.auditoria.api.response.EventoAuditoriaResponse;
 import co.edu.unbosque.marketplace.auditoria.api.response.PaginaAuditoriaResponse;
@@ -17,6 +15,9 @@ import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
 import co.edu.unbosque.marketplace.auditoria.domain.FiltrosAuditoria;
 import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.AuditoriaConsultaJdbcRepository;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.ServicioNoDisponibleException;
 
 @Service
 public class AuditoriaConsultaService {
@@ -102,8 +103,7 @@ public class AuditoriaConsultaService {
 
         } catch (DataAccessException | IllegalStateException error) {
 
-            throw new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
+            throw new ServicioNoDisponibleException(
                     "No fue posible consultar el almacén de auditoría.",
                     error
             );
@@ -113,16 +113,14 @@ public class AuditoriaConsultaService {
     public EventoAuditoriaResponse consultar(UUID idEvento) {
 
         if (idEvento == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new DatosInvalidosException(
                     "Debes proporcionar el identificador del evento.");
         }
 
         try {
 
             EventoAuditoriaIndice indice = repository.buscar(idEvento)
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
                             "El evento de auditoría no existe."));
 
             AlmacenamientoInmutableAuditoria almacenamiento =
@@ -139,8 +137,7 @@ public class AuditoriaConsultaService {
 
         } catch (DataAccessException | IllegalStateException error) {
 
-            throw new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
+            throw new ServicioNoDisponibleException(
                     "No fue posible recuperar el evento de auditoría.",
                     error
             );
@@ -153,8 +150,7 @@ public class AuditoriaConsultaService {
                 backblazeProvider.getIfAvailable();
 
         if (servicio == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
+            throw new ServicioNoDisponibleException(
                     "El almacenamiento Backblaze no está habilitado."
             );
         }
@@ -169,20 +165,17 @@ public class AuditoriaConsultaService {
             int tamano) {
 
         if (desde != null && hasta != null && desde.isAfter(hasta)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new DatosInvalidosException(
                     "La fecha desde no puede ser posterior a la fecha hasta.");
         }
 
         if (pagina < 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new DatosInvalidosException(
                     "La página debe ser mayor o igual a cero.");
         }
 
         if (tamano < 1 || tamano > TAMANO_MAXIMO) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new DatosInvalidosException(
                     "El tamaño debe estar entre 1 y " + TAMANO_MAXIMO + ".");
         }
     }

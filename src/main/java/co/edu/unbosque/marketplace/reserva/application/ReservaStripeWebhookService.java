@@ -10,12 +10,15 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.ExcepcionDominio;
+import co.edu.unbosque.marketplace.compartido.domain.ServicioNoDisponibleException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 
 @Service
 public class ReservaStripeWebhookService {
@@ -39,7 +42,7 @@ public class ReservaStripeWebhookService {
         try {
             evento = mapper.readTree(cuerpo);
         } catch (Exception error) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El evento Stripe no contiene JSON válido.");
+            throw new DatosInvalidosException("El evento Stripe no contiene JSON válido.");
         }
 
         String tipo = evento.path("type").asText("");
@@ -72,12 +75,11 @@ public class ReservaStripeWebhookService {
 
     private void verificarFirma(String cuerpo, String firma) {
         if (secretoWebhook.isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
+            throw new ServicioNoDisponibleException(
                     "El secreto de firma de Stripe no está configurado.");
         }
         if (cuerpo == null || firma == null || firma.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "El webhook no tiene firma válida.");
+            throw new SesionRequeridaException("El webhook no tiene firma válida.");
         }
 
         String timestamp = null;
@@ -91,17 +93,17 @@ public class ReservaStripeWebhookService {
             }
         }
         if (timestamp == null || firmaV1 == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "El webhook no tiene firma válida.");
+            throw new SesionRequeridaException("El webhook no tiene firma válida.");
         }
 
         long epoch;
         try {
             epoch = Long.parseLong(timestamp);
         } catch (NumberFormatException error) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "El timestamp de la firma no es válido.");
+            throw new SesionRequeridaException("El timestamp de la firma no es válido.");
         }
         if (Duration.between(Instant.ofEpochSecond(epoch), Instant.now()).abs().compareTo(Duration.ofMinutes(5)) > 0) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La firma del webhook expiró.");
+            throw new SesionRequeridaException("La firma del webhook expiró.");
         }
 
         try {
@@ -110,12 +112,12 @@ public class ReservaStripeWebhookService {
             byte[] esperado = hmac.doFinal((timestamp + "." + cuerpo).getBytes(StandardCharsets.UTF_8));
             byte[] recibido = HexFormat.of().parseHex(firmaV1);
             if (!MessageDigest.isEqual(esperado, recibido)) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La firma del webhook no coincide.");
+                throw new SesionRequeridaException("La firma del webhook no coincide.");
             }
-        } catch (ResponseStatusException error) {
+        } catch (ExcepcionDominio error) {
             throw error;
         } catch (Exception error) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No se pudo verificar la firma del webhook.");
+            throw new SesionRequeridaException("No se pudo verificar la firma del webhook.");
         }
     }
 }

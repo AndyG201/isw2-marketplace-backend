@@ -5,11 +5,11 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.resena.api.response.ResenaPublicacionItemResponse;
 import co.edu.unbosque.marketplace.resena.api.response.ResenasPublicacionResponse;
 import co.edu.unbosque.marketplace.resena.domain.Resena;
@@ -27,10 +27,10 @@ public class ResenaPublicaQueryService {
     @Transactional(readOnly = true)
     public ResenasPublicacionResponse consultar(UUID idPublicacion) {
         if (idPublicacion == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El identificador de publicación es obligatorio.");
+            throw new DatosInvalidosException("El identificador de publicación es obligatorio.");
         }
         if (!resenas.existePublicacion(idPublicacion)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "La publicación no existe.");
+            throw new RecursoNoEncontradoException("La publicación no existe.");
         }
 
         List<Resena> resultado = resenas.consultarVisibles(idPublicacion);

@@ -8,12 +8,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.PlazoVencidoException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.pago.domain.OperacionPendiente;
 import co.edu.unbosque.marketplace.pago.domain.Pago;
 import co.edu.unbosque.marketplace.pago.infrastructure.persistence.OperacionPendienteRepository;
@@ -55,26 +59,25 @@ public class ReservaPagoIntentoService {
     @Transactional
     public PagoIntentoPreparado preparar(UUID idHuesped, UUID idReserva, String clave) {
         if (idHuesped == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Debes iniciar sesión.");
+            throw new SesionRequeridaException("Debes iniciar sesión.");
         }
         if (idReserva == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El identificador de la reserva es obligatorio.");
+            throw new DatosInvalidosException("El identificador de la reserva es obligatorio.");
         }
         String claveNormalizada = normalizarClave(clave);
         bloquearClave(claveNormalizada);
 
         Reserva reserva = reservas.bloquearPorId(idReserva)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La reserva no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("La reserva no existe."));
         if (!idHuesped.equals(reserva.getIdHuesped())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "La reserva pertenece a otro huésped.");
+            throw new AccesoNoPermitidoException("La reserva pertenece a otro huésped.");
         }
 
         Optional<Pago> pagoConClave = pagos.findByClaveIdempotencia(claveNormalizada);
         if (pagoConClave.isPresent()) {
             Pago existente = pagoConClave.get();
             if (!idReserva.equals(existente.getIdReserva())) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
+                throw new ConflictoNegocioException(
                         "La clave de idempotencia ya corresponde a otra reserva.");
             }
             return prepararExistente(reserva, existente);
@@ -85,33 +88,30 @@ public class ReservaPagoIntentoService {
             return convertir(reserva, ultimoPago.get(), "La reserva ya cuenta con un pago aprobado.", false);
         }
         if (ultimoPago.isPresent() && PAGO_PENDIENTE.equals(ultimoPago.get().getEstado())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "La reserva tiene un pago pendiente de conciliación. Reintenta con la misma clave de idempotencia.");
         }
 
         if (!RESERVA_PENDIENTE_PAGO.equals(reserva.getEstado())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva no está pendiente de pago.");
+            throw new ConflictoNegocioException("La reserva no está pendiente de pago.");
         }
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
         if (reserva.getRetencionHasta() == null || !reserva.getRetencionHasta().isAfter(ahora)) {
-            throw new ResponseStatusException(HttpStatus.GONE, "El plazo de pago de la reserva venció.");
+            throw new PlazoVencidoException("El plazo de pago de la reserva venció.");
         }
 
         operaciones.findFirstByIdReservaAndEstadoIn(idReserva, List.of(PENDIENTE, EN_PROCESO))
                 .ifPresent(operacion -> {
-                    throw new ResponseStatusException(
-                            HttpStatus.CONFLICT,
+                    throw new ConflictoNegocioException(
                             "Ya existe un intento de pago pendiente para la reserva.");
                 });
 
         ReservaConfirmacionDatos datos = reservas.consultarDatos(reserva.getIdCotizacion())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.CONFLICT,
+                .orElseThrow(() -> new ConflictoNegocioException(
                         "No fue posible recuperar el monto de la reserva."));
         BigDecimal monto = datos.getMontoTotal();
         if (monto == null || monto.signum() <= 0) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "El monto calculado para la reserva no es válido.");
+            throw new ConflictoNegocioException("El monto calculado para la reserva no es válido.");
         }
 
         UUID idPago = UUID.randomUUID();
@@ -133,11 +133,11 @@ public class ReservaPagoIntentoService {
     public PagoIntentoPreparado buscarPendiente(String clave) {
         String claveNormalizada = normalizarClave(clave);
         Pago pago = pagos.findByClaveIdempotencia(claveNormalizada)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe el intento de pago."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el intento de pago."));
         Reserva reserva = reservas.findById(pago.getIdReserva())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La reserva no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("La reserva no existe."));
         OperacionPendiente operacion = operaciones.findByClaveIdempotencia(claveNormalizada)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "No existe la operación de conciliación."));
+                .orElseThrow(() -> new ConflictoNegocioException("No existe la operación de conciliación."));
         if (!PENDIENTE.equals(operacion.getEstado())) {
             return convertir(reserva, pago, "El intento de pago ya no está pendiente.", false);
         }
@@ -152,9 +152,9 @@ public class ReservaPagoIntentoService {
             String mensaje) {
         String claveNormalizada = normalizarClave(clave);
         Pago pago = pagos.findByClaveIdempotencia(claveNormalizada)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe el intento de pago."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el intento de pago."));
         Reserva reserva = reservas.bloquearPorId(pago.getIdReserva())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La reserva no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("La reserva no existe."));
         OperacionPendiente operacion = operaciones.findByClaveIdempotencia(claveNormalizada).orElse(null);
 
         if (PAGO_PAGADO.equals(pago.getEstado())) {
@@ -197,11 +197,11 @@ public class ReservaPagoIntentoService {
     public PagoSimuladoResponse registrarError(String clave, String error) {
         String claveNormalizada = normalizarClave(clave);
         Pago pago = pagos.findByClaveIdempotencia(claveNormalizada)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe el intento de pago."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el intento de pago."));
         Reserva reserva = reservas.findById(pago.getIdReserva())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La reserva no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("La reserva no existe."));
         OperacionPendiente operacion = operaciones.findByClaveIdempotencia(claveNormalizada)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "No existe la operación de conciliación."));
+                .orElseThrow(() -> new ConflictoNegocioException("No existe la operación de conciliación."));
         if (!PENDIENTE.equals(operacion.getEstado())) {
             return respuesta(reserva, pago, "El resultado del pago ya fue registrado.");
         }
@@ -251,8 +251,7 @@ public class ReservaPagoIntentoService {
 
     private String normalizarClave(String clave) {
         if (clave == null || clave.isBlank() || clave.trim().length() > 100) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new DatosInvalidosException(
                     "Debes enviar Idempotency-Key de máximo 100 caracteres.");
         }
         return clave.trim();

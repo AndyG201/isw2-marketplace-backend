@@ -8,14 +8,16 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.reserva.api.request.CrearReservaRequest;
 import co.edu.unbosque.marketplace.reserva.api.response.SolicitudReservaResponse;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaSolicitadaEvent;
@@ -58,8 +60,7 @@ public class ReservaSolicitudService {
             String claveIdempotencia) {
 
         if (idHuesped == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
+            throw new SesionRequeridaException(
                     "Debes iniciar sesión para solicitar una reserva.");
         }
 
@@ -76,8 +77,7 @@ public class ReservaSolicitudService {
             if (!idHuesped.equals(reserva.getIdHuesped())
                     || !solicitud.idCotizacion().equals(
                             reserva.getIdCotizacion())) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
+                throw new ConflictoNegocioException(
                         "La clave de idempotencia ya fue utilizada para otra solicitud.");
             }
             return convertirRespuesta(reserva);
@@ -85,13 +85,11 @@ public class ReservaSolicitudService {
 
         ReservaSolicitudDatos datos = reservaRepository
                 .consultarDatosCotizacion(solicitud.idCotizacion())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
+                .orElseThrow(() -> new RecursoNoEncontradoException(
                         "La cotización indicada no existe."));
 
         if (!"ACTIVA".equals(datos.getEstadoPublicacion())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "La publicación no está disponible para nuevas reservas.");
         }
 
@@ -100,23 +98,20 @@ public class ReservaSolicitudService {
                 || !datos.getFechaSalida().isAfter(datos.getFechaEntrada())
                 || datos.getFechaEntrada().isBefore(
                         OffsetDateTime.now(ZoneOffset.UTC).toLocalDate())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new DatosInvalidosException(
                     "Las fechas de la cotización no son válidas.");
         }
 
         if (datos.getCantidadHuespedes() < 1
                 || datos.getCantidadHuespedes() > datos.getCapacidad()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new DatosInvalidosException(
                     "La cantidad de huéspedes supera la capacidad del alojamiento.");
         }
 
         String modo = datos.getModoAceptacion();
         if (!MODO_INMEDIATA.equals(modo)
                 && !MODO_APROBACION.equals(modo)) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "La publicación no tiene un modo de aceptación válido.");
         }
 
@@ -124,15 +119,13 @@ public class ReservaSolicitudService {
                 datos.getIdAlojamiento(),
                 datos.getFechaEntrada(),
                 datos.getFechaSalida())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "El alojamiento no está disponible para las fechas indicadas.");
         }
 
         if (reservaRepository.findByIdCotizacion(
                 solicitud.idCotizacion()).isPresent()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "Esta cotización ya tiene una solicitud de reserva.");
         }
 
@@ -191,16 +184,14 @@ public class ReservaSolicitudService {
             String claveIdempotencia) {
 
         if (solicitud == null || solicitud.idCotizacion() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new DatosInvalidosException(
                     "Debes indicar la cotización para solicitar una reserva.");
         }
 
         if (claveIdempotencia == null
                 || claveIdempotencia.isBlank()
                 || claveIdempotencia.trim().length() > 100) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new DatosInvalidosException(
                     "Debes enviar una clave de idempotencia de máximo 100 caracteres.");
         }
     }

@@ -6,19 +6,18 @@ import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaAdministracionCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAdministracion;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
+import co.edu.unbosque.marketplace.compartido.domain.PlazoVencidoException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.reporte.api.response.ExportacionReporteResponse;
 import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteInfo;
 import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteJdbcRepository;
@@ -114,7 +113,7 @@ public class ExportacionReporteService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<byte[]> descargar(
+    public ArchivoExportado descargar(
             UUID idExportacion,
             UUID idAdministrador) {
 
@@ -122,14 +121,12 @@ public class ExportacionReporteService {
                 obtenerExportacion(idExportacion, idAdministrador);
 
         if (!"COMPLETADO".equals(info.estado())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "El archivo todavía no está disponible.");
         }
 
         if (info.rutaArchivo() == null || info.rutaArchivo().isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
+            throw new RecursoNoEncontradoException(
                     "La exportación no tiene un archivo asociado.");
         }
 
@@ -139,29 +136,23 @@ public class ExportacionReporteService {
                     .normalize();
 
             if (!Files.isRegularFile(archivo)) {
-                throw new ResponseStatusException(
-                        HttpStatus.GONE,
+                throw new PlazoVencidoException(
                         "El archivo exportado ya no está disponible.");
             }
 
             boolean esPdf = "PDF".equals(info.formato());
             String extension = esPdf ? "pdf" : "xlsx";
-            MediaType tipo = esPdf
-                    ? MediaType.APPLICATION_PDF
-                    : MediaType.parseMediaType(
-                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            String tipo = esPdf
+                    ? "application/pdf"
+                    : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-            return ResponseEntity.ok()
-                    .contentType(tipo)
-                    .header(
-                            HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"reporte-"
-                                    + idExportacion + "." + extension + "\"")
-                    .body(Files.readAllBytes(archivo));
+            return new ArchivoExportado(
+                    "reporte-" + idExportacion + "." + extension,
+                    tipo,
+                    Files.readAllBytes(archivo));
 
         } catch (java.io.IOException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
+            throw new FallaInternaException(
                     "No fue posible leer el archivo exportado.",
                     e);
         }
@@ -223,8 +214,7 @@ public class ExportacionReporteService {
             UUID idAdministrador) {
 
         return repositorio.buscar(idExportacion, idAdministrador)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
+                .orElseThrow(() -> new RecursoNoEncontradoException(
                         "La exportación no existe."));
     }
 

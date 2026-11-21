@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.web.server.ResponseStatusException;
 
 import co.edu.unbosque.marketplace.auditoria.api.response.EventoAuditoriaResponse;
 import co.edu.unbosque.marketplace.auditoria.api.response.PaginaAuditoriaResponse;
@@ -25,6 +24,9 @@ import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAudit
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
 import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.AuditoriaConsultaJdbcRepository;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.ServicioNoDisponibleException;
 
 @ExtendWith(MockitoExtension.class)
 class AuditoriaConsultaServiceTest {
@@ -168,8 +170,8 @@ class AuditoriaConsultaServiceTest {
     @Test
     void consultaConDesdePosteriorAHastaEsRechazada() {
 
-        ResponseStatusException error = assertThrows(
-                ResponseStatusException.class,
+        assertThrows(
+                DatosInvalidosException.class,
                 () -> service.consultar(
                         null,
                         fechaEvento,
@@ -182,33 +184,30 @@ class AuditoriaConsultaServiceTest {
                 )
         );
 
-        assertEquals(400, error.getStatusCode().value());
         verifyNoInteractions(repository, backblaze);
     }
 
     @Test
     void consultaConPaginaNegativaEsRechazada() {
 
-        ResponseStatusException error = assertThrows(
-                ResponseStatusException.class,
+        assertThrows(
+                DatosInvalidosException.class,
                 () -> service.consultar(
                         null, null, null, null, null, null, -1, 20)
         );
 
-        assertEquals(400, error.getStatusCode().value());
         verifyNoInteractions(repository);
     }
 
     @Test
     void consultaConTamanoFueraDelLimiteEsRechazada() {
 
-        ResponseStatusException error = assertThrows(
-                ResponseStatusException.class,
+        assertThrows(
+                DatosInvalidosException.class,
                 () -> service.consultar(
                         null, null, null, null, null, null, 0, 101)
         );
 
-        assertEquals(400, error.getStatusCode().value());
         verifyNoInteractions(repository);
     }
 
@@ -219,13 +218,11 @@ class AuditoriaConsultaServiceTest {
                 .thenThrow(new DataAccessResourceFailureException(
                         "PostgreSQL no disponible"));
 
-        ResponseStatusException error = assertThrows(
-                ResponseStatusException.class,
+        assertThrows(
+                ServicioNoDisponibleException.class,
                 () -> service.consultar(
                         null, null, null, null, null, null, 0, 20)
         );
-
-        assertEquals(503, error.getStatusCode().value());
     }
 
     @Test
@@ -242,13 +239,11 @@ class AuditoriaConsultaServiceTest {
                 any(UUID.class)
         )).thenThrow(new IllegalStateException("Backblaze no disponible"));
 
-        ResponseStatusException error = assertThrows(
-                ResponseStatusException.class,
+        assertThrows(
+                ServicioNoDisponibleException.class,
                 () -> service.consultar(
                         null, null, null, null, null, null, 0, 20)
         );
-
-        assertEquals(503, error.getStatusCode().value());
     }
 
     @Test
@@ -281,24 +276,22 @@ class AuditoriaConsultaServiceTest {
         when(repository.buscar(idEvento))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException error = assertThrows(
-                ResponseStatusException.class,
+        assertThrows(
+                RecursoNoEncontradoException.class,
                 () -> service.consultar(idEvento)
         );
 
-        assertEquals(404, error.getStatusCode().value());
         verifyNoInteractions(backblaze);
     }
 
     @Test
     void consultaPorIdNuloDevuelve400() {
 
-        ResponseStatusException error = assertThrows(
-                ResponseStatusException.class,
+        assertThrows(
+                DatosInvalidosException.class,
                 () -> service.consultar((UUID) null)
         );
 
-        assertEquals(400, error.getStatusCode().value());
         verifyNoInteractions(repository);
     }
 
@@ -315,12 +308,10 @@ class AuditoriaConsultaServiceTest {
                 any(UUID.class)
         )).thenThrow(new IllegalStateException("Error de lectura"));
 
-        ResponseStatusException error = assertThrows(
-                ResponseStatusException.class,
+        assertThrows(
+                ServicioNoDisponibleException.class,
                 () -> service.consultar(idEvento)
         );
-
-        assertEquals(503, error.getStatusCode().value());
     }
 
     @Test
@@ -332,12 +323,10 @@ class AuditoriaConsultaServiceTest {
 
         when(backblazeProvider.getIfAvailable()).thenReturn(null);
 
-        ResponseStatusException error = assertThrows(
-                ResponseStatusException.class,
+        assertThrows(
+                ServicioNoDisponibleException.class,
                 () -> service.consultar(
                         null, null, null, null, null, null, 0, 20)
         );
-
-        assertEquals(503, error.getStatusCode().value());
     }
 }

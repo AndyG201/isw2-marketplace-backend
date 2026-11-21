@@ -6,13 +6,16 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaReservaCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoReserva;
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.reserva.api.response.DecisionReservaResponse;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaDecisionEvent;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
@@ -67,29 +70,24 @@ public class ReservaDecisionService {
 
     private DecisionReservaResponse decidir(UUID idAnfitrion, UUID idReserva, boolean aprobar) {
         if (idAnfitrion == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED, "Debes iniciar sesión como anfitrión.");
+            throw new SesionRequeridaException("Debes iniciar sesión como anfitrión.");
         }
 
         Reserva reserva = retenciones.bloquearPorId(idReserva)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "La solicitud de reserva no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("La solicitud de reserva no existe."));
 
         ReservaSolicitudDatos datos = solicitudes.consultarDatosCotizacion(reserva.getIdCotizacion())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.CONFLICT,
+                .orElseThrow(() -> new ConflictoNegocioException(
                         "No fue posible consultar el alojamiento de la solicitud."));
 
         if (!idAnfitrion.equals(datos.getIdAnfitrion())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
+            throw new AccesoNoPermitidoException(
                     "La solicitud no corresponde a un alojamiento tuyo.");
         }
 
         if (!MODO_APROBACION.equals(reserva.getModoAceptacion())
                 || !PENDIENTE_APROBACION.equals(reserva.getEstado())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "La solicitud ya fue resuelta o no admite una decisión. Estado actual: "
                             + reserva.getEstado() + ".");
         }
@@ -98,8 +96,7 @@ public class ReservaDecisionService {
         OffsetDateTime limiteAprobacion = reserva.getRetencionHasta();
 
         if (limiteAprobacion == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "La solicitud no tiene un plazo de retención válido.");
         }
 
@@ -128,8 +125,7 @@ public class ReservaDecisionService {
             OffsetDateTime ahora) {
 
         if (minutosRetencionPago <= 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
+            throw new FallaInternaException(
                     "El plazo de retención para el pago debe ser mayor que cero.");
         }
 

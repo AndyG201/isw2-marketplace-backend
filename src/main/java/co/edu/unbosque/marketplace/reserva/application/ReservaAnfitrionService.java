@@ -3,11 +3,13 @@ package co.edu.unbosque.marketplace.reserva.application;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.reserva.api.response.ReservaAlojamientoResponse;
 import co.edu.unbosque.marketplace.reserva.api.response.ReservasAlojamientoResponse;
 import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaAnfitrionDatos;
@@ -47,21 +49,20 @@ public class ReservaAnfitrionService {
     public ReservaAlojamientoResponse consultarReserva(UUID idAnfitrion, UUID idReserva) {
         validarAnfitrion(idAnfitrion);
         if (idReserva == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El identificador de la reserva es obligatorio.");
+            throw new DatosInvalidosException("El identificador de la reserva es obligatorio.");
         }
 
         return historial.consultarReservaPorAnfitrion(idAnfitrion, idReserva)
                 .map(this::convertir)
                 .orElseThrow(() -> reservas.existsById(idReserva)
-                        ? new ResponseStatusException(
-                                HttpStatus.FORBIDDEN,
+                        ? new AccesoNoPermitidoException(
                                 "No tienes permiso para consultar esta reserva.")
-                        : new ResponseStatusException(HttpStatus.NOT_FOUND, "La reserva no existe."));
+                        : new RecursoNoEncontradoException("La reserva no existe."));
     }
 
     private void validarAnfitrion(UUID idAnfitrion) {
         if (idAnfitrion == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Debes iniciar sesión como anfitrión.");
+            throw new SesionRequeridaException("Debes iniciar sesión como anfitrión.");
         }
     }
 

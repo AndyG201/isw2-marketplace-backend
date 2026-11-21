@@ -6,15 +6,15 @@ import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaReservaCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoReserva;
-import co.edu.unbosque.marketplace.reserva.contracts.ReservaRetenidaEvent;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaRetencionVencidaEvent;
+import co.edu.unbosque.marketplace.reserva.contracts.ReservaRetenidaEvent;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaSolicitadaEvent;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.NocheReservaJdbcRepository;
@@ -55,7 +55,7 @@ public class ReservaRetencionService {
             return;
         }
         Reserva reserva = reservas.findById(evento.idReserva()).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "La reserva solicitada ya no existe."));
+                new RecursoNoEncontradoException("La reserva solicitada ya no existe."));
         if (!MODO_APROBACION.equals(reserva.getModoAceptacion())
                 || !PENDIENTE_APROBACION.equals(reserva.getEstado())) {
             return;
@@ -65,16 +65,16 @@ public class ReservaRetencionService {
             return;
         }
         ReservaSolicitudDatos datos = solicitudes.consultarDatosCotizacion(reserva.getIdCotizacion())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
+                .orElseThrow(() -> new ConflictoNegocioException(
                         "No fue posible recuperar las fechas de la solicitud."));
         if (!"ACTIVA".equals(datos.getEstadoPublicacion())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "La publicación dejó de estar disponible para recibir reservas.");
         }
         OffsetDateTime fechaVencimiento = reserva.getFechaSolicitud().plusHours(24);
         if (!noches.reservarRango(datos.getIdAlojamiento(), reserva.getIdReserva(),
                 datos.getFechaEntrada(), datos.getFechaSalida())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "El periodo ya fue ocupado por otra reserva o no está disponible.");
         }
         reserva.setRetencionHasta(fechaVencimiento);
