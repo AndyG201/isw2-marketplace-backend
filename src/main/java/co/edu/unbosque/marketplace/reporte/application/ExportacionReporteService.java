@@ -18,22 +18,22 @@ import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
 import co.edu.unbosque.marketplace.compartido.domain.PlazoVencidoException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
-import co.edu.unbosque.marketplace.reporte.api.response.ExportacionReporteResponse;
-import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteInfo;
-import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteJdbcRepository;
+import co.edu.unbosque.marketplace.reporte.application.dto.ExportacionReporteResponse;
+import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteInfo;
+import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteRepository;
 import co.edu.unbosque.marketplace.trabajo.ColaTrabajosRedis;
 import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 
 @Service
 public class ExportacionReporteService {
 
-    private final ExportacionReporteJdbcRepository repositorio;
+    private final ExportacionReporteRepository repositorio;
     private final AuditoriaAdministracionCommand auditoria;
     private final ColaTrabajosRedis cola;
     private final ObjectMapper mapper;
 
     public ExportacionReporteService(
-            ExportacionReporteJdbcRepository repositorio,
+            ExportacionReporteRepository repositorio,
             AuditoriaAdministracionCommand auditoria,
             ColaTrabajosRedis cola,
             ObjectMapper mapper) {

@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 
-import co.edu.unbosque.marketplace.publicacion.api.request.ConfigurarModoAceptacionRequest;
-import co.edu.unbosque.marketplace.publicacion.api.response.ModoAceptacionPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionModoAceptacionService;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ConfigurarModoAceptacionRequest;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ModoAceptacionPublicacionResponse;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 

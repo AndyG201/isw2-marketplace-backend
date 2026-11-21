@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 
-import co.edu.unbosque.marketplace.cotizacion.api.request.CrearCotizacionRequest;
 import co.edu.unbosque.marketplace.cotizacion.application.CotizacionService;
+import co.edu.unbosque.marketplace.cotizacion.application.dto.CrearCotizacionRequest;
 
 @RestController
 @RequestMapping("/cotizaciones")

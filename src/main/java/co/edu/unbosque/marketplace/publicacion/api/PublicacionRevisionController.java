@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.publicacion.api.response.EnviarRevisionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionRevisionService;
+import co.edu.unbosque.marketplace.publicacion.application.dto.EnviarRevisionResponse;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 

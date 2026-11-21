@@ -17,12 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
-import co.edu.unbosque.marketplace.usuario.api.request.ModificarDocumentoRequest;
-import co.edu.unbosque.marketplace.usuario.api.request.RestringirUsuarioRequest;
-import co.edu.unbosque.marketplace.usuario.api.response.AdministradorUsuarioResponse;
+import co.edu.unbosque.marketplace.usuario.application.dto.AdministradorUsuarioResponse;
+import co.edu.unbosque.marketplace.usuario.application.dto.ModificarDocumentoRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.RestringirUsuarioRequest;
+import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.contracts.CuentaRestringidaEvent;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.security.JwtUtil;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionDocumento;
 

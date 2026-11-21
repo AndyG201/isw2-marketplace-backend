@@ -5,8 +5,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionDisponibilidadQuery;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 
 @Service
 public class PublicacionDisponibilidadQueryService

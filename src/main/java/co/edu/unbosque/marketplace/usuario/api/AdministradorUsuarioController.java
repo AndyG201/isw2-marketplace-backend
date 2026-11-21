@@ -17,10 +17,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-import co.edu.unbosque.marketplace.usuario.api.request.ModificarDocumentoRequest;
-import co.edu.unbosque.marketplace.usuario.api.request.RestringirUsuarioRequest;
-import co.edu.unbosque.marketplace.usuario.api.response.AdministradorUsuarioResponse;
 import co.edu.unbosque.marketplace.usuario.application.AdministradorService;
+import co.edu.unbosque.marketplace.usuario.application.dto.AdministradorUsuarioResponse;
+import co.edu.unbosque.marketplace.usuario.application.dto.ModificarDocumentoRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.RestringirUsuarioRequest;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

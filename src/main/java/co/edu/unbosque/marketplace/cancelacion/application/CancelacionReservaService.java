@@ -16,11 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
-import co.edu.unbosque.marketplace.cancelacion.api.response.CancelarReservaResponse;
+import co.edu.unbosque.marketplace.cancelacion.application.dto.CancelarReservaResponse;
+import co.edu.unbosque.marketplace.cancelacion.application.port.CancelacionRepository;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.cancelacion.domain.Cancelacion;
-import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.CancelacionRepository;
 import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;

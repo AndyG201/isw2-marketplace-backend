@@ -18,9 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionPublicaResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionDetallePublicoService;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionDetalleResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionPublicaResponse;
 
 @ExtendWith(MockitoExtension.class)
 class PublicacionDetallePublicoControllerTest {

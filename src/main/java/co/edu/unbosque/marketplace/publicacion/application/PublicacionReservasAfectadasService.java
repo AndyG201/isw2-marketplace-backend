@@ -14,12 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaInfo;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaQuery;
-import co.edu.unbosque.marketplace.publicacion.api.response.ReservaAfectadaResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.ReservasAfectadasResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ReservaAfectadaResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ReservasAfectadasResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.RevisionPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.RevisionPublicacion;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.RevisionPublicacionRepository;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaAfectadaInfo;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaAfectadaQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioReservaInfo;

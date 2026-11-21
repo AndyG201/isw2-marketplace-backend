@@ -19,12 +19,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.disponibilidad.api.response.ConsultaDisponibilidadResponse;
-import co.edu.unbosque.marketplace.disponibilidad.api.response.RangoDisponibleResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.ConsultaDisponibilidadResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.RangoDisponibleResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.port.NocheReservadaRepository;
+import co.edu.unbosque.marketplace.disponibilidad.application.port.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplace.disponibilidad.domain.NocheReservada;
 import co.edu.unbosque.marketplace.disponibilidad.domain.PeriodoDisponibilidad;
-import co.edu.unbosque.marketplace.disponibilidad.infrastructure.persistence.NocheReservadaRepository;
-import co.edu.unbosque.marketplace.disponibilidad.infrastructure.persistence.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionDisponibilidadQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 

@@ -9,14 +9,17 @@ import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
+
 @Repository
-public class NocheReservaJdbcRepository {
+public class NocheReservaJdbcRepository implements NocheReservaRepository {
     private final JdbcTemplate jdbc;
 
     public NocheReservaJdbcRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
+    @Override
     public boolean reservarRango(UUID idAlojamiento, UUID idReserva, LocalDate entrada, LocalDate salida) {
         jdbc.queryForObject("SELECT id_alojamiento FROM public.alojamiento WHERE id_alojamiento = ? FOR UPDATE",
                 UUID.class, idAlojamiento);
@@ -49,6 +52,7 @@ public class NocheReservaJdbcRepository {
         return true;
     }
 
+    @Override
     public void liberar(UUID idReserva) {
         List<UUID> idsNoches = jdbc.query(
                 "SELECT id_noche FROM public.reserva_noche WHERE id_reserva = ?",

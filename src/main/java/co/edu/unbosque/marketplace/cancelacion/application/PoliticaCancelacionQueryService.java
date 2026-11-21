@@ -6,11 +6,11 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import co.edu.unbosque.marketplace.cancelacion.application.port.PoliticaCancelacionRepository;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.cancelacion.domain.PoliticaCancelacion;
 import co.edu.unbosque.marketplace.cancelacion.domain.TipoPoliticaCancelacion;
-import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.PoliticaCancelacionRepository;
 
 @Service
 public class PoliticaCancelacionQueryService

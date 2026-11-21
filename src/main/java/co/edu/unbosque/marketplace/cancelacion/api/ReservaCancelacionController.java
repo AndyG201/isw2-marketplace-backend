@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplace.cancelacion.api.request.CancelarReservaRequest;
-import co.edu.unbosque.marketplace.cancelacion.api.response.CancelarReservaResponse;
 import co.edu.unbosque.marketplace.cancelacion.application.CancelacionReservaService;
+import co.edu.unbosque.marketplace.cancelacion.application.dto.CancelarReservaResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController

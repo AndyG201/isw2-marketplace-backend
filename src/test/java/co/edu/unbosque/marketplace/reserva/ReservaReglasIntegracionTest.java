@@ -41,7 +41,6 @@ import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoExceptio
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
-import co.edu.unbosque.marketplace.reserva.api.request.CrearReservaRequest;
 import co.edu.unbosque.marketplace.reserva.application.ReservaAnfitrionService;
 import co.edu.unbosque.marketplace.reserva.application.ReservaConfirmacionService;
 import co.edu.unbosque.marketplace.reserva.application.ReservaDecisionService;
@@ -51,6 +50,7 @@ import co.edu.unbosque.marketplace.reserva.application.ReservaPagoIntentoService
 import co.edu.unbosque.marketplace.reserva.application.ReservaRetencionScheduler;
 import co.edu.unbosque.marketplace.reserva.application.ReservaRetencionService;
 import co.edu.unbosque.marketplace.reserva.application.ReservaSolicitudService;
+import co.edu.unbosque.marketplace.reserva.application.dto.CrearReservaRequest;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaSolicitadaEvent;
 import co.edu.unbosque.marketplace.usuario.security.JwtUtil;
 

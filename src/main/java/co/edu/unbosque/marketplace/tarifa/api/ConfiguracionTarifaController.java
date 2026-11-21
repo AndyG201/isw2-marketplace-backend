@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 
-import co.edu.unbosque.marketplace.tarifa.api.request.ConfigurarPorcentajesTarifaRequest;
-import co.edu.unbosque.marketplace.tarifa.api.response.ConfiguracionTarifaResponse;
 import co.edu.unbosque.marketplace.tarifa.application.ConfiguracionTarifaService;
+import co.edu.unbosque.marketplace.tarifa.application.dto.ConfiguracionTarifaResponse;
+import co.edu.unbosque.marketplace.tarifa.application.dto.ConfigurarPorcentajesTarifaRequest;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController

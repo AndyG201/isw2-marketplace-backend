@@ -17,10 +17,10 @@ import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
-import co.edu.unbosque.marketplace.resena.api.request.CrearResenaRequest;
-import co.edu.unbosque.marketplace.resena.api.response.CrearResenaResponse;
+import co.edu.unbosque.marketplace.resena.application.dto.CrearResenaRequest;
+import co.edu.unbosque.marketplace.resena.application.dto.CrearResenaResponse;
+import co.edu.unbosque.marketplace.resena.application.port.ResenaRepository;
 import co.edu.unbosque.marketplace.resena.domain.Resena;
-import co.edu.unbosque.marketplace.resena.infrastructure.persistence.ResenaRepository;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaResenaInfo;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaResenaQuery;
 

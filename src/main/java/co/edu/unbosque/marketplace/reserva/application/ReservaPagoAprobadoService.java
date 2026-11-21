@@ -13,15 +13,15 @@ import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.PlazoVencidoException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
+import co.edu.unbosque.marketplace.pago.application.port.PagoRepository;
 import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
 import co.edu.unbosque.marketplace.pago.domain.Pago;
-import co.edu.unbosque.marketplace.pago.infrastructure.persistence.PagoRepository;
-import co.edu.unbosque.marketplace.reserva.api.response.ConfirmacionReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.dto.ConfirmacionReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.NocheReservaJdbcRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaConfirmacionDatos;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaConfirmacionRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 
 @Service
 public class ReservaPagoAprobadoService {
@@ -32,13 +32,13 @@ public class ReservaPagoAprobadoService {
 
     private final ReservaConfirmacionRepository reservas;
     private final PagoRepository pagos;
-    private final NocheReservaJdbcRepository noches;
+    private final NocheReservaRepository noches;
     private final PagoSandboxGateway pasarela;
 
     public ReservaPagoAprobadoService(
             ReservaConfirmacionRepository reservas,
             PagoRepository pagos,
-            NocheReservaJdbcRepository noches,
+            NocheReservaRepository noches,
             PagoSandboxGateway pasarela) {
         this.reservas = reservas;
         this.pagos = pagos;

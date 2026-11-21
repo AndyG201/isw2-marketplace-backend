@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.reserva.api.response.DecisionReservaResponse;
 import co.edu.unbosque.marketplace.reserva.application.ReservaDecisionService;
+import co.edu.unbosque.marketplace.reserva.application.dto.DecisionReservaResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController

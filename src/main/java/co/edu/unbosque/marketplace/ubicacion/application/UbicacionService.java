@@ -13,14 +13,14 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.unbosque.marketplace.ubicacion.api.response.CiudadResponse;
-import co.edu.unbosque.marketplace.ubicacion.api.response.PaisResponse;
+import co.edu.unbosque.marketplace.ubicacion.application.dto.CiudadResponse;
+import co.edu.unbosque.marketplace.ubicacion.application.dto.PaisResponse;
+import co.edu.unbosque.marketplace.ubicacion.application.port.CiudadRepository;
+import co.edu.unbosque.marketplace.ubicacion.application.port.PaisRepository;
 import co.edu.unbosque.marketplace.ubicacion.contracts.CiudadUbicacionInfo;
 import co.edu.unbosque.marketplace.ubicacion.contracts.UbicacionRegistroQuery;
 import co.edu.unbosque.marketplace.ubicacion.domain.Ciudad;
 import co.edu.unbosque.marketplace.ubicacion.domain.Pais;
-import co.edu.unbosque.marketplace.ubicacion.infrastructure.persistence.CiudadRepository;
-import co.edu.unbosque.marketplace.ubicacion.infrastructure.persistence.PaisRepository;
 
 @Service
 public class UbicacionService implements UbicacionRegistroQuery {

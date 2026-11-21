@@ -14,9 +14,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import co.edu.unbosque.marketplace.auditoria.api.response.EventoAuditoriaResponse;
-import co.edu.unbosque.marketplace.auditoria.api.response.PaginaAuditoriaResponse;
 import co.edu.unbosque.marketplace.auditoria.application.AuditoriaConsultaService;
+import co.edu.unbosque.marketplace.auditoria.application.dto.EventoAuditoriaResponse;
+import co.edu.unbosque.marketplace.auditoria.application.dto.PaginaAuditoriaResponse;
 
 @ExtendWith(MockitoExtension.class)
 class AuditoriaConsultaControllerTest {

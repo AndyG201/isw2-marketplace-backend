@@ -3,10 +3,10 @@ package co.edu.unbosque.marketplace.usuario.api;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import co.edu.unbosque.marketplace.usuario.api.request.ModificarDocumentoRequest;
-import co.edu.unbosque.marketplace.usuario.api.request.RestringirUsuarioRequest;
-import co.edu.unbosque.marketplace.usuario.api.response.AdministradorUsuarioResponse;
 import co.edu.unbosque.marketplace.usuario.application.AdministradorService;
+import co.edu.unbosque.marketplace.usuario.application.dto.AdministradorUsuarioResponse;
+import co.edu.unbosque.marketplace.usuario.application.dto.ModificarDocumentoRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.RestringirUsuarioRequest;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

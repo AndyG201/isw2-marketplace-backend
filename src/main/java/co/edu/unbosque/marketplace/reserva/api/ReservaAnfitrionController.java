@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.reserva.api.response.ReservaAlojamientoResponse;
-import co.edu.unbosque.marketplace.reserva.api.response.ReservasAlojamientoResponse;
 import co.edu.unbosque.marketplace.reserva.application.ReservaAnfitrionService;
+import co.edu.unbosque.marketplace.reserva.application.dto.ReservaAlojamientoResponse;
+import co.edu.unbosque.marketplace.reserva.application.dto.ReservasAlojamientoResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController

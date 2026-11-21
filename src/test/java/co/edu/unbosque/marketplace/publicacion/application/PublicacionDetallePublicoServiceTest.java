@@ -28,13 +28,13 @@ import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionI
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAdministracionResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionPublicaResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.ServicioAdicionalPublicacionResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.SolicitudCambioResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAdministracionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionDetalleResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionPublicaResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ServicioAdicionalPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.SolicitudCambioResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 
 @ExtendWith(MockitoExtension.class)
 class PublicacionDetallePublicoServiceTest {

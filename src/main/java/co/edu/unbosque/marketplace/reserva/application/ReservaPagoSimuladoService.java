@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
-import co.edu.unbosque.marketplace.reserva.api.response.PagoSimuladoResponse;
+import co.edu.unbosque.marketplace.reserva.application.dto.PagoSimuladoResponse;
 
 @Service
 public class ReservaPagoSimuladoService {

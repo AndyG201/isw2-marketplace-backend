@@ -28,11 +28,11 @@ import org.springframework.web.multipart.MultipartFile;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaInfo;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaQuery;
-import co.edu.unbosque.marketplace.publicacion.api.request.EditarPublicacionRequest;
-import co.edu.unbosque.marketplace.publicacion.api.response.SolicitudCambioResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.EditarPublicacionRequest;
+import co.edu.unbosque.marketplace.publicacion.application.dto.SolicitudCambioResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.SolicitudCambioPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.SolicitudCambioPublicacion;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.SolicitudCambioPublicacionRepository;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaAfectadaInfo;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaAfectadaQuery;
 

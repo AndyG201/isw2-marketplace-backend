@@ -4,12 +4,16 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import co.edu.unbosque.marketplace.usuario.api.request.*;
 import co.edu.unbosque.marketplace.ubicacion.contracts.CiudadUbicacionInfo;
 import co.edu.unbosque.marketplace.ubicacion.contracts.UbicacionRegistroQuery;
+import co.edu.unbosque.marketplace.usuario.application.dto.ActualizarContrasenaRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.ActualizarPerfilRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.ReactivarCuentaRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.RegistrarUsuarioRequest;
+import co.edu.unbosque.marketplace.usuario.application.port.RolRepository;
+import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.domain.*;
 import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.*;
 import co.edu.unbosque.marketplace.usuario.security.*;
 
 import org.junit.jupiter.api.Test;

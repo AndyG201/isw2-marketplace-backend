@@ -18,14 +18,14 @@ import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.PlazoVencidoException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
+import co.edu.unbosque.marketplace.pago.application.port.OperacionPendienteRepository;
+import co.edu.unbosque.marketplace.pago.application.port.PagoRepository;
 import co.edu.unbosque.marketplace.pago.domain.OperacionPendiente;
 import co.edu.unbosque.marketplace.pago.domain.Pago;
-import co.edu.unbosque.marketplace.pago.infrastructure.persistence.OperacionPendienteRepository;
-import co.edu.unbosque.marketplace.pago.infrastructure.persistence.PagoRepository;
-import co.edu.unbosque.marketplace.reserva.api.response.PagoSimuladoResponse;
+import co.edu.unbosque.marketplace.reserva.application.dto.PagoSimuladoResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaConfirmacionDatos;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaConfirmacionRepository;
 
 @Service
 public class ReservaPagoIntentoService {

@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.servicio.api.response.ServicioResponse;
 import co.edu.unbosque.marketplace.servicio.application.ServicioService;
+import co.edu.unbosque.marketplace.servicio.application.dto.ServicioResponse;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 

@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 
-import co.edu.unbosque.marketplace.disponibilidad.api.request.PeriodoDisponibilidadRequest;
 import co.edu.unbosque.marketplace.disponibilidad.application.PeriodoDisponibilidadService;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadRequest;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 

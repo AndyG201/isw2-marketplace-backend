@@ -15,8 +15,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import co.edu.unbosque.marketplace.reporte.api.response.DashboardIndicadoresResponse;
 import co.edu.unbosque.marketplace.reporte.application.DashboardIndicadoresService;
+import co.edu.unbosque.marketplace.reporte.application.dto.DashboardIndicadoresResponse;
 
 class DashboardIndicadoresControllerTest {
 

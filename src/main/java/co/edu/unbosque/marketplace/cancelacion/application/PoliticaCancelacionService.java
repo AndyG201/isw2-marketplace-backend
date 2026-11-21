@@ -4,9 +4,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import co.edu.unbosque.marketplace.cancelacion.api.response.PoliticaCancelacionResponse;
+import co.edu.unbosque.marketplace.cancelacion.application.dto.PoliticaCancelacionResponse;
+import co.edu.unbosque.marketplace.cancelacion.application.port.PoliticaCancelacionRepository;
 import co.edu.unbosque.marketplace.cancelacion.domain.TipoPoliticaCancelacion;
-import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.PoliticaCancelacionRepository;
 
 @Service
 public class PoliticaCancelacionService {

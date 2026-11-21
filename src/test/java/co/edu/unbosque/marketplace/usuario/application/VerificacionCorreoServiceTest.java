@@ -8,12 +8,12 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
+import co.edu.unbosque.marketplace.usuario.application.port.VerificacionCorreoRepository;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.VerificacionCorreoRepository;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

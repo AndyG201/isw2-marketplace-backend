@@ -8,10 +8,10 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import co.edu.unbosque.marketplace.publicacion.api.response.PaginaPublicacionesResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PaginaPublicacionesResponse;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionBusquedaCriteria;
 import co.edu.unbosque.marketplace.publicacion.infrastructure.cache.PublicacionBusquedaCache;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionBusquedaRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionBusquedaRepository;
 
 @Service
 public class PublicacionBusquedaService {

@@ -6,10 +6,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.cotizacion.application.port.CotizacionRepository;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaInfo;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaQuery;
 import co.edu.unbosque.marketplace.cotizacion.domain.Cotizacion;
-import co.edu.unbosque.marketplace.cotizacion.infrastructure.persistence.CotizacionRepository;
 
 @Service
 public class CotizacionReservaQueryService

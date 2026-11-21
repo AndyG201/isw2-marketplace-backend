@@ -11,12 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.request.ConfigurarModoAceptacionRequest;
-import co.edu.unbosque.marketplace.publicacion.api.response.ModoAceptacionPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ConfigurarModoAceptacionRequest;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ModoAceptacionPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.contracts.ModoAceptacionActualizadoEvent;
 import co.edu.unbosque.marketplace.publicacion.domain.ModoAceptacionReserva;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioAdministracionQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;

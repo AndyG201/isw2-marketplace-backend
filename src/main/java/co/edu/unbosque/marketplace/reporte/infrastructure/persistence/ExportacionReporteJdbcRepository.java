@@ -8,8 +8,11 @@ import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteInfo;
+import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteRepository;
+
 @Repository
-public class ExportacionReporteJdbcRepository {
+public class ExportacionReporteJdbcRepository implements ExportacionReporteRepository {
 
     private final JdbcTemplate jdbc;
 
@@ -17,6 +20,7 @@ public class ExportacionReporteJdbcRepository {
         this.jdbc = jdbc;
     }
 
+    @Override
     public void crear(UUID id, UUID administrador, String formato, OffsetDateTime fecha) {
         jdbc.update("""
                 INSERT INTO exportacion_reporte
@@ -26,6 +30,7 @@ public class ExportacionReporteJdbcRepository {
                 """, id, administrador, formato, fecha);
     }
 
+    @Override
     public Optional<ExportacionReporteInfo> buscar(UUID id, UUID administrador) {
         return jdbc.query("""
                 SELECT id_exportacion, id_administrador, formato, estado,
@@ -48,6 +53,7 @@ public class ExportacionReporteJdbcRepository {
                 id, administrador);
     }
 
+    @Override
     public Optional<UUID> buscarAdministrador(UUID id) {
         return jdbc.query("""
                 SELECT id_administrador
@@ -60,6 +66,7 @@ public class ExportacionReporteJdbcRepository {
                 id);
     }
 
+    @Override
     public boolean iniciar(UUID id) {
         return jdbc.update("""
                 UPDATE exportacion_reporte
@@ -68,6 +75,7 @@ public class ExportacionReporteJdbcRepository {
                 """, id) == 1;
     }
 
+    @Override
     public void completar(
             UUID id,
             OffsetDateTime corte,
@@ -83,6 +91,7 @@ public class ExportacionReporteJdbcRepository {
                 """, corte, generacion, ruta, id);
     }
 
+    @Override
     public void fallar(UUID id) {
         jdbc.update("""
                 UPDATE exportacion_reporte
@@ -92,6 +101,7 @@ public class ExportacionReporteJdbcRepository {
                 """, OffsetDateTime.now(), id);
     }
 
+    @Override
     public int recuperarProcesosAbandonados(OffsetDateTime anterioresA) {
         return jdbc.update("""
                 UPDATE exportacion_reporte
@@ -101,6 +111,7 @@ public class ExportacionReporteJdbcRepository {
                   AND fecha_generacion < ?
                 """, anterioresA);
     }
+    @Override
     public List<UUID> listarIdsSolicitados(int limite) {
         return jdbc.query("""
                 SELECT id_exportacion

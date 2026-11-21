@@ -10,11 +10,11 @@ import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
-import co.edu.unbosque.marketplace.reserva.api.response.ReservaAlojamientoResponse;
-import co.edu.unbosque.marketplace.reserva.api.response.ReservasAlojamientoResponse;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaAnfitrionDatos;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaAnfitrionRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaRepository;
+import co.edu.unbosque.marketplace.reserva.application.dto.ReservaAlojamientoResponse;
+import co.edu.unbosque.marketplace.reserva.application.dto.ReservasAlojamientoResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaAnfitrionDatos;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaAnfitrionRepository;
 
 @Service
 public class ReservaAnfitrionService {

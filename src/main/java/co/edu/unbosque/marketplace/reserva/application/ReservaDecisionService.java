@@ -16,14 +16,14 @@ import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
-import co.edu.unbosque.marketplace.reserva.api.response.DecisionReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.dto.DecisionReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaRetencionRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudDatos;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudRepository;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaDecisionEvent;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.NocheReservaJdbcRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaRetencionRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaSolicitudDatos;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaSolicitudRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 
 @Service
 public class ReservaDecisionService {
@@ -36,7 +36,7 @@ public class ReservaDecisionService {
     private final ReservaRetencionRepository retenciones;
     private final ReservaSolicitudRepository solicitudes;
     private final ReservaRepository reservas;
-    private final NocheReservaJdbcRepository noches;
+    private final NocheReservaRepository noches;
     private final AuditoriaReservaCommand auditoria;
     private final ApplicationEventPublisher eventos;
 
@@ -47,7 +47,7 @@ public class ReservaDecisionService {
             ReservaRetencionRepository retenciones,
             ReservaSolicitudRepository solicitudes,
             ReservaRepository reservas,
-            NocheReservaJdbcRepository noches,
+            NocheReservaRepository noches,
             AuditoriaReservaCommand auditoria,
             ApplicationEventPublisher eventos) {
         this.retenciones = retenciones;

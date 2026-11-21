@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 
-import co.edu.unbosque.marketplace.publicacion.api.request.ConfigurarConfiguracionComercialRequest;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionConfiguracionComercialService;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ConfigurarConfiguracionComercialRequest;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 

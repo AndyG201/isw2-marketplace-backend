@@ -6,8 +6,8 @@ import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteInfo;
-import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteJdbcRepository;
+import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteInfo;
+import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteRepository;
 import co.edu.unbosque.marketplace.notificacion.contracts.CrearNotificacionUsuario;
 import co.edu.unbosque.marketplace.notificacion.contracts.NotificacionUsuarioCommand;
 import co.edu.unbosque.marketplace.trabajo.ProcesadorTrabajo;
@@ -17,13 +17,13 @@ import co.edu.unbosque.marketplace.trabajo.TipoTrabajo;
 @Profile("worker")
 public class ExportacionReporteWorker implements ProcesadorTrabajo {
 
-    private final ExportacionReporteJdbcRepository exportaciones;
+    private final ExportacionReporteRepository exportaciones;
     private final ReporteArchivoGenerator generador;
     private final ExportacionReporteService servicio;
     private final NotificacionUsuarioCommand notificaciones;
 
     public ExportacionReporteWorker(
-            ExportacionReporteJdbcRepository exportaciones,
+            ExportacionReporteRepository exportaciones,
             ReporteArchivoGenerator generador,
             ExportacionReporteService servicio,
             NotificacionUsuarioCommand notificaciones) {

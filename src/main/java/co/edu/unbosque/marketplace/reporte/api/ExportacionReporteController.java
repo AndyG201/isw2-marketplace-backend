@@ -12,9 +12,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import co.edu.unbosque.marketplace.reporte.api.request.SolicitarExportacionRequest;
-import co.edu.unbosque.marketplace.reporte.api.response.ExportacionReporteResponse;
 import co.edu.unbosque.marketplace.reporte.application.ArchivoExportado;
 import co.edu.unbosque.marketplace.reporte.application.ExportacionReporteService;
+import co.edu.unbosque.marketplace.reporte.application.dto.ExportacionReporteResponse;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioSesionInfo;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioSesionQuery;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

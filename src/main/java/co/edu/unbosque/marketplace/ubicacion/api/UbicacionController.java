@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.ubicacion.api.response.CiudadResponse;
-import co.edu.unbosque.marketplace.ubicacion.api.response.PaisResponse;
 import co.edu.unbosque.marketplace.ubicacion.application.UbicacionService;
+import co.edu.unbosque.marketplace.ubicacion.application.dto.CiudadResponse;
+import co.edu.unbosque.marketplace.ubicacion.application.dto.PaisResponse;
 
 @RestController
 @RequestMapping("/autenticacion/ubicaciones")

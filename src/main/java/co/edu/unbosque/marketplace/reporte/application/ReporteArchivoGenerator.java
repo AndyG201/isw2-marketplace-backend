@@ -20,8 +20,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import co.edu.unbosque.marketplace.reporte.api.response.DashboardIndicadoresResponse;
-
+import co.edu.unbosque.marketplace.reporte.application.dto.DashboardIndicadoresResponse;
 
 @Component
 public class ReporteArchivoGenerator {

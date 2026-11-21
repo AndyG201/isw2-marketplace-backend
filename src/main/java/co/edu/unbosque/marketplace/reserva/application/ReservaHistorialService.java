@@ -10,12 +10,12 @@ import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
-import co.edu.unbosque.marketplace.reserva.api.response.MisReservasResponse;
-import co.edu.unbosque.marketplace.reserva.api.response.ReservaPropiaResponse;
+import co.edu.unbosque.marketplace.reserva.application.dto.MisReservasResponse;
+import co.edu.unbosque.marketplace.reserva.application.dto.ReservaPropiaResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaHistorialDatos;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaHistorialDatos;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaHistorialRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaHistorialRepository;
 
 @Service
 public class ReservaHistorialService {

@@ -4,10 +4,10 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import co.edu.unbosque.marketplace.usuario.api.request.AutenticacionRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.AutenticacionRequest;
+import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.security.JwtUtil;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionContrasena;
 

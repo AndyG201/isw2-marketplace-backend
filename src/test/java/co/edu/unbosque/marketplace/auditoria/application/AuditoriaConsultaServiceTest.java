@@ -18,12 +18,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessResourceFailureException;
 
-import co.edu.unbosque.marketplace.auditoria.api.response.EventoAuditoriaResponse;
-import co.edu.unbosque.marketplace.auditoria.api.response.PaginaAuditoriaResponse;
+import co.edu.unbosque.marketplace.auditoria.application.dto.EventoAuditoriaResponse;
+import co.edu.unbosque.marketplace.auditoria.application.dto.PaginaAuditoriaResponse;
 import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.AuditoriaConsultaJdbcRepository;
+import co.edu.unbosque.marketplace.auditoria.application.port.AuditoriaConsultaRepository;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.ServicioNoDisponibleException;
@@ -32,7 +32,7 @@ import co.edu.unbosque.marketplace.compartido.domain.ServicioNoDisponibleExcepti
 class AuditoriaConsultaServiceTest {
 
     @Mock
-    private AuditoriaConsultaJdbcRepository repository;
+    private AuditoriaConsultaRepository repository;
 
     @Mock
     private ObjectProvider<AlmacenamientoInmutableAuditoria> backblazeProvider;

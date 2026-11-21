@@ -11,16 +11,16 @@ import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.response.ImagenPublicacionResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.MisPublicacionesResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionResumenResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.ServicioPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ImagenPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.MisPublicacionesResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionDetalleResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionResumenResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ServicioPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 

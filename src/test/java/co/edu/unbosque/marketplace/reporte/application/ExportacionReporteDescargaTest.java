@@ -23,8 +23,8 @@ import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaAdministracionCo
 import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.PlazoVencidoException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
-import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteInfo;
-import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.ExportacionReporteJdbcRepository;
+import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteInfo;
+import co.edu.unbosque.marketplace.reporte.application.port.ExportacionReporteRepository;
 import co.edu.unbosque.marketplace.trabajo.ColaTrabajosRedis;
 
 class ExportacionReporteDescargaTest {
@@ -35,12 +35,12 @@ class ExportacionReporteDescargaTest {
     @TempDir
     Path carpeta;
 
-    private ExportacionReporteJdbcRepository repositorio;
+    private ExportacionReporteRepository repositorio;
     private ExportacionReporteService servicio;
 
     @BeforeEach
     void preparar() {
-        repositorio = mock(ExportacionReporteJdbcRepository.class);
+        repositorio = mock(ExportacionReporteRepository.class);
         servicio = new ExportacionReporteService(
                 repositorio,
                 mock(AuditoriaAdministracionCommand.class),

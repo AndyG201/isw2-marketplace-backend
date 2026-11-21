@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import co.edu.unbosque.marketplace.auditoria.application.port.AuditoriaConsultaRepository;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
 import co.edu.unbosque.marketplace.auditoria.domain.FiltrosAuditoria;
 
@@ -22,7 +23,7 @@ import co.edu.unbosque.marketplace.auditoria.domain.FiltrosAuditoria;
  * Los documentos JSON originales permanecen en Backblaze B2.
  */
 @Repository
-public class AuditoriaConsultaJdbcRepository {
+public class AuditoriaConsultaJdbcRepository implements AuditoriaConsultaRepository {
 
     private static final String COLUMNAS = """
             id_evento,
@@ -44,6 +45,7 @@ public class AuditoriaConsultaJdbcRepository {
         this.jdbc = jdbc;
     }
 
+    @Override
     public List<EventoAuditoriaIndice> consultar(
             FiltrosAuditoria filtros,
             int limite,
@@ -66,6 +68,7 @@ public class AuditoriaConsultaJdbcRepository {
         return jdbc.query(sql, this::mapear, parametros.toArray());
     }
 
+    @Override
     public long contar(FiltrosAuditoria filtros) {
 
         List<Object> parametros = new ArrayList<>();
@@ -80,6 +83,7 @@ public class AuditoriaConsultaJdbcRepository {
         return total == null ? 0 : total;
     }
 
+    @Override
     public Optional<EventoAuditoriaIndice> buscar(UUID idEvento) {
 
         if (idEvento == null) {

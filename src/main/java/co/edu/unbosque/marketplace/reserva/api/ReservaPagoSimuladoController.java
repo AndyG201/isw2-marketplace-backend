@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.reserva.api.response.PagoSimuladoResponse;
 import co.edu.unbosque.marketplace.reserva.application.ReservaPagoSimuladoService;
+import co.edu.unbosque.marketplace.reserva.application.dto.PagoSimuladoResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController

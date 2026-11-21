@@ -17,8 +17,8 @@ import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
 import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.VerificacionCorreoRepository;
+import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
+import co.edu.unbosque.marketplace.usuario.application.port.VerificacionCorreoRepository;
 
 @Service
 public class VerificacionCorreoService {
