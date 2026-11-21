@@ -19,8 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 
-import co.edu.unbosque.marketplace.publicacion.api.response.EstadoPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionEstadoService;
+import co.edu.unbosque.marketplace.publicacion.application.dto.EstadoPublicacionResponse;
 
 @ExtendWith(MockitoExtension.class)
 class PublicacionEstadoControllerTest {

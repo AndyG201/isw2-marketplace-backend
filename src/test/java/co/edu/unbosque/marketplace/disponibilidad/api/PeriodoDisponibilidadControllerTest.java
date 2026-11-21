@@ -16,8 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 
-import co.edu.unbosque.marketplace.disponibilidad.api.request.PeriodoDisponibilidadRequest;
-import co.edu.unbosque.marketplace.disponibilidad.api.response.PeriodoDisponibilidadResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadRequest;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadResponse;
 import co.edu.unbosque.marketplace.disponibilidad.application.PeriodoDisponibilidadService;
 
 class PeriodoDisponibilidadControllerTest {

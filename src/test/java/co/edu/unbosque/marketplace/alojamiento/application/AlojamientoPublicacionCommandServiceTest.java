@@ -15,16 +15,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.alojamiento.application.port.AlojamientoRepository;
 import co.edu.unbosque.marketplace.alojamiento.contracts.ActualizarAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.alojamiento.contracts.CrearAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
-import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AlojamientoPublicacionCommandServiceTest {
 
+    private static final UUID ANFITRION = UUID.randomUUID();
+
     @Mock
-    private AlojamientoRepository alojamientoRepository;
+    private AlojamientoRepository repositorio;
 
     @InjectMocks
     private AlojamientoPublicacionCommandService servicio;
@@ -37,6 +39,19 @@ class AlojamientoPublicacionCommandServiceTest {
         idAnfitrion = UUID.randomUUID();
         idAlojamiento = UUID.randomUUID();
     }
+
+    private Alojamiento guardado() {
+        ArgumentCaptor<Alojamiento> captor =
+                ArgumentCaptor.forClass(Alojamiento.class);
+
+        verify(repositorio).save(captor.capture());
+
+        return captor.getValue();
+    }
+
+    // =====================================================
+    // PRUEBAS DE CREACIÓN
+    // =====================================================
 
     @Test
     void debeCrearAlojamientoCorrectamente() {
@@ -53,20 +68,15 @@ class AlojamientoPublicacionCommandServiceTest {
 
         assertNotNull(resultado);
 
-        ArgumentCaptor<Alojamiento> captor =
-                ArgumentCaptor.forClass(Alojamiento.class);
+        Alojamiento alojamientoGuardado = guardado();
 
-        verify(alojamientoRepository).save(captor.capture());
-
-        Alojamiento guardado = captor.getValue();
-
-        assertEquals(resultado, guardado.getIdAlojamiento());
-        assertEquals(idAnfitrion, guardado.getIdAnfitrion());
-        assertEquals("Calle 123", guardado.getUbicacion());
-        assertEquals("Bogotá", guardado.getCiudad());
-        assertEquals("Apartamento", guardado.getTipoAlojamiento());
-        assertEquals(4, guardado.getCapacidad());
-        assertNotNull(guardado.getFechaCreacion());
+        assertEquals(resultado, alojamientoGuardado.getIdAlojamiento());
+        assertEquals(idAnfitrion, alojamientoGuardado.getIdAnfitrion());
+        assertEquals("Calle 123", alojamientoGuardado.getUbicacion());
+        assertEquals("Bogotá", alojamientoGuardado.getCiudad());
+        assertEquals("Apartamento", alojamientoGuardado.getTipoAlojamiento());
+        assertEquals(4, alojamientoGuardado.getCapacidad());
+        assertNotNull(alojamientoGuardado.getFechaCreacion());
     }
 
     @Test
@@ -81,7 +91,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 exception.getMessage()
         );
 
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).save(any());
     }
 
     @Test
@@ -96,7 +106,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 () -> servicio.crearAlojamiento(solicitud)
         );
 
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).save(any());
     }
 
     @Test
@@ -111,7 +121,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 () -> servicio.crearAlojamiento(solicitud)
         );
 
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).save(any());
     }
 
     @Test
@@ -126,7 +136,7 @@ class AlojamientoPublicacionCommandServiceTest {
                 () -> servicio.crearAlojamiento(solicitud)
         );
 
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).save(any());
     }
 
     @Test
@@ -141,14 +151,97 @@ class AlojamientoPublicacionCommandServiceTest {
                 () -> servicio.crearAlojamiento(solicitud)
         );
 
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).save(any());
     }
+
+    // =====================================================
+    // PRUEBAS DE DISTRIBUCIÓN DEL ALOJAMIENTO
+    // =====================================================
+
+    @Test
+    void creaElAlojamientoConSuDistribucion() {
+        UUID id = servicio.crearAlojamiento(
+                new CrearAlojamientoParaPublicacion(
+                        ANFITRION,
+                        " Calle 1 ",
+                        " Bogotá ",
+                        " Casa ",
+                        6,
+                        3,
+                        4,
+                        2
+                )
+        );
+
+        Alojamiento alojamiento = guardado();
+
+        assertAll(
+                () -> assertEquals(id, alojamiento.getIdAlojamiento()),
+                () -> assertEquals("Bogotá", alojamiento.getCiudad()),
+                () -> assertEquals(3, alojamiento.getHabitaciones()),
+                () -> assertEquals(4, alojamiento.getCamas()),
+                () -> assertEquals(2, alojamiento.getBanos())
+        );
+    }
+
+    @Test
+    void sinDistribucionUsaUnoPorDefecto() {
+        servicio.crearAlojamiento(
+                new CrearAlojamientoParaPublicacion(
+                        ANFITRION, "Calle 1", "Bogotá", "Casa", 2
+                )
+        );
+
+        Alojamiento alojamiento = guardado();
+
+        assertAll(
+                () -> assertEquals(1, alojamiento.getHabitaciones()),
+                () -> assertEquals(1, alojamiento.getCamas()),
+                () -> assertEquals(1, alojamiento.getBanos())
+        );
+    }
+
+    @Test
+    void rechazaDistribucionesFueraDeLosLimites() {
+        CrearAlojamientoParaPublicacion sinHabitaciones =
+                new CrearAlojamientoParaPublicacion(
+                        ANFITRION, "Calle 1", "Bogotá", "Casa",
+                        2, 0, 1, 1
+                );
+
+        CrearAlojamientoParaPublicacion muchasCamas =
+                new CrearAlojamientoParaPublicacion(
+                        ANFITRION, "Calle 1", "Bogotá", "Casa",
+                        2, 1, 51, 1
+                );
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> servicio.crearAlojamiento(sinHabitaciones)
+        );
+
+        assertEquals(
+                "El número de habitaciones debe estar entre 1 y 50.",
+                error.getMessage()
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> servicio.crearAlojamiento(muchasCamas)
+        );
+
+        verify(repositorio, never()).save(any());
+    }
+
+    // =====================================================
+    // PRUEBAS DE ACTUALIZACIÓN
+    // =====================================================
 
     @Test
     void debeActualizarAlojamientoCorrectamente() {
         Alojamiento alojamiento = new Alojamiento();
 
-        when(alojamientoRepository.findById(idAlojamiento))
+        when(repositorio.findById(idAlojamiento))
                 .thenReturn(Optional.of(alojamiento));
 
         ActualizarAlojamientoParaPublicacion solicitud =
@@ -156,17 +249,15 @@ class AlojamientoPublicacionCommandServiceTest {
                         " Carrera 15 ",
                         " Medellín ",
                         " Casa ",
-                        6
+                        6,
+                        null,
+                        null,
+                        null
                 );
 
         servicio.actualizarAlojamiento(idAlojamiento, solicitud);
 
-        ArgumentCaptor<Alojamiento> captor =
-                ArgumentCaptor.forClass(Alojamiento.class);
-
-        verify(alojamientoRepository).save(captor.capture());
-
-        Alojamiento actualizado = captor.getValue();
+        Alojamiento actualizado = guardado();
 
         assertEquals("Carrera 15", actualizado.getUbicacion());
         assertEquals("Medellín", actualizado.getCiudad());
@@ -178,7 +269,8 @@ class AlojamientoPublicacionCommandServiceTest {
     void debeRechazarIdentificadorNuloAlActualizar() {
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        "Calle 123", "Bogotá", "Apartamento", 4
+                        "Calle 123", "Bogotá", "Apartamento", 4,
+                        null, null, null
                 );
 
         assertThrows(
@@ -186,8 +278,8 @@ class AlojamientoPublicacionCommandServiceTest {
                 () -> servicio.actualizarAlojamiento(null, solicitud)
         );
 
-        verify(alojamientoRepository, never()).findById(any());
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).findById(any());
+        verify(repositorio, never()).save(any());
     }
 
     @Test
@@ -197,15 +289,16 @@ class AlojamientoPublicacionCommandServiceTest {
                 () -> servicio.actualizarAlojamiento(idAlojamiento, null)
         );
 
-        verify(alojamientoRepository, never()).findById(any());
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).findById(any());
+        verify(repositorio, never()).save(any());
     }
 
     @Test
     void debeRechazarUbicacionVaciaAlActualizar() {
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        " ", "Bogotá", "Apartamento", 4
+                        " ", "Bogotá", "Apartamento", 4,
+                        null, null, null
                 );
 
         assertThrows(
@@ -213,15 +306,16 @@ class AlojamientoPublicacionCommandServiceTest {
                 () -> servicio.actualizarAlojamiento(idAlojamiento, solicitud)
         );
 
-        verify(alojamientoRepository, never()).findById(any());
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).findById(any());
+        verify(repositorio, never()).save(any());
     }
 
     @Test
     void debeRechazarCiudadVaciaAlActualizar() {
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        "Calle 123", " ", "Apartamento", 4
+                        "Calle 123", " ", "Apartamento", 4,
+                        null, null, null
                 );
 
         assertThrows(
@@ -229,15 +323,16 @@ class AlojamientoPublicacionCommandServiceTest {
                 () -> servicio.actualizarAlojamiento(idAlojamiento, solicitud)
         );
 
-        verify(alojamientoRepository, never()).findById(any());
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).findById(any());
+        verify(repositorio, never()).save(any());
     }
 
     @Test
     void debeRechazarTipoAlojamientoVacioAlActualizar() {
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        "Calle 123", "Bogotá", " ", 4
+                        "Calle 123", "Bogotá", " ", 4,
+                        null, null, null
                 );
 
         assertThrows(
@@ -245,15 +340,16 @@ class AlojamientoPublicacionCommandServiceTest {
                 () -> servicio.actualizarAlojamiento(idAlojamiento, solicitud)
         );
 
-        verify(alojamientoRepository, never()).findById(any());
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).findById(any());
+        verify(repositorio, never()).save(any());
     }
 
     @Test
     void debeRechazarCapacidadNegativaAlActualizar() {
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        "Calle 123", "Bogotá", "Apartamento", -1
+                        "Calle 123", "Bogotá", "Apartamento", -1,
+                        null, null, null
                 );
 
         assertThrows(
@@ -261,18 +357,19 @@ class AlojamientoPublicacionCommandServiceTest {
                 () -> servicio.actualizarAlojamiento(idAlojamiento, solicitud)
         );
 
-        verify(alojamientoRepository, never()).findById(any());
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).findById(any());
+        verify(repositorio, never()).save(any());
     }
 
     @Test
     void debeLanzarExcepcionCuandoNoExisteElAlojamiento() {
-        when(alojamientoRepository.findById(idAlojamiento))
+        when(repositorio.findById(idAlojamiento))
                 .thenReturn(Optional.empty());
 
         ActualizarAlojamientoParaPublicacion solicitud =
                 new ActualizarAlojamientoParaPublicacion(
-                        "Calle 123", "Bogotá", "Apartamento", 4
+                        "Calle 123", "Bogotá", "Apartamento", 4,
+                        null, null, null
                 );
 
         IllegalStateException exception = assertThrows(
@@ -285,6 +382,194 @@ class AlojamientoPublicacionCommandServiceTest {
                 exception.getMessage()
         );
 
-        verify(alojamientoRepository, never()).save(any());
+        verify(repositorio, never()).save(any());
+    }
+
+    @Test
+    void actualizaLaDistribucionIndicadaYConservaLaQueNoSeEnvia() {
+        UUID id = UUID.randomUUID();
+
+        Alojamiento existente = new Alojamiento();
+        existente.setIdAlojamiento(id);
+        existente.setHabitaciones(2);
+        existente.setCamas(3);
+        existente.setBanos(1);
+
+        when(repositorio.findById(id))
+                .thenReturn(Optional.of(existente));
+
+        servicio.actualizarAlojamiento(
+                id,
+                new ActualizarAlojamientoParaPublicacion(
+                        "Calle 2", "Cali", "Finca", 8,
+                        4, null, 3
+                )
+        );
+
+        Alojamiento alojamiento = guardado();
+
+        assertAll(
+                () -> assertEquals("Cali", alojamiento.getCiudad()),
+                () -> assertEquals(4, alojamiento.getHabitaciones()),
+                () -> assertEquals(3, alojamiento.getCamas()),
+                () -> assertEquals(3, alojamiento.getBanos())
+        );
+    }
+
+    @Test
+    void noActualizaConUnaDistribucionInvalida() {
+        UUID id = UUID.randomUUID();
+
+        ActualizarAlojamientoParaPublicacion solicitud =
+                new ActualizarAlojamientoParaPublicacion(
+                        "Calle 2", "Cali", "Finca", 8,
+                        null, null, 0
+                );
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> servicio.actualizarAlojamiento(id, solicitud)
+        );
+
+        assertEquals(
+                "El número de baños debe estar entre 1 y 50.",
+                error.getMessage()
+        );
+
+        verify(repositorio, never()).save(any());
+    }
+
+    // =====================================================
+    // PRUEBAS DEL PROPIETARIO DEL INMUEBLE
+    // =====================================================
+
+    @Test
+    void guardaElPropietarioDelInmuebleSinEspaciosSobrantes() {
+        servicio.crearAlojamiento(
+                new CrearAlojamientoParaPublicacion(
+                        ANFITRION, "Calle 1", "Bogotá", "Casa",
+                        2, 1, 1, 1, "  Ana Gómez  "
+                )
+        );
+
+        assertEquals("Ana Gómez", guardado().getPropietarioInmueble());
+    }
+
+    @Test
+    void sinPropietarioLoDejaVacio() {
+        servicio.crearAlojamiento(
+                new CrearAlojamientoParaPublicacion(
+                        ANFITRION, "Calle 1", "Bogotá", "Casa",
+                        2, 1, 1, 1, "   "
+                )
+        );
+
+        assertNull(guardado().getPropietarioInmueble());
+    }
+
+    @Test
+    void rechazaUnPropietarioDemasiadoLargo() {
+        CrearAlojamientoParaPublicacion solicitud =
+                new CrearAlojamientoParaPublicacion(
+                        ANFITRION, "Calle 1", "Bogotá", "Casa",
+                        2, 1, 1, 1, "x".repeat(121)
+                );
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> servicio.crearAlojamiento(solicitud)
+        );
+
+        assertEquals(
+                "El nombre del propietario del inmueble no puede superar 120 caracteres.",
+                error.getMessage()
+        );
+
+        verify(repositorio, never()).save(any());
+    }
+
+    @Test
+    void alEditarCambiaElPropietarioSoloSiSeEnvia() {
+        UUID id = UUID.randomUUID();
+
+        Alojamiento existente = new Alojamiento();
+        existente.setIdAlojamiento(id);
+        existente.setPropietarioInmueble("Ana Gómez");
+
+        when(repositorio.findById(id))
+                .thenReturn(Optional.of(existente));
+
+        servicio.actualizarAlojamiento(
+                id,
+                new ActualizarAlojamientoParaPublicacion(
+                        "Calle 2", "Cali", "Finca", 8,
+                        null, null, null
+                )
+        );
+
+        assertEquals("Ana Gómez", existente.getPropietarioInmueble());
+
+        servicio.actualizarAlojamiento(
+                id,
+                new ActualizarAlojamientoParaPublicacion(
+                        "Calle 2", "Cali", "Finca", 8,
+                        null, null, null, " Inversiones Rojas "
+                )
+        );
+
+        assertEquals("Inversiones Rojas", existente.getPropietarioInmueble());
+        verify(repositorio, times(2)).save(any());
+    }
+
+    // =====================================================
+    // PRUEBAS DE PAÍS Y CÓDIGO ISO
+    // =====================================================
+
+    @Test
+    void guardaElPaisDelAlojamientoConSuCodigo() {
+        servicio.crearAlojamiento(
+                new CrearAlojamientoParaPublicacion(
+                        ANFITRION, "Calle 1", "Lima", "Casa",
+                        2, 1, 1, 1, null, " Peru ", "pe"
+                )
+        );
+
+        Alojamiento alojamiento = guardado();
+
+        assertEquals("Peru", alojamiento.getPais());
+        assertEquals("PE", alojamiento.getCodigoPais());
+    }
+
+    @Test
+    void ignoraUnCodigoDePaisInvalidoYConservaElPaisSiNoSeEnvia() {
+        UUID id = UUID.randomUUID();
+
+        Alojamiento existente = new Alojamiento();
+        existente.setIdAlojamiento(id);
+        existente.asignarPais("Colombia", "CO");
+
+        when(repositorio.findById(id))
+                .thenReturn(Optional.of(existente));
+
+        servicio.actualizarAlojamiento(
+                id,
+                new ActualizarAlojamientoParaPublicacion(
+                        "Calle 2", "Cali", "Finca", 8,
+                        null, null, null
+                )
+        );
+
+        assertEquals("CO", existente.getCodigoPais());
+
+        servicio.actualizarAlojamiento(
+                id,
+                new ActualizarAlojamientoParaPublicacion(
+                        "Calle 2", "Quito", "Finca", 8,
+                        null, null, null, null, "Ecuador", "ECU"
+                )
+        );
+
+        assertEquals("Ecuador", existente.getPais());
+        assertNull(existente.getCodigoPais());
     }
 }

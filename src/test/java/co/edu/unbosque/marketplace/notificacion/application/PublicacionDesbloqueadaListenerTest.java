@@ -32,46 +32,54 @@ class PublicacionDesbloqueadaListenerTest {
     @BeforeEach
     void setUp() {
         evento = new PublicacionDesbloqueadaEvent(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            "Apartamento moderno",
-            "Se corrigió la información requerida.",
-            OffsetDateTime.parse("2026-11-21T10:00:00-05:00")
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Apartamento moderno",
+                "Se corrigió la información requerida.",
+                OffsetDateTime.parse("2026-11-21T10:00:00-05:00")
         );
     }
 
     @Test
     void alDesbloquearPublicacionDebeRegistrarNotificacion() {
+
         listener.alDesbloquearPublicacion(evento);
 
         verify(notificacionService, times(1))
-            .registrarPublicacionDesbloqueada(evento);
+                .registrarPublicacionDesbloqueada(evento);
     }
 
     @Test
     void alDesbloquearPublicacionDebeEnviarElMismoEvento() {
+
         listener.alDesbloquearPublicacion(evento);
 
         verify(notificacionService)
-            .registrarPublicacionDesbloqueada(same(evento));
+                .registrarPublicacionDesbloqueada(same(evento));
     }
 
     @Test
     void alDesbloquearPublicacionNoDebeInvocarOtrosMetodos() {
+
         listener.alDesbloquearPublicacion(evento);
+
+        verify(notificacionService)
+                .registrarPublicacionDesbloqueada(evento);
 
         verifyNoMoreInteractions(notificacionService);
     }
 
     @Test
-    void debeTenerConfiguradaLaFaseBeforeCommit() throws NoSuchMethodException {
+    void debeTenerConfiguradaLaFaseBeforeCommit()
+            throws NoSuchMethodException {
+
         TransactionalEventListener anotacion =
-            PublicacionDesbloqueadaListener.class
-                .getMethod(
-                    "alDesbloquearPublicacion",
-                    PublicacionDesbloqueadaEvent.class
-                )
-                .getAnnotation(TransactionalEventListener.class);
+                PublicacionDesbloqueadaListener.class
+                        .getMethod(
+                                "alDesbloquearPublicacion",
+                                PublicacionDesbloqueadaEvent.class
+                        )
+                        .getAnnotation(TransactionalEventListener.class);
 
         assertNotNull(anotacion);
         assertEquals(TransactionPhase.BEFORE_COMMIT, anotacion.phase());

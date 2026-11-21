@@ -31,47 +31,55 @@ class ModoAceptacionActualizadoListenerTest {
     @BeforeEach
     void setUp() {
         evento = new ModoAceptacionActualizadoEvent(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            "Apartamento moderno",
-            "APROBACION",
-            "INMEDIATA",
-            OffsetDateTime.parse("2026-11-21T10:00:00-05:00")
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Apartamento moderno",
+                "APROBACION",
+                "INMEDIATA",
+                OffsetDateTime.parse("2026-11-21T10:00:00-05:00")
         );
     }
 
     @Test
     void alActualizarModoAceptacionDebeRegistrarNotificacion() {
+
         listener.alActualizarModoAceptacion(evento);
 
         verify(notificacionService, times(1))
-            .registrarModoAceptacionActualizado(evento);
+                .registrarModoAceptacionActualizado(evento);
     }
 
     @Test
     void alActualizarModoAceptacionDebeEnviarElMismoEvento() {
+
         listener.alActualizarModoAceptacion(evento);
 
         verify(notificacionService)
-            .registrarModoAceptacionActualizado(same(evento));
+                .registrarModoAceptacionActualizado(same(evento));
     }
 
     @Test
     void alActualizarModoAceptacionNoDebeInvocarOtrosMetodos() {
+
         listener.alActualizarModoAceptacion(evento);
+
+        verify(notificacionService)
+                .registrarModoAceptacionActualizado(evento);
 
         verifyNoMoreInteractions(notificacionService);
     }
 
     @Test
-    void debeTenerConfiguradaLaFaseBeforeCommit() throws NoSuchMethodException {
+    void debeTenerConfiguradaLaFaseBeforeCommit()
+            throws NoSuchMethodException {
+
         TransactionalEventListener anotacion =
-            ModoAceptacionActualizadoListener.class
-                .getMethod(
-                    "alActualizarModoAceptacion",
-                    ModoAceptacionActualizadoEvent.class
-                )
-                .getAnnotation(TransactionalEventListener.class);
+                ModoAceptacionActualizadoListener.class
+                        .getMethod(
+                                "alActualizarModoAceptacion",
+                                ModoAceptacionActualizadoEvent.class
+                        )
+                        .getAnnotation(TransactionalEventListener.class);
 
         assertEquals(TransactionPhase.BEFORE_COMMIT, anotacion.phase());
     }

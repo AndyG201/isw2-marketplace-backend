@@ -1,6 +1,7 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -22,9 +23,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionResumenResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionResumenResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
+import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -35,6 +38,9 @@ class PublicacionCatalogoServiceTest {
 
     @Mock
     private AlojamientoPublicacionQuery alojamientoQuery;
+
+    @Mock
+    private ImagenPublicacionRepository imagenRepository;
 
     @InjectMocks
     private PublicacionCatalogoService service;
@@ -211,5 +217,30 @@ class PublicacionCatalogoServiceTest {
 
         verify(publicacionRepository, never())
                 .findByEstadoOrderByFechaCreacionDesc("BORRADOR");
+    }
+
+    @Test
+    void consultarCatalogoIncluyeLaImagenDePortada() {
+
+        when(publicacionRepository.findByEstadoOrderByFechaCreacionDesc("ACTIVA"))
+                .thenReturn(List.of(publicacion, publicacion2));
+
+        when(alojamientoQuery.consultarPorIdsAlojamiento(anyList()))
+                .thenReturn(List.of(alojamientoInfo, alojamientoInfo2));
+
+        when(imagenRepository.findByIdPublicacionInOrderByOrdenAsc(anyList()))
+                .thenReturn(List.of(
+                        new ImagenPublicacion(UUID.randomUUID(), idPublicacion,
+                                "/imagenes/publicaciones/primera.jpg", 1, false),
+                        new ImagenPublicacion(UUID.randomUUID(), idPublicacion,
+                                "/imagenes/publicaciones/portada.jpg", 2, true)
+                ));
+
+        List<PublicacionResumenResponse> resultado =
+                service.consultarCatalogo();
+
+        assertEquals("/imagenes/publicaciones/portada.jpg",
+                resultado.get(0).getImagenPortada());
+        assertNull(resultado.get(1).getImagenPortada());
     }
 }

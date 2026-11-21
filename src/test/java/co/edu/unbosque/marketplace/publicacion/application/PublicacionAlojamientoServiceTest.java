@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -24,12 +25,12 @@ import org.springframework.web.multipart.MultipartFile;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
 import co.edu.unbosque.marketplace.alojamiento.contracts.CrearAlojamientoParaPublicacion;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.request.CrearPublicacionRequest;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAlojamientoResponse;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.storage.AlmacenamientoImagenService;
+import co.edu.unbosque.marketplace.publicacion.application.dto.CrearPublicacionRequest;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAlojamientoResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoImagenes;
+import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
@@ -61,7 +62,7 @@ class PublicacionAlojamientoServiceTest {
     private UsuarioPublicacionQuery usuarioPublicacionQuery;
 
     @Mock
-    private AlmacenamientoImagenService almacenamientoImagenService;
+    private AlmacenamientoImagenes almacenamientoImagenService;
 
     private PublicacionAlojamientoService service;
 
@@ -150,6 +151,10 @@ class PublicacionAlojamientoServiceTest {
 
         CrearPublicacionRequest solicitud = crearSolicitudValida();
 
+        when(solicitud.getHabitaciones()).thenReturn(2);
+        when(solicitud.getCamas()).thenReturn(3);
+        when(solicitud.getBanos()).thenReturn(1);
+
         configurarAnfitrionValido();
 
         ServicioInfo servicio = mock(ServicioInfo.class);
@@ -169,8 +174,12 @@ class PublicacionAlojamientoServiceTest {
 
         assertNotNull(respuesta);
 
-        verify(alojamientoCommand).crearAlojamiento(
-                any(CrearAlojamientoParaPublicacion.class));
+        ArgumentCaptor<CrearAlojamientoParaPublicacion> alojamiento =
+                ArgumentCaptor.forClass(CrearAlojamientoParaPublicacion.class);
+        verify(alojamientoCommand).crearAlojamiento(alojamiento.capture());
+        assertEquals(2, alojamiento.getValue().habitaciones());
+        assertEquals(3, alojamiento.getValue().camas());
+        assertEquals(1, alojamiento.getValue().banos());
 
         verify(publicacionRepository).save(any());
         verify(publicacionServicioRepository).save(any());

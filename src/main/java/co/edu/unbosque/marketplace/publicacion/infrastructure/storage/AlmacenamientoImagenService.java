@@ -12,17 +12,22 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoImagenes;
+
 @Service
-public class AlmacenamientoImagenService {
+public class AlmacenamientoImagenService implements AlmacenamientoImagenes {
 
     private static final long TAMANO_MAXIMO = 5 * 1024 * 1024;
 
     private final Path directorioBase;
+    private final CloudinaryCliente cloudinary;
 
     public AlmacenamientoImagenService(
             @Value("${app.storage.upload-dir:uploads}")
-            String directorio) {
+            String directorio,
+            CloudinaryCliente cloudinary) {
 
+        this.cloudinary = cloudinary;
         this.directorioBase = Paths.get(directorio)
                 .toAbsolutePath()
                 .normalize()
@@ -30,6 +35,7 @@ public class AlmacenamientoImagenService {
                 .normalize();
     }
 
+    @Override
     public String guardar(MultipartFile archivo) {
 
         if (archivo == null || archivo.isEmpty()) {
@@ -48,8 +54,13 @@ public class AlmacenamientoImagenService {
 
             String extension = detectarExtension(contenido);
 
-            String nombreArchivo =
-                    UUID.randomUUID() + extension;
+            String nombre = UUID.randomUUID().toString();
+
+            if (cloudinary.configurado()) {
+                return cloudinary.subir(contenido, nombre, extension);
+            }
+
+            String nombreArchivo = nombre + extension;
 
             Files.createDirectories(directorioBase);
 
@@ -117,9 +128,19 @@ public class AlmacenamientoImagenService {
                 "Formato de imagen no permitido. Utiliza JPG, PNG o WEBP.");
     }
 
+    @Override
     public void eliminar(String rutaImagen) {
 
         if (rutaImagen == null || rutaImagen.isBlank()) {
+            return;
+        }
+
+        if (cloudinary.esUrlPropia(rutaImagen)) {
+            cloudinary.eliminar(rutaImagen);
+            return;
+        }
+
+        if (rutaImagen.startsWith("http://") || rutaImagen.startsWith("https://")) {
             return;
         }
 

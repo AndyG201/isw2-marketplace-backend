@@ -14,9 +14,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import co.edu.unbosque.marketplace.notificacion.api.response.NotificacionResponse;
+import co.edu.unbosque.marketplace.notificacion.application.dto.NotificacionResponse;
+import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
-import co.edu.unbosque.marketplace.notificacion.infrastructure.persistence.NotificacionRepository;
 
 @ExtendWith(MockitoExtension.class)
 class NotificacionConsultaServiceTest {
@@ -28,7 +28,6 @@ class NotificacionConsultaServiceTest {
     private NotificacionConsultaService service;
 
     private UUID idUsuario;
-    private Notificacion notificacion;
     private UUID idNotificacion;
     private UUID idReserva;
     private UUID idPublicacion;
@@ -44,17 +43,6 @@ class NotificacionConsultaServiceTest {
 
         fechaCreacion = OffsetDateTime.parse("2026-11-21T09:00:00-05:00");
         fechaLectura = OffsetDateTime.parse("2026-11-21T10:00:00-05:00");
-
-        notificacion = crearNotificacion(
-            idNotificacion,
-            idUsuario,
-            idReserva,
-            idPublicacion,
-            "RESERVA_CONFIRMADA",
-            "Tu reserva ha sido confirmada.",
-            fechaCreacion,
-            fechaLectura
-        );
     }
 
     private Notificacion crearNotificacion(
@@ -83,14 +71,15 @@ class NotificacionConsultaServiceTest {
 
     @Test
     void consultarMisNotificacionesDebeRechazarUsuarioNulo() {
+
         IllegalArgumentException excepcion = assertThrows(
-            IllegalArgumentException.class,
-            () -> service.consultarMisNotificaciones(null)
+                IllegalArgumentException.class,
+                () -> service.consultarMisNotificaciones(null)
         );
 
         assertEquals(
-            "No se pudo identificar al usuario.",
-            excepcion.getMessage()
+                "No se pudo identificar al usuario.",
+                excepcion.getMessage()
         );
 
         verifyNoInteractions(notificacionRepository);
@@ -98,98 +87,138 @@ class NotificacionConsultaServiceTest {
 
     @Test
     void consultarMisNotificacionesDebeRetornarLasNotificacionesDelUsuario() {
+
+        Notificacion notificacion = crearNotificacion(
+                idNotificacion,
+                idUsuario,
+                idReserva,
+                idPublicacion,
+                "RESERVA_CONFIRMADA",
+                "Tu reserva ha sido confirmada.",
+                fechaCreacion,
+                fechaLectura
+        );
+
         when(notificacionRepository
-            .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario))
-            .thenReturn(List.of(notificacion));
+                .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario))
+                .thenReturn(List.of(notificacion));
 
         List<NotificacionResponse> respuestas =
-            service.consultarMisNotificaciones(idUsuario);
+                service.consultarMisNotificaciones(idUsuario);
 
         assertEquals(1, respuestas.size());
 
         NotificacionResponse respuesta = respuestas.get(0);
 
         assertAll(
-            () -> assertEquals(idNotificacion, respuesta.idNotificacion()),
-            () -> assertEquals(idUsuario, respuesta.idUsuario()),
-            () -> assertEquals(idReserva, respuesta.idReserva()),
-            () -> assertEquals(idPublicacion, respuesta.idPublicacion()),
-            () -> assertEquals("RESERVA_CONFIRMADA", respuesta.tipo()),
-            () -> assertEquals("Tu reserva ha sido confirmada.", respuesta.mensaje()),
-            () -> assertEquals(fechaCreacion, respuesta.fechaCreacion()),
-            () -> assertEquals(fechaLectura, respuesta.fechaLectura())
+                () -> assertEquals(idNotificacion, respuesta.idNotificacion()),
+                () -> assertEquals(idUsuario, respuesta.idUsuario()),
+                () -> assertEquals(idReserva, respuesta.idReserva()),
+                () -> assertEquals(idPublicacion, respuesta.idPublicacion()),
+                () -> assertEquals("RESERVA_CONFIRMADA", respuesta.tipo()),
+                () -> assertEquals(
+                        "Tu reserva ha sido confirmada.",
+                        respuesta.mensaje()
+                ),
+                () -> assertEquals(fechaCreacion, respuesta.fechaCreacion()),
+                () -> assertEquals(fechaLectura, respuesta.fechaLectura())
         );
 
-        verify(notificacionRepository, times(1))
-            .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario);
+        verify(notificacionRepository)
+                .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario);
     }
 
     @Test
     void consultarMisNotificacionesDebeRetornarListaVaciaCuandoNoHayResultados() {
+
         when(notificacionRepository
-            .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario))
-            .thenReturn(List.of());
+                .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario))
+                .thenReturn(List.of());
 
         List<NotificacionResponse> respuestas =
-            service.consultarMisNotificaciones(idUsuario);
+                service.consultarMisNotificaciones(idUsuario);
 
         assertNotNull(respuestas);
         assertTrue(respuestas.isEmpty());
 
-        verify(notificacionRepository, times(1))
-            .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario);
+        verify(notificacionRepository)
+                .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario);
     }
 
     @Test
     void consultarMisNotificacionesDebeConvertirVariasNotificaciones() {
+
+        Notificacion primera = crearNotificacion(
+                idNotificacion,
+                idUsuario,
+                idReserva,
+                idPublicacion,
+                "RESERVA_CONFIRMADA",
+                "Tu reserva ha sido confirmada.",
+                fechaCreacion,
+                fechaLectura
+        );
+
         Notificacion segunda = crearNotificacion(
-            UUID.randomUUID(),
-            idUsuario,
-            null,
-            null,
-            "PUBLICACION_ACTUALIZADA",
-            "Una publicación fue actualizada.",
-            fechaCreacion.plusHours(1),
-            null
+                UUID.randomUUID(),
+                idUsuario,
+                null,
+                null,
+                "PUBLICACION_ACTUALIZADA",
+                "Una publicación fue actualizada.",
+                fechaCreacion.plusHours(1),
+                null
         );
 
         when(notificacionRepository
-            .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario))
-            .thenReturn(List.of(notificacion, segunda));
+                .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario))
+                .thenReturn(List.of(primera, segunda));
 
         List<NotificacionResponse> respuestas =
-            service.consultarMisNotificaciones(idUsuario);
+                service.consultarMisNotificaciones(idUsuario);
 
         assertEquals(2, respuestas.size());
 
         assertAll(
-            () -> assertEquals("RESERVA_CONFIRMADA", respuestas.get(0).tipo()),
-            () -> assertEquals("PUBLICACION_ACTUALIZADA", respuestas.get(1).tipo()),
-            () -> assertNull(respuestas.get(1).idReserva()),
-            () -> assertNull(respuestas.get(1).idPublicacion()),
-            () -> assertNull(respuestas.get(1).fechaLectura())
+                () -> assertEquals("RESERVA_CONFIRMADA", respuestas.get(0).tipo()),
+                () -> assertEquals("PUBLICACION_ACTUALIZADA", respuestas.get(1).tipo()),
+                () -> assertNull(respuestas.get(1).idReserva()),
+                () -> assertNull(respuestas.get(1).idPublicacion()),
+                () -> assertNull(respuestas.get(1).fechaLectura())
         );
     }
 
     @Test
     void consultarMisNotificacionesDebeConservarElOrdenDelRepositorio() {
+
+        Notificacion primera = crearNotificacion(
+                UUID.randomUUID(),
+                idUsuario,
+                null,
+                null,
+                "NUEVA_NOTIFICACION",
+                "Segunda notificación.",
+                fechaCreacion.plusHours(1),
+                null
+        );
+
         Notificacion segunda = crearNotificacion(
-            UUID.randomUUID(),
-            idUsuario,
-            null,
-            null,
-            "NUEVA_NOTIFICACION",
-            "Segunda notificación.",
-            fechaCreacion.plusHours(1),
-            null
+                idNotificacion,
+                idUsuario,
+                idReserva,
+                idPublicacion,
+                "RESERVA_CONFIRMADA",
+                "Tu reserva ha sido confirmada.",
+                fechaCreacion,
+                fechaLectura
         );
 
         when(notificacionRepository
-            .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario))
-            .thenReturn(List.of(segunda, notificacion));
+                .findByIdUsuarioOrderByFechaCreacionDesc(idUsuario))
+                .thenReturn(List.of(primera, segunda));
 
         List<NotificacionResponse> respuestas =
-            service.consultarMisNotificaciones(idUsuario);
+                service.consultarMisNotificaciones(idUsuario);
 
         assertEquals(2, respuestas.size());
         assertEquals("NUEVA_NOTIFICACION", respuestas.get(0).tipo());

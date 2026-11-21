@@ -4,10 +4,16 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import co.edu.unbosque.marketplace.usuario.api.request.*;
+import co.edu.unbosque.marketplace.ubicacion.contracts.CiudadUbicacionInfo;
+import co.edu.unbosque.marketplace.ubicacion.contracts.UbicacionRegistroQuery;
+import co.edu.unbosque.marketplace.usuario.application.dto.ActualizarContrasenaRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.ActualizarPerfilRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.ReactivarCuentaRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.RegistrarUsuarioRequest;
+import co.edu.unbosque.marketplace.usuario.application.port.RolRepository;
+import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.domain.*;
-import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.*;
+import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
 import co.edu.unbosque.marketplace.usuario.security.*;
 
 import org.junit.jupiter.api.Test;
@@ -28,6 +34,7 @@ class UsuarioServiceTest {
 
     private static final UUID ID = UUID.randomUUID();
     private static final String CORREO = "ana@ejemplo.com";
+    private static final UUID CIUDAD = UUID.randomUUID();
     private static final String PREFIJO = "perfil:cambio-correo:" + ID;
     private static final String CLAVE_CODIGO = "recuperacion:contrasena:" + CORREO;
     // SHA-256 del código 123456.
@@ -39,9 +46,10 @@ class UsuarioServiceTest {
     @Mock private ProteccionDocumento proteccionDocumento;
     @Mock private ProteccionContrasena proteccionContrasena;
     @Mock private VerificacionCorreoService verificacionCorreoService;
-    @Mock private ExternalHTTPRequestMapping correoExterno;
+    @Mock private ServicioCorreo servicioCorreo;
     @Mock private JwtUtil jwtUtil;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private UbicacionRegistroQuery ubicacionRegistroQuery;
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private StringRedisTemplate redisTemplate;
     @InjectMocks private UsuarioService service;
@@ -79,11 +87,13 @@ class UsuarioServiceTest {
         r.setDocumentoIdentidad("123456789");
         r.setTelefono("3001234567");
         r.setContrasena("Clave123");
+        r.setIdCiudad(CIUDAD);
         r.setRol(" huesped ");
 
         Rol rol = mock(Rol.class);
         var datos = mock(ProteccionDocumento.DatosDocumento.class);
         byte[] hash = {1, 2, 3};
+        when(ubicacionRegistroQuery.existeCiudad(CIUDAD)).thenReturn(true);
         when(rolRepository.findByNombreIgnoreCase("HUESPED")).thenReturn(Optional.of(rol));
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO)).thenReturn(Optional.empty());
         when(proteccionDocumento.protegerDocumento("CEDULA", "123456789")).thenReturn(datos);
@@ -119,7 +129,7 @@ class UsuarioServiceTest {
         assertTrue(service.generarCodigoRecuperacion("  " + CORREO + "  "));
 
         var codigo = ArgumentCaptor.forClass(String.class);
-        verify(correoExterno).enviarCodigoRecuperacion(eq(CORREO), codigo.capture());
+        verify(servicioCorreo).enviarCodigoRecuperacion(eq(CORREO), codigo.capture());
         assertTrue(codigo.getValue().matches("\\d{6}"));
         verify(redisTemplate.opsForValue()).set(
                 eq(CLAVE_CODIGO), matches("[0-9a-f]{64}"), eq(5L), eq(TimeUnit.MINUTES));
@@ -182,6 +192,46 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void consultarCuentaIncluyeLaCiudadYElPaisDelUsuario() {
+        Usuario u = usuario();
+        Rol rol = mock(Rol.class);
+        when(rol.getNombre()).thenReturn("HUESPED");
+        u.setRol(rol);
+        u.setIdCiudad(CIUDAD);
+        encontrar(u);
+        when(ubicacionRegistroQuery.consultarCiudad(CIUDAD))
+                .thenReturn(Optional.of(new CiudadUbicacionInfo("Lima", "Peru", "PE")));
+
+        var respuesta = service.consultarMiCuenta(ID);
+
+        assertAll(
+                () -> assertEquals("Lima", respuesta.getCiudad()),
+                () -> assertEquals("Peru", respuesta.getPais()),
+                () -> assertEquals("PE", respuesta.getCodigoPais()));
+    }
+
+    @Test
+    void consultarCuentaDevuelveLosDatosAunqueElDocumentoNoSePuedaDescifrar() {
+        Usuario u = usuario();
+        Rol rol = mock(Rol.class);
+        when(rol.getNombre()).thenReturn("AUDITOR_OPERACION");
+        u.setRol(rol);
+        u.setDocumentoCifrado(new byte[]{1});
+        u.setDocumentoNonce(new byte[]{2});
+        encontrar(u);
+        when(proteccionDocumento.descifrarDocumento(u.getDocumentoCifrado(), u.getDocumentoNonce()))
+                .thenThrow(new IllegalStateException("No fue posible descifrar el documento."));
+
+        var respuesta = service.consultarMiCuenta(ID);
+
+        assertAll(
+                () -> assertEquals("Ana", respuesta.getNombre()),
+                () -> assertEquals(CORREO, respuesta.getCorreo()),
+                () -> assertNull(respuesta.getDocumentoIdentidad()),
+                () -> assertEquals("AUDITOR_OPERACION", respuesta.getRol()));
+    }
+
+    @Test
     void actualizarPerfilSinCambiarCorreo() {
         Usuario u = usuario();
         encontrar(u);
@@ -195,7 +245,7 @@ class UsuarioServiceTest {
         assertEquals("Carlos", u.getNombre());
         assertEquals("Lopez", u.getApellido());
         verify(usuarioRepository).save(u);
-        verifyNoInteractions(correoExterno, redisTemplate);
+        verifyNoInteractions(servicioCorreo, redisTemplate);
     }
 
     @Test
@@ -300,7 +350,9 @@ class UsuarioServiceTest {
         r.setDocumentoIdentidad("123456789");
         r.setTelefono("3001234567");
         r.setContrasena("Clave123");
+        r.setIdCiudad(CIUDAD);
         r.setRol("HUESPED");
+        when(ubicacionRegistroQuery.existeCiudad(CIUDAD)).thenReturn(true);
         when(rolRepository.findByNombreIgnoreCase("HUESPED"))
                 .thenReturn(Optional.of(mock(Rol.class)));
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO))
@@ -324,14 +376,14 @@ class UsuarioServiceTest {
     void generarCodigoRetornaFalseSiNoExisteUsuario() {
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO)).thenReturn(Optional.empty());
         assertFalse(service.generarCodigoRecuperacion(CORREO));
-        verifyNoInteractions(redisTemplate, correoExterno);
+        verifyNoInteractions(redisTemplate, servicioCorreo);
     }
 
     @Test
     void generarCodigoLimpiaRedisSiFallaElEnvio() {
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO)).thenReturn(Optional.of(usuario()));
         RuntimeException fallo = new RuntimeException("Error de correo");
-        doThrow(fallo).when(correoExterno).enviarCodigoRecuperacion(eq(CORREO), anyString());
+        doThrow(fallo).when(servicioCorreo).enviarCodigoRecuperacion(eq(CORREO), anyString());
 
         assertSame(fallo, assertThrows(RuntimeException.class,
                 () -> service.generarCodigoRecuperacion(CORREO)));
@@ -393,7 +445,7 @@ class UsuarioServiceTest {
 
         assertEquals(CORREO, u.getCorreo());
         var codigo = ArgumentCaptor.forClass(String.class);
-        verify(correoExterno).enviarCodigoVerificacion(eq("nuevo@ejemplo.com"), codigo.capture());
+        verify(servicioCorreo).enviarCodigoVerificacion(eq("nuevo@ejemplo.com"), codigo.capture());
         assertTrue(codigo.getValue().matches("\\d{6}"));
         verify(redisTemplate.opsForValue()).set(
                 PREFIJO + ":correo", "nuevo@ejemplo.com", 5L, TimeUnit.MINUTES);
@@ -412,7 +464,7 @@ class UsuarioServiceTest {
                 () -> service.actualizarPerfil(ID, perfilConNuevoCorreo()));
         assertEquals("El correo electrónico ya está asociado a otra cuenta.", error.getMessage());
         verify(usuarioRepository, never()).save(any(Usuario.class));
-        verifyNoInteractions(redisTemplate, correoExterno);
+        verifyNoInteractions(redisTemplate, servicioCorreo);
     }
 
     private void verificarLimpiezaCambioCorreo() {
@@ -425,7 +477,7 @@ class UsuarioServiceTest {
     void actualizarPerfilLimpiaSolicitudSiFallaElEnvio() {
         encontrar(usuario());
         RuntimeException fallo = new RuntimeException("Error de correo");
-        doThrow(fallo).when(correoExterno).enviarCodigoVerificacion(eq("nuevo@ejemplo.com"), anyString());
+        doThrow(fallo).when(servicioCorreo).enviarCodigoVerificacion(eq("nuevo@ejemplo.com"), anyString());
 
         var error = assertThrows(IllegalStateException.class,
                 () -> service.actualizarPerfil(ID, perfilConNuevoCorreo()));

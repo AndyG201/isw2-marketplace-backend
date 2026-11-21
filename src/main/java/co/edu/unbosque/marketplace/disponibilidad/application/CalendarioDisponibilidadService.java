@@ -10,14 +10,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.disponibilidad.api.response.CalendarioDisponibilidadResponse;
-import co.edu.unbosque.marketplace.disponibilidad.api.response.ConsultaDisponibilidadResponse;
-import co.edu.unbosque.marketplace.disponibilidad.api.response.PeriodoDisponibilidadResponse;
-import co.edu.unbosque.marketplace.disponibilidad.domain.NocheReservada;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.CalendarioDisponibilidadResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.ConsultaDisponibilidadResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.RangoDisponibleResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.port.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplace.disponibilidad.domain.PeriodoDisponibilidad;
-import co.edu.unbosque.marketplace.disponibilidad.infrastructure.persistence.NocheReservadaRepository;
-import co.edu.unbosque.marketplace.disponibilidad.infrastructure.persistence.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionDisponibilidadQuery;
+import co.edu.unbosque.marketplace.reserva.contracts.NochesOcupadasQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
@@ -25,20 +25,20 @@ import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 public class CalendarioDisponibilidadService {
 
     private final PeriodoDisponibilidadRepository periodoRepository;
-    private final NocheReservadaRepository nocheReservadaRepository;
+    private final NochesOcupadasQuery noches;
     private final AlojamientoPublicacionQuery alojamientoQuery;
     private final UsuarioPublicacionQuery usuarioQuery;
     private final PublicacionDisponibilidadQuery publicacionQuery;
 
     public CalendarioDisponibilidadService(
             PeriodoDisponibilidadRepository periodoRepository,
-            NocheReservadaRepository nocheReservadaRepository,
+            NochesOcupadasQuery noches,
             AlojamientoPublicacionQuery alojamientoQuery,
             UsuarioPublicacionQuery usuarioQuery,
             PublicacionDisponibilidadQuery publicacionQuery) {
 
         this.periodoRepository = periodoRepository;
-        this.nocheReservadaRepository = nocheReservadaRepository;
+        this.noches = noches;
         this.alojamientoQuery = alojamientoQuery;
         this.usuarioQuery = usuarioQuery;
         this.publicacionQuery = publicacionQuery;
@@ -77,14 +77,8 @@ public class CalendarioDisponibilidadService {
                         .toList();
 
         List<LocalDate> nochesOcupadas =
-                nocheReservadaRepository
-                        .consultarNochesOcupadasEnRango(
-                                idAlojamiento,
-                                fechaInicio,
-                                fechaFin
-                        )
+                noches.nochesOcupadas(idAlojamiento, fechaInicio, fechaFin)
                         .stream()
-                        .map(NocheReservada::getFecha)
                         .distinct()
                         .sorted()
                         .toList();
@@ -103,7 +97,12 @@ public class CalendarioDisponibilidadService {
                 fechaFin,
                 disponible,
                 cubierto,
-                nochesOcupadas
+                nochesOcupadas,
+                periodosDisponibles.stream()
+                        .map(periodo -> new RangoDisponibleResponse(
+                                periodo.getFechaInicio(),
+                                periodo.getFechaFin()))
+                        .toList()
         );
     }
 
@@ -129,10 +128,8 @@ public class CalendarioDisponibilidadService {
                         .toList();
 
         List<LocalDate> nochesOcupadas =
-                nocheReservadaRepository
-                        .consultarTodasLasNochesOcupadas(idAlojamiento)
+                noches.nochesOcupadas(idAlojamiento)
                         .stream()
-                        .map(NocheReservada::getFecha)
                         .distinct()
                         .sorted()
                         .toList();

@@ -1,6 +1,9 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -21,10 +24,10 @@ import org.mockito.quality.Strictness;
 import org.springframework.security.access.AccessDeniedException;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.RevisionPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.RevisionPublicacion;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.RevisionPublicacionRepository;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioAdministracionQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
@@ -50,6 +53,9 @@ class RevisionAdministrativaServiceTest {
 
     @Mock
     private Publicacion publicacion;
+
+    @Mock
+    private CambiosPublicacionService cambios;
 
     @InjectMocks
     private RevisionAdministrativaService service;
@@ -510,5 +516,35 @@ class RevisionAdministrativaServiceTest {
         verify(publicacion).setEstado("BORRADOR");
         verify(publicacionRepository).save(publicacion);
         verify(revisionRepository).save(any(RevisionPublicacion.class));
+    }
+
+    @Test
+    void alAprobarLosCambiosDeUnaPublicacionPausadaVuelveAPausada() {
+        prepararAnfitrionValido();
+        when(cambios.resolver(eq(idPublicacion), any())).thenReturn(Optional.of("PAUSADA"));
+
+        var respuesta = service.aprobarPublicacion(idAdministrador, idPublicacion);
+
+        assertEquals("PAUSADA", estadoPublicacion.get());
+        assertEquals("PAUSADA", respuesta.getEstadoActual());
+        assertTrue(respuesta.getMensaje().contains("sigue pausada"));
+    }
+
+    @Test
+    void alAprobarLosCambiosDeUnaPublicacionActivaQuedaActiva() {
+        prepararAnfitrionValido();
+        when(cambios.resolver(eq(idPublicacion), any())).thenReturn(Optional.of("ACTIVA"));
+
+        service.aprobarPublicacion(idAdministrador, idPublicacion);
+
+        assertEquals("ACTIVA", estadoPublicacion.get());
+    }
+
+    @Test
+    void alRechazarCierraLaSolicitudDeCambiosYDevuelveABorrador() {
+        service.rechazarPublicacion(idAdministrador, idPublicacion, "Las fotos no corresponden");
+
+        verify(cambios).resolver(eq(idPublicacion), any());
+        assertEquals("BORRADOR", estadoPublicacion.get());
     }
 }

@@ -23,9 +23,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 
-import co.edu.unbosque.marketplace.publicacion.api.request.EditarPublicacionRequest;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAlojamientoResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionEdicionService;
+import co.edu.unbosque.marketplace.publicacion.application.dto.EditarPublicacionRequest;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAlojamientoResponse;
 
 @ExtendWith(MockitoExtension.class)
 class PublicacionEdicionControllerTest {

@@ -2,6 +2,7 @@
 package co.edu.unbosque.marketplace.publicacion.application;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -9,6 +10,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,16 +25,18 @@ import co.edu.unbosque.marketplace.alojamiento.contracts.ActualizarAlojamientoPa
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionCommand;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
+import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
+import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.request.EditarPublicacionRequest;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAlojamientoResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.EditarPublicacionRequest;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAlojamientoResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoImagenes;
+import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.storage.AlmacenamientoImagenService;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioAdministracionQuery;
@@ -40,6 +45,9 @@ import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
 @Service
 public class PublicacionEdicionService {
+
+    private static final String EN_REVISION = "PENDIENTE_REVISION";
+    private static final Set<String> ESTADOS_SIN_EDICION = Set.of(EN_REVISION, "BLOQUEADA");
 
     private static final Logger logger =
             LoggerFactory.getLogger(PublicacionEdicionService.class);
@@ -55,7 +63,9 @@ public class PublicacionEdicionService {
     private final ServicioPublicacionQuery servicioPublicacionQuery;
     private final PoliticaCancelacionQuery politicaCancelacionQuery;
 
-    private final AlmacenamientoImagenService almacenamientoImagenService;
+    private final AlmacenamientoImagenes almacenamientoImagenes;
+    private final CambiosPublicacionService cambios;
+    private AuditoriaEventoCommand auditoria;
 
     public PublicacionEdicionService(
             PublicacionRepository publicacionRepository,
@@ -67,7 +77,8 @@ public class PublicacionEdicionService {
             UsuarioPublicacionQuery usuarioPublicacionQuery,
             ServicioPublicacionQuery servicioPublicacionQuery,
             PoliticaCancelacionQuery politicaCancelacionQuery,
-            AlmacenamientoImagenService almacenamientoImagenService) {
+            AlmacenamientoImagenes almacenamientoImagenes,
+            CambiosPublicacionService cambios) {
 
         this.publicacionRepository = publicacionRepository;
         this.publicacionServicioRepository = publicacionServicioRepository;
@@ -78,7 +89,13 @@ public class PublicacionEdicionService {
         this.usuarioPublicacionQuery = usuarioPublicacionQuery;
         this.servicioPublicacionQuery = servicioPublicacionQuery;
         this.politicaCancelacionQuery = politicaCancelacionQuery;
-        this.almacenamientoImagenService = almacenamientoImagenService;
+        this.almacenamientoImagenes = almacenamientoImagenes;
+        this.cambios = cambios;
+    }
+
+    @Autowired
+    public void configurarAuditoria(AuditoriaEventoCommand auditoria) {
+        this.auditoria = auditoria;
     }
 
     @Transactional
@@ -103,6 +120,25 @@ public class PublicacionEdicionService {
                                 "No se encontró el alojamiento asociado."));
 
         validarPermisos(idActor, alojamiento);
+
+        String estadoAnterior = publicacion.getEstado();
+        if (estadoAnterior != null && ESTADOS_SIN_EDICION.contains(estadoAnterior)) {
+            throw new IllegalStateException(
+                    "No puedes editar una publicación en revisión o bloqueada.");
+        }
+
+        List<String> camposEnRevision =
+                !usuarioAdministracionQuery.esAdministrador(idActor)
+                        && cambios.requiereRevision(estadoAnterior)
+                        ? cambios.camposSensiblesModificados(publicacion, alojamiento, solicitud)
+                        : List.of();
+        String mensajeCambios = camposEnRevision.isEmpty()
+                ? null
+                : cambios.validarMensaje(solicitud.getMensajeCambios());
+
+        if (solicitud.getCapacidad() < alojamiento.capacidad()) {
+            cambios.validarCapacidad(idPublicacion, solicitud.getCapacidad(), LocalDate.now());
+        }
 
         if (!politicaCancelacionQuery.existePoliticaActiva(
                 solicitud.getIdPolitica())) {
@@ -135,7 +171,13 @@ public class PublicacionEdicionService {
                         solicitud.getUbicacion(),
                         solicitud.getCiudad(),
                         solicitud.getTipoAlojamiento(),
-                        solicitud.getCapacidad()
+                        solicitud.getCapacidad(),
+                        solicitud.getHabitaciones(),
+                        solicitud.getCamas(),
+                        solicitud.getBanos(),
+                        solicitud.getPropietarioInmueble(),
+                        solicitud.getPais(),
+                        solicitud.getCodigoPais()
                 )
         );
 
@@ -153,9 +195,21 @@ public class PublicacionEdicionService {
         publicacion.setIdPolitica(solicitud.getIdPolitica());
         publicacion.setFechaActualizacion(ahora);
 
+        if (!camposEnRevision.isEmpty()) {
+            publicacion.setEstado(EN_REVISION);
+            cambios.registrarSolicitud(
+                    idPublicacion, idActor, mensajeCambios, camposEnRevision, estadoAnterior, ahora);
+        }
+
         publicacionRepository.save(publicacion);
 
         actualizarServicios(publicacion.getIdPublicacion(), idsServicios);
+        if (auditoria != null) {
+            auditoria.registrarEvento(new RegistrarEventoAuditoria(
+                    idActor, ahora, "MODIFICAR_PUBLICACION", "EXITOSO", "PUBLICACION",
+                    publicacion.getIdPublicacion(),
+                    "{\"estado\":\"" + publicacion.getEstado() + "\"}", null));
+        }
 
         List<ImagenPublicacion> imagenesActuales =
                 imagenRepository.findByIdPublicacionOrderByOrdenAsc(
@@ -331,7 +385,7 @@ public class PublicacionEdicionService {
 
         for (int i = 0; i < archivos.size(); i++) {
 
-            String ruta = almacenamientoImagenService.guardar(
+            String ruta = almacenamientoImagenes.guardar(
                     archivos.get(i));
 
             rutasNuevas.add(ruta);
@@ -358,7 +412,7 @@ public class PublicacionEdicionService {
 
         for (String ruta : rutas) {
             try {
-                almacenamientoImagenService.eliminar(ruta);
+                almacenamientoImagenes.eliminar(ruta);
             } catch (RuntimeException e) {
                 logger.warn(
                         "No fue posible eliminar el archivo de imagen: {}",

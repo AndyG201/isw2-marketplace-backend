@@ -7,9 +7,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.unbosque.marketplace.notificacion.api.response.NotificacionResponse;
+import co.edu.unbosque.marketplace.notificacion.application.dto.NotificacionResponse;
+import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
-import co.edu.unbosque.marketplace.notificacion.infrastructure.persistence.NotificacionRepository;
 
 @Service
 public class NotificacionConsultaService {

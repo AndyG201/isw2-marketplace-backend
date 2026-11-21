@@ -1,33 +1,35 @@
 package co.edu.unbosque.marketplace.notificacion.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.springframework.http.ResponseEntity;
 
 import co.edu.unbosque.marketplace.notificacion.application.NotificacionConsultaService;
 
-@WebMvcTest(NotificacionController.class)
+@ExtendWith(MockitoExtension.class)
 class NotificacionControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
+    @Mock
     private NotificacionConsultaService consultaService;
+
+    @InjectMocks
+    private NotificacionController controller;
 
     private UUID idUsuario;
 
@@ -37,35 +39,39 @@ class NotificacionControllerTest {
     }
 
     @Test
-    void consultarMisNotificacionesSinAutenticacion()
-            throws Exception {
+    void consultarMisNotificacionesSinAutenticacion() {
 
-        mockMvc.perform(get("/notificaciones/mis-notificaciones"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.mensaje").value(
-                        "Debes iniciar sesión para consultar tus notificaciones."
-                ));
+        ResponseEntity<?> respuesta =
+                controller.consultarMisNotificaciones(null);
+
+        assertEquals(401, respuesta.getStatusCode().value());
+
+        Map<?, ?> cuerpo = assertInstanceOf(
+                Map.class,
+                respuesta.getBody()
+        );
+
+        assertEquals(
+                "Debes iniciar sesión para consultar tus notificaciones.",
+                cuerpo.get("mensaje")
+        );
 
         verifyNoInteractions(consultaService);
     }
 
     @Test
-    void consultarMisNotificacionesCorrectamente()
-            throws Exception {
+    void consultarMisNotificacionesCorrectamente() {
 
         when(consultaService.consultarMisNotificaciones(idUsuario))
                 .thenReturn(List.of());
 
-        mockMvc.perform(
-                get("/notificaciones/mis-notificaciones")
-                        .with(request -> {
-                            request.setUserPrincipal(() -> idUsuario.toString());
-                            return request;
-                        })
-        )
-                .andExpect(status().isOk())
-                .andExpect(content().json("[]"));
+        ResponseEntity<?> respuesta =
+                controller.consultarMisNotificaciones(idUsuario);
 
-        verify(consultaService).consultarMisNotificaciones(idUsuario);
+        assertEquals(200, respuesta.getStatusCode().value());
+        assertEquals(List.of(), respuesta.getBody());
+
+        verify(consultaService)
+                .consultarMisNotificaciones(idUsuario);
     }
 }

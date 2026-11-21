@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import co.edu.unbosque.marketplace.cancelacion.api.response.PoliticaCancelacionResponse;
 import co.edu.unbosque.marketplace.cancelacion.application.PoliticaCancelacionService;
+import co.edu.unbosque.marketplace.cancelacion.application.dto.PoliticaCancelacionResponse;
 
 class PoliticaCancelacionControllerTest {
 

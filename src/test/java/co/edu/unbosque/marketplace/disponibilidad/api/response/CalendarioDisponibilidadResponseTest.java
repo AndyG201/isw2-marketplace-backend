@@ -9,6 +9,9 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.CalendarioDisponibilidadResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadResponse;
+
 class CalendarioDisponibilidadResponseTest {
 
     @Test

@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import co.edu.unbosque.marketplace.servicio.api.response.ServicioResponse;
-import co.edu.unbosque.marketplace.servicio.infrastructure.persistence.ServicioRepository;
+import co.edu.unbosque.marketplace.servicio.application.dto.ServicioResponse;
+import co.edu.unbosque.marketplace.servicio.application.port.ServicioRepository;
 
 @Service
 public class ServicioService {

@@ -5,7 +5,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
+import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {

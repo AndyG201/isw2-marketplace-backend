@@ -43,3 +43,8 @@ uploads/
 # Logs
 *.log
 logs/
+
+/application-local.properties
+
+# Reportes generados por el worker
+reportes/

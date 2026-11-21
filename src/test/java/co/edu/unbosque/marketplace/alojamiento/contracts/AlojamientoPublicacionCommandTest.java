@@ -59,7 +59,10 @@ class AlojamientoPublicacionCommandTest {
                         "Calle 123",
                         "Bogotá",
                         "Apartamento",
-                        4
+                        4,
+                        null,
+                        null,
+                        null
                 );
 
         doNothing().when(comando)
@@ -95,7 +98,10 @@ class AlojamientoPublicacionCommandTest {
                         "Calle 123",
                         "Bogotá",
                         "Apartamento",
-                        4
+                        4,
+                        null,
+                        null,
+                        null
                 );
 
         doThrow(new IllegalArgumentException("Solicitud inválida."))

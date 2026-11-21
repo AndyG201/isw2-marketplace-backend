@@ -16,7 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
-import co.edu.unbosque.marketplace.notificacion.infrastructure.persistence.NotificacionRepository;
+import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.publicacion.contracts.ModoAceptacionActualizadoEvent;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionDesbloqueadaEvent;
 

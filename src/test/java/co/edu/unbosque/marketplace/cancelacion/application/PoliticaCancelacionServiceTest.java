@@ -18,9 +18,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import co.edu.unbosque.marketplace.cancelacion.api.response.PoliticaCancelacionResponse;
+import co.edu.unbosque.marketplace.cancelacion.application.dto.PoliticaCancelacionResponse;
+import co.edu.unbosque.marketplace.cancelacion.application.port.PoliticaCancelacionRepository;
 import co.edu.unbosque.marketplace.cancelacion.domain.PoliticaCancelacion;
-import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.PoliticaCancelacionRepository;
 
 @ExtendWith(MockitoExtension.class)
 class PoliticaCancelacionServiceTest {

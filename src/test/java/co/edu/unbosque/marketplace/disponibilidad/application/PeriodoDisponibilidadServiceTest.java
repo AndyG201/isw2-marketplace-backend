@@ -15,18 +15,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.access.AccessDeniedException;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.disponibilidad.api.request.PeriodoDisponibilidadRequest;
-import co.edu.unbosque.marketplace.disponibilidad.api.response.PeriodoDisponibilidadResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadRequest;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadResponse;
 import co.edu.unbosque.marketplace.disponibilidad.domain.PeriodoDisponibilidad;
-import co.edu.unbosque.marketplace.disponibilidad.infrastructure.persistence.NocheReservadaRepository;
-import co.edu.unbosque.marketplace.disponibilidad.infrastructure.persistence.PeriodoDisponibilidadRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.NochesOcupadasQuery;
+import co.edu.unbosque.marketplace.disponibilidad.application.port.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 
 class PeriodoDisponibilidadServiceTest {
 
     private PeriodoDisponibilidadRepository periodoRepository;
-    private NocheReservadaRepository nocheReservadaRepository;
+    private NochesOcupadasQuery noches;
     private AlojamientoPublicacionQuery alojamientoQuery;
     private UsuarioPublicacionQuery usuarioQuery;
 
@@ -45,13 +45,13 @@ class PeriodoDisponibilidadServiceTest {
     @BeforeEach
     void setUp() {
         periodoRepository = mock(PeriodoDisponibilidadRepository.class);
-        nocheReservadaRepository = mock(NocheReservadaRepository.class);
+        noches = mock(NochesOcupadasQuery.class);
         alojamientoQuery = mock(AlojamientoPublicacionQuery.class);
         usuarioQuery = mock(UsuarioPublicacionQuery.class);
 
         service = new PeriodoDisponibilidadService(
                 periodoRepository,
-                nocheReservadaRepository,
+                noches,
                 alojamientoQuery,
                 usuarioQuery
         );
@@ -76,7 +76,7 @@ class PeriodoDisponibilidadServiceTest {
         when(alojamientoQuery.consultarIdAnfitrion(idAlojamiento))
                 .thenReturn(Optional.of(idAnfitrion));
 
-        when(nocheReservadaRepository.existeNocheOcupadaEnRango(
+        when(noches.hayNochesOcupadas(
                 any(UUID.class),
                 any(LocalDate.class),
                 any(LocalDate.class)
@@ -223,7 +223,7 @@ class PeriodoDisponibilidadServiceTest {
 
     @Test
     void debeRechazarRegistroCuandoExisteUnaReserva() {
-        when(nocheReservadaRepository.existeNocheOcupadaEnRango(
+        when(noches.hayNochesOcupadas(
                 idAlojamiento, fechaInicio, fechaFin
         )).thenReturn(true);
 
@@ -386,7 +386,7 @@ class PeriodoDisponibilidadServiceTest {
                 idPeriodo, idAlojamiento
         )).thenReturn(Optional.of(periodo));
 
-        when(nocheReservadaRepository.existeNocheOcupadaEnRango(
+        when(noches.hayNochesOcupadas(
                 idAlojamiento, fechaInicio, fechaFin
         )).thenReturn(true);
 
@@ -490,7 +490,7 @@ class PeriodoDisponibilidadServiceTest {
 
         assertFalse(resultado.habilitado());
         verify(periodoRepository, never()).save(any());
-        verifyNoInteractions(nocheReservadaRepository);
+        verifyNoInteractions(noches);
     }
 
     @Test
@@ -525,7 +525,7 @@ class PeriodoDisponibilidadServiceTest {
                 idPeriodo, idAlojamiento
         )).thenReturn(Optional.of(periodo));
 
-        when(nocheReservadaRepository.existeNocheOcupadaEnRango(
+        when(noches.hayNochesOcupadas(
                 idAlojamiento, fechaInicio, fechaFin
         )).thenReturn(true);
 

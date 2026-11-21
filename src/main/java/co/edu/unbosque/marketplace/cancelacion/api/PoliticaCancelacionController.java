@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.cancelacion.api.response.PoliticaCancelacionResponse;
 import co.edu.unbosque.marketplace.cancelacion.application.PoliticaCancelacionService;
+import co.edu.unbosque.marketplace.cancelacion.application.dto.PoliticaCancelacionResponse;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 

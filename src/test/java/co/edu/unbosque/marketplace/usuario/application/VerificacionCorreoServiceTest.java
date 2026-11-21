@@ -8,12 +8,12 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
+import co.edu.unbosque.marketplace.usuario.application.port.VerificacionCorreoRepository;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
+import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
-import co.edu.unbosque.marketplace.usuario.infrastructure.email.ExternalHTTPRequestMapping;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.VerificacionCorreoRepository;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +44,7 @@ class VerificacionCorreoServiceTest {
 
     @Mock private VerificacionCorreoRepository verificacionRepository;
     @Mock private UsuarioRepository usuarioRepository;
-    @Mock private ExternalHTTPRequestMapping correoExterno;
+    @Mock private ServicioCorreo servicioCorreo;
     @Mock private StringRedisTemplate redisTemplate;
     @Mock private ValueOperations<String, String> valores;
     @InjectMocks private VerificacionCorreoService service;
@@ -82,7 +82,7 @@ class VerificacionCorreoServiceTest {
     }
 
     private void verificarSinEnvio() {
-        verifyNoInteractions(verificacionRepository, correoExterno);
+        verifyNoInteractions(verificacionRepository, servicioCorreo);
     }
 
     @ParameterizedTest
@@ -99,7 +99,7 @@ class VerificacionCorreoServiceTest {
                 () -> assertEquals("Debes proporcionar un correo electrónico.",
                         assertThrows(IllegalArgumentException.class,
                                 () -> service.confirmarCodigo(correo, CODIGO)).getMessage()));
-        verifyNoInteractions(usuarioRepository, redisTemplate, verificacionRepository, correoExterno);
+        verifyNoInteractions(usuarioRepository, redisTemplate, verificacionRepository, servicioCorreo);
     }
 
     @Test
@@ -149,10 +149,10 @@ class VerificacionCorreoServiceTest {
         var guardado = ArgumentCaptor.forClass(VerificacionCorreo.class);
         var fecha = ArgumentCaptor.forClass(OffsetDateTime.class);
         var codigo = ArgumentCaptor.forClass(String.class);
-        var orden = inOrder(verificacionRepository, correoExterno);
+        var orden = inOrder(verificacionRepository, servicioCorreo);
         orden.verify(verificacionRepository).invalidarCodigosPendientes(eq(u), fecha.capture());
         orden.verify(verificacionRepository).save(guardado.capture());
-        orden.verify(correoExterno).enviarCodigoVerificacion(eq(CORREO), codigo.capture());
+        orden.verify(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), codigo.capture());
 
         String hashEsperado = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
                 .digest(codigo.getValue().getBytes(StandardCharsets.UTF_8)));
@@ -180,7 +180,7 @@ class VerificacionCorreoServiceTest {
         service.enviarCodigo("  ANA@EJEMPLO.COM  ");
 
         verify(valores).set(ULTIMO, "1", 60L, TimeUnit.SECONDS);
-        verify(correoExterno).enviarCodigoVerificacion(eq(CORREO), anyString());
+        verify(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), anyString());
     }
 
     @Test
@@ -188,7 +188,7 @@ class VerificacionCorreoServiceTest {
         encontrarUsuario();
         usarRedis();
         RuntimeException fallo = new RuntimeException("Error de correo");
-        doThrow(fallo).when(correoExterno).enviarCodigoVerificacion(eq(CORREO), anyString());
+        doThrow(fallo).when(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), anyString());
 
         assertSame(fallo, assertThrows(RuntimeException.class, () -> service.enviarCodigo(CORREO)));
 
@@ -205,7 +205,7 @@ class VerificacionCorreoServiceTest {
 
         service.reenviarCodigo(CORREO);
 
-        verify(correoExterno).enviarCodigoVerificacion(eq(CORREO), anyString());
+        verify(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), anyString());
         verify(verificacionRepository).save(any(VerificacionCorreo.class));
         if (numero == 1) {
             verify(redisTemplate).expire(CONTADOR, 60L, TimeUnit.MINUTES);
@@ -275,7 +275,7 @@ class VerificacionCorreoServiceTest {
         permitirReenvio(2);
         when(valores.decrement(CONTADOR)).thenReturn(contadorActual);
         RuntimeException fallo = new RuntimeException("Error de correo");
-        doThrow(fallo).when(correoExterno).enviarCodigoVerificacion(eq(CORREO), anyString());
+        doThrow(fallo).when(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), anyString());
 
         assertSame(fallo, assertThrows(RuntimeException.class, () -> service.reenviarCodigo(CORREO)));
 

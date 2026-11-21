@@ -11,16 +11,16 @@ import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.response.ImagenPublicacionResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.MisPublicacionesResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionResumenResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.ServicioPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ImagenPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.MisPublicacionesResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionDetalleResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionResumenResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ServicioPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 
@@ -90,6 +90,9 @@ public class PublicacionConsultaService {
             );
         }
 
+        Map<UUID, String> portadas =
+                ResumenesPublicacion.portadas(imagenRepository, publicaciones);
+
         List<PublicacionResumenResponse> resultado =
                 publicaciones.stream()
                         .map(publicacion -> {
@@ -99,17 +102,7 @@ public class PublicacionConsultaService {
                                             publicacion.getIdAlojamiento()
                                     );
 
-                            return new PublicacionResumenResponse(
-                                    publicacion.getIdPublicacion(),
-                                    alojamiento.idAlojamiento(),
-                                    publicacion.getTitulo(),
-                                    alojamiento.ciudad(),
-                                    alojamiento.tipoAlojamiento(),
-                                    alojamiento.capacidad(),
-                                    publicacion.getPrecioPorNoche(),
-                                    publicacion.getEstado(),
-                                    publicacion.getFechaCreacion()
-                            );
+                            return ResumenesPublicacion.resumen(publicacion, alojamiento, portadas);
                         })
                         .toList();
 
@@ -158,6 +151,17 @@ public class PublicacionConsultaService {
                 .orElseThrow(() ->
                         new IllegalStateException(
                                 "No se encontró el alojamiento asociado."));
+
+        return armarDetalle(publicacion, alojamiento)
+                .conPropietario(alojamiento.propietarioInmueble())
+                .conUbicacionPais(alojamiento.pais(), alojamiento.codigoPais());
+    }
+
+    PublicacionDetalleResponse armarDetalle(
+            Publicacion publicacion,
+            AlojamientoPublicacionInfo alojamiento) {
+
+        UUID idPublicacion = publicacion.getIdPublicacion();
 
         List<ImagenPublicacionResponse> imagenes =
                 imagenRepository
@@ -210,6 +214,10 @@ public class PublicacionConsultaService {
                 alojamiento.capacidad(),
                 servicios,
                 imagenes
+        ).conDistribucion(
+                alojamiento.habitaciones(),
+                alojamiento.camas(),
+                alojamiento.banos()
         );
     }
 }

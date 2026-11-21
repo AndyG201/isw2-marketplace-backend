@@ -9,6 +9,8 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.ConsultaDisponibilidadResponse;
+
 class ConsultaDisponibilidadResponseTest {
 
     @Test
@@ -25,7 +27,8 @@ class ConsultaDisponibilidadResponseTest {
                         fechaFin,
                         false,
                         true,
-                        List.of(nocheOcupada)
+                        List.of(nocheOcupada),
+                        List.of()
                 );
 
         assertEquals(idAlojamiento, response.idAlojamiento());
@@ -45,6 +48,7 @@ class ConsultaDisponibilidadResponseTest {
                         LocalDate.of(2026, 12, 15),
                         true,
                         true,
+                        List.of(),
                         List.of()
                 );
 
@@ -65,7 +69,8 @@ class ConsultaDisponibilidadResponseTest {
                         LocalDate.of(2026, 12, 15),
                         false,
                         true,
-                        nochesOcupadas
+                        nochesOcupadas,
+                        List.of()
                 );
 
         nochesOcupadas.add(LocalDate.of(2026, 12, 13));
@@ -83,7 +88,8 @@ class ConsultaDisponibilidadResponseTest {
                         LocalDate.of(2026, 12, 15),
                         false,
                         true,
-                        List.of(LocalDate.of(2026, 12, 12))
+                        List.of(LocalDate.of(2026, 12, 12)),
+                        List.of()
                 );
 
         assertThrows(
@@ -110,7 +116,8 @@ class ConsultaDisponibilidadResponseTest {
                         fechaFin,
                         false,
                         true,
-                        noches
+                        noches,
+                        List.of()
                 );
 
         ConsultaDisponibilidadResponse segundo =
@@ -120,7 +127,8 @@ class ConsultaDisponibilidadResponseTest {
                         fechaFin,
                         false,
                         true,
-                        noches
+                        noches,
+                        List.of()
                 );
 
         assertEquals(primero, segundo);
@@ -140,6 +148,7 @@ class ConsultaDisponibilidadResponseTest {
                         fechaFin,
                         true,
                         true,
+                        List.of(),
                         List.of()
                 );
 
@@ -150,6 +159,7 @@ class ConsultaDisponibilidadResponseTest {
                         fechaFin,
                         false,
                         true,
+                        List.of(),
                         List.of()
                 );
 

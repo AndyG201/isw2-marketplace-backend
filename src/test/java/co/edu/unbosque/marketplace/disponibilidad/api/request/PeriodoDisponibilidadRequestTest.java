@@ -12,6 +12,8 @@ import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadRequest;
+
 class PeriodoDisponibilidadRequestTest {
 
     private static Validator validator;

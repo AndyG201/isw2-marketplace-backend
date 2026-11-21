@@ -18,14 +18,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.response.MisPublicacionesResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.MisPublicacionesResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionDetalleResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 
@@ -171,6 +171,43 @@ class PublicacionConsultaServiceTest {
         verify(publicacionRepository)
                 .findByIdAlojamientoInOrderByFechaCreacionDesc(
                         List.of(idAlojamiento));
+
+        assertNull(respuesta.getPublicaciones().get(0).getImagenPortada());
+    }
+
+    @Test
+    void consultarMisPublicacionesIncluyeLaImagenDePortada() {
+
+        AlojamientoPublicacionInfo alojamiento =
+                crearAlojamientoInfo();
+
+        Publicacion publicacion = mock(Publicacion.class);
+
+        when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
+                .thenReturn(List.of(alojamiento));
+
+        when(publicacion.getIdPublicacion()).thenReturn(idPublicacion);
+        when(publicacion.getIdAlojamiento()).thenReturn(idAlojamiento);
+
+        when(publicacionRepository
+                .findByIdAlojamientoInOrderByFechaCreacionDesc(
+                        List.of(idAlojamiento)))
+                .thenReturn(List.of(publicacion));
+
+        when(imagenRepository.findByIdPublicacionInOrderByOrdenAsc(
+                List.of(idPublicacion)))
+                .thenReturn(List.of(
+                        new ImagenPublicacion(UUID.randomUUID(), idPublicacion,
+                                "/imagenes/publicaciones/b.jpg", 2, false),
+                        new ImagenPublicacion(UUID.randomUUID(), idPublicacion,
+                                "/imagenes/publicaciones/a.jpg", 1, false)
+                ));
+
+        MisPublicacionesResponse respuesta =
+                service.consultarMisPublicaciones(idAnfitrion);
+
+        assertEquals("/imagenes/publicaciones/a.jpg",
+                respuesta.getPublicaciones().get(0).getImagenPortada());
     }
 
     @Test
@@ -236,6 +273,12 @@ class PublicacionConsultaServiceTest {
         when(alojamiento.ciudad()).thenReturn("Bogotá");
         when(alojamiento.tipoAlojamiento()).thenReturn("Apartamento");
         when(alojamiento.capacidad()).thenReturn(3);
+        when(alojamiento.habitaciones()).thenReturn(2);
+        when(alojamiento.camas()).thenReturn(3);
+        when(alojamiento.banos()).thenReturn(1);
+        when(alojamiento.propietarioInmueble()).thenReturn("Ana Gómez");
+        when(alojamiento.pais()).thenReturn("Perú");
+        when(alojamiento.codigoPais()).thenReturn("PE");
 
         Publicacion publicacion = mock(Publicacion.class);
         ImagenPublicacion imagen = mock(ImagenPublicacion.class);
@@ -291,6 +334,13 @@ class PublicacionConsultaServiceTest {
                 service.consultarDetalle(idAnfitrion, idPublicacion);
 
         assertNotNull(respuesta);
+
+        assertEquals(2, respuesta.getHabitaciones());
+        assertEquals(3, respuesta.getCamas());
+        assertEquals(1, respuesta.getBanos());
+        assertEquals("Ana Gómez", respuesta.getPropietarioInmueble());
+        assertEquals("Perú", respuesta.getPais());
+        assertEquals("PE", respuesta.getCodigoPais());
 
         verify(imagenRepository)
                 .findByIdPublicacionOrderByOrdenAsc(idPublicacion);

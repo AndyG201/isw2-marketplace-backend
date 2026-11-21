@@ -25,8 +25,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 
 import co.edu.unbosque.marketplace.publicacion.api.request.RechazarPublicacionRequest;
-import co.edu.unbosque.marketplace.publicacion.api.response.DecisionPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.RevisionAdministrativaService;
+import co.edu.unbosque.marketplace.publicacion.application.dto.DecisionPublicacionResponse;
 
 @ExtendWith(MockitoExtension.class)
 class PublicacionDecisionControllerTest {

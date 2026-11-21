@@ -31,6 +31,24 @@ public class Alojamiento {
     @Column(name = "capacidad", nullable = false)
     private int capacidad;
 
+    @Column(name = "habitaciones", nullable = false)
+    private int habitaciones = 1;
+
+    @Column(name = "camas", nullable = false)
+    private int camas = 1;
+
+    @Column(name = "banos", nullable = false)
+    private int banos = 1;
+
+    @Column(name = "propietario_inmueble", length = 120)
+    private String propietarioInmueble;
+
+    @Column(name = "pais", length = 120)
+    private String pais;
+
+    @Column(name = "codigo_pais", length = 2)
+    private String codigoPais;
+
     @Column(name = "fecha_creacion", nullable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -105,5 +123,48 @@ public class Alojamiento {
 		this.fechaCreacion = fechaCreacion;
 	}
 
-    
+    public int getHabitaciones() {
+        return habitaciones;
+    }
+
+    public void setHabitaciones(int habitaciones) {
+        this.habitaciones = habitaciones;
+    }
+
+    public int getCamas() {
+        return camas;
+    }
+
+    public void setCamas(int camas) {
+        this.camas = camas;
+    }
+
+    public int getBanos() {
+        return banos;
+    }
+
+    public void setBanos(int banos) {
+        this.banos = banos;
+    }
+
+    public String getPropietarioInmueble() {
+        return propietarioInmueble;
+    }
+
+    public void setPropietarioInmueble(String propietarioInmueble) {
+        this.propietarioInmueble = propietarioInmueble;
+    }
+
+    public void asignarPais(String nombre, String codigo) {
+        this.pais = nombre;
+        this.codigoPais = codigo;
+    }
+
+    public String getPais() {
+        return pais;
+    }
+
+    public String getCodigoPais() {
+        return codigoPais;
+    }
 }

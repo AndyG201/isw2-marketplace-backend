@@ -7,10 +7,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaAfectadaInfo;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaAfectadaQuery;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaRepository;
 
 @Service
 public class ReservaAfectadaQueryService
