@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.usuario.application.port.CorreoPendienteRepository;
 import co.edu.unbosque.marketplace.usuario.domain.CorreoPendiente;
 import co.edu.unbosque.marketplace.usuario.security.ProteccionDocumento;
@@ -29,7 +30,7 @@ public class CorreoOutboxService {
     @Transactional(propagation = Propagation.MANDATORY)
     public void encolarCodigoVerificacion(String correo, String codigo) {
         if (correo == null || correo.isBlank() || codigo == null || !codigo.matches("\\d{6}")) {
-            throw new IllegalArgumentException("Los datos del correo de verificación son inválidos.");
+            throw new DatosInvalidosException("Los datos del correo de verificación son inválidos.");
         }
         ProteccionDocumento.TextoCifrado cifrado = proteccion.cifrarTexto(codigo);
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);

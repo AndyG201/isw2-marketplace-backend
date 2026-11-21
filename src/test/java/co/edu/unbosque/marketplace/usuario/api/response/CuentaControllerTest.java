@@ -1,7 +1,10 @@
 package co.edu.unbosque.marketplace.usuario.api.response;
 
+import java.util.Map;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import java.util.UUID;
 import java.util.stream.Stream;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 
 import co.edu.unbosque.marketplace.usuario.api.CuentaController;
 import co.edu.unbosque.marketplace.usuario.api.request.ConfirmarCambioCorreoRequest;
@@ -22,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -69,11 +73,11 @@ class CuentaControllerTest {
     static Stream<Arguments> erroresDelServicio() {
         return Stream.of(
             Arguments.of(
-                new IllegalArgumentException("Datos inválidos."),
+                new DatosInvalidosException("Datos inválidos."),
                 HttpStatus.BAD_REQUEST
             ),
             Arguments.of(
-                new IllegalStateException("Operación no permitida."),
+                new ConflictoNegocioException("Operación no permitida."),
                 HttpStatus.CONFLICT
             )
         );
@@ -120,7 +124,7 @@ class CuentaControllerTest {
         when(usuarioService.consultarMiCuenta(idUsuario))
             .thenReturn(cuenta);
 
-        var response = controller.consultarMiCuenta(usuario);
+        var response = traducir(() -> controller.consultarMiCuenta(usuario));
 
         assertAll(
             () -> assertEquals(HttpStatus.OK, response.getStatusCode()),
@@ -140,7 +144,7 @@ class CuentaControllerTest {
         when(usuarioService.actualizarPerfil(idUsuario, solicitud))
             .thenReturn(resultado);
 
-        var response = controller.actualizarPerfil(usuario, solicitud);
+        var response = traducir(() -> controller.actualizarPerfil(usuario, solicitud));
 
         verificarRespuesta(response, HttpStatus.OK, resultado);
 
@@ -159,7 +163,7 @@ class CuentaControllerTest {
         when(usuarioService.actualizarPerfil(idUsuario, solicitud))
             .thenThrow(error);
 
-        var response = controller.actualizarPerfil(usuario, solicitud);
+        var response = traducir(() -> controller.actualizarPerfil(usuario, solicitud));
 
         verificarRespuesta(response, estadoEsperado, error.getMessage());
 
@@ -171,9 +175,9 @@ class CuentaControllerTest {
         configurarUsuario();
         ConfirmarCambioCorreoRequest solicitud = solicitudCorreo();
 
-        var response = controller.confirmarCambioCorreo(
+        var response = traducir(() -> controller.confirmarCambioCorreo(
             usuario, solicitud
-        );
+        ));
 
         verificarRespuesta(
             response,
@@ -199,9 +203,9 @@ class CuentaControllerTest {
             .when(usuarioService)
             .confirmarCambioCorreo(idUsuario, "123456");
 
-        var response = controller.confirmarCambioCorreo(
+        var response = traducir(() -> controller.confirmarCambioCorreo(
             usuario, solicitud
-        );
+        ));
 
         verificarRespuesta(response, estadoEsperado, error.getMessage());
 
@@ -215,9 +219,9 @@ class CuentaControllerTest {
         configurarUsuario();
         ActualizarContrasenaRequest solicitud = solicitudContrasena();
 
-        var response = controller.actualizarContrasena(
+        var response = traducir(() -> controller.actualizarContrasena(
             usuario, solicitud
-        );
+        ));
 
         verificarRespuesta(
             response,
@@ -231,18 +235,18 @@ class CuentaControllerTest {
     }
 
     @Test
-    void actualizarContrasenaRetorna400AnteIllegalArgumentException() {
+    void actualizarContrasenaRetorna400AnteDatosInvalidosException() {
         configurarUsuario();
         ActualizarContrasenaRequest solicitud = solicitudContrasena();
         String mensaje = "La contraseña actual es incorrecta.";
 
-        doThrow(new IllegalArgumentException(mensaje))
+        doThrow(new DatosInvalidosException(mensaje))
             .when(usuarioService)
             .actualizarContrasena(idUsuario, solicitud);
 
-        var response = controller.actualizarContrasena(
+        var response = traducir(() -> controller.actualizarContrasena(
             usuario, solicitud
-        );
+        ));
 
         verificarRespuesta(response, HttpStatus.BAD_REQUEST, mensaje);
 
@@ -255,7 +259,7 @@ class CuentaControllerTest {
     void desactivarCuentaRetornaOk() {
         configurarUsuario();
 
-        var response = controller.desactivarCuenta(usuario);
+        var response = traducir(() -> controller.desactivarCuenta(usuario));
 
         verificarRespuesta(
             response,
@@ -278,7 +282,7 @@ class CuentaControllerTest {
             .when(usuarioService)
             .desactivarCuenta(idUsuario);
 
-        var response = controller.desactivarCuenta(usuario);
+        var response = traducir(() -> controller.desactivarCuenta(usuario));
 
         verificarRespuesta(response, estadoEsperado, error.getMessage());
 
@@ -295,15 +299,19 @@ class CuentaControllerTest {
     }
 
     private void verificarRespuesta(
-            ResponseEntity<String> response,
+            ResponseEntity<?> response,
             HttpStatus estadoEsperado,
             String mensajeEsperado) {
+
+        Object cuerpoEsperado = estadoEsperado.isError()
+                ? Map.of("mensaje", mensajeEsperado)
+                : mensajeEsperado;
 
         assertAll(
             () -> assertEquals(
                 estadoEsperado, response.getStatusCode()
             ),
-            () -> assertEquals(mensajeEsperado, response.getBody())
+            () -> assertEquals(cuerpoEsperado, response.getBody())
         );
     }
 }

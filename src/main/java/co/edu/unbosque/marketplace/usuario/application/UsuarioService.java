@@ -11,6 +11,12 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.usuario.application.dto.ActualizarContrasenaRequest;
 import co.edu.unbosque.marketplace.usuario.application.dto.RegistrarUsuarioRequest;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
@@ -243,7 +249,7 @@ public class UsuarioService {
 			return HexFormat.of().formatHex(hash);
 
 		} catch (Exception e) {
-			throw new IllegalStateException("No se pudo generar el hash del código", e);
+			throw new FallaInternaException("No se pudo generar el hash del código", e);
 		}
 	}
 
@@ -321,14 +327,14 @@ public class UsuarioService {
 	public ConsultarCuentaResponse consultarMiCuenta(UUID idUsuario) {
 
 		if (idUsuario == null) {
-			throw new IllegalArgumentException("No se pudo identificar al usuario.");
+			throw new SesionRequeridaException("No se pudo identificar al usuario.");
 		}
 
 		Usuario usuario = usuarioRepository.findById(idUsuario)
-				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+				.orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));
 
 		if (usuario.getRol() == null) {
-			throw new IllegalStateException("El usuario no tiene un rol asignado.");
+			throw new ConflictoNegocioException("El usuario no tiene un rol asignado.");
 		}
 
 		String documento = documentoLegible(usuario);
@@ -356,11 +362,11 @@ public class UsuarioService {
 				|| solicitud.getApellido() == null || solicitud.getApellido().isBlank() || solicitud.getCorreo() == null
 				|| solicitud.getCorreo().isBlank()) {
 
-			throw new IllegalArgumentException("Debes proporcionar todos los datos del perfil.");
+			throw new DatosInvalidosException("Debes proporcionar todos los datos del perfil.");
 		}
 
 		Usuario usuario = usuarioRepository.findById(idUsuario)
-				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+				.orElseThrow(() -> new DatosInvalidosException("Usuario no encontrado."));
 
 		String nombre = solicitud.getNombre().trim();
 		String apellido = solicitud.getApellido().trim();
@@ -372,7 +378,7 @@ public class UsuarioService {
 
 			if (usuarioRepository.existsByCorreoIgnoreCaseAndIdUsuarioNot(correoNuevo, idUsuario)) {
 
-				throw new IllegalStateException("El correo electrónico ya está asociado a otra cuenta.");
+				throw new ConflictoNegocioException("El correo electrónico ya está asociado a otra cuenta.");
 			}
 
 			String codigo = String.format("%06d", random.nextInt(1_000_000));
@@ -394,7 +400,7 @@ public class UsuarioService {
 
 				eliminarDatosCambioCorreo(idUsuario);
 
-				throw new IllegalStateException("No se pudo enviar el código al nuevo correo.", e);
+				throw new ConflictoNegocioException("No se pudo enviar el código al nuevo correo.", e);
 			}
 		}
 
@@ -425,11 +431,11 @@ public class UsuarioService {
 
 		if (idUsuario == null || codigo == null || !codigo.matches("\\d{6}")) {
 
-			throw new IllegalArgumentException("Debes proporcionar un código válido de seis dígitos.");
+			throw new DatosInvalidosException("Debes proporcionar un código válido de seis dígitos.");
 		}
 
 		Usuario usuario = usuarioRepository.findById(idUsuario)
-				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+				.orElseThrow(() -> new DatosInvalidosException("Usuario no encontrado."));
 
 		String prefijo = "perfil:cambio-correo:" + idUsuario;
 
@@ -441,7 +447,7 @@ public class UsuarioService {
 
 			eliminarDatosCambioCorreo(idUsuario);
 
-			throw new IllegalStateException("El código ha expirado o no existe una solicitud pendiente.");
+			throw new ConflictoNegocioException("El código ha expirado o no existe una solicitud pendiente.");
 		}
 
 		String hashIngresado = calcularHashCodigo(codigo);
@@ -454,18 +460,18 @@ public class UsuarioService {
 
 				eliminarDatosCambioCorreo(idUsuario);
 
-				throw new IllegalStateException(
+				throw new ConflictoNegocioException(
 						"Superaste los cinco intentos. Solicita nuevamente el cambio de correo.");
 			}
 
-			throw new IllegalArgumentException("El código de verificación es incorrecto.");
+			throw new DatosInvalidosException("El código de verificación es incorrecto.");
 		}
 
 		if (usuarioRepository.existsByCorreoIgnoreCaseAndIdUsuarioNot(correoNuevo, idUsuario)) {
 
 			eliminarDatosCambioCorreo(idUsuario);
 
-			throw new IllegalStateException("El correo electrónico ya está asociado a otra cuenta.");
+			throw new ConflictoNegocioException("El correo electrónico ya está asociado a otra cuenta.");
 		}
 
 		usuario.setCorreo(correoNuevo);
@@ -491,15 +497,15 @@ public class UsuarioService {
 		if (idUsuario == null || solicitud == null || textoVacio(solicitud.getContrasenaActual())
 				|| textoVacio(solicitud.getNuevaContrasena())) {
 
-			throw new IllegalArgumentException("Debes proporcionar la contraseña actual y la nueva contraseña.");
+			throw new DatosInvalidosException("Debes proporcionar la contraseña actual y la nueva contraseña.");
 		}
 
 		Usuario usuario = usuarioRepository.findById(idUsuario)
-				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+				.orElseThrow(() -> new DatosInvalidosException("Usuario no encontrado."));
 
 		if (!proteccionContrasena.verificar(solicitud.getContrasenaActual(), usuario.getContrasenaHash())) {
 
-			throw new IllegalArgumentException("La contraseña actual es incorrecta.");
+			throw new DatosInvalidosException("La contraseña actual es incorrecta.");
 		}
 
 		usuario.setContrasenaHash(proteccionContrasena.generarHash(solicitud.getNuevaContrasena()));
@@ -513,25 +519,25 @@ public class UsuarioService {
 	public void desactivarCuenta(UUID idUsuario) {
 
 		if (idUsuario == null) {
-			throw new IllegalArgumentException("No se pudo identificar al usuario.");
+			throw new DatosInvalidosException("No se pudo identificar al usuario.");
 		}
 
 		Usuario usuario = usuarioRepository.findById(idUsuario)
-				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+				.orElseThrow(() -> new DatosInvalidosException("Usuario no encontrado."));
 
 		if (usuario.isRestringido()) {
-			throw new IllegalStateException("No puedes desactivar una cuenta con restricción administrativa.");
+			throw new ConflictoNegocioException("No puedes desactivar una cuenta con restricción administrativa.");
 		}
 
 		if (usuario.getIntentosFallidos() >= 5
 				|| "Bloqueo automático por intentos fallidos".equals(usuario.getMotivoBloqueo())) {
 
-			throw new IllegalStateException("No puedes desactivar una cuenta bloqueada por intentos fallidos.");
+			throw new ConflictoNegocioException("No puedes desactivar una cuenta bloqueada por intentos fallidos.");
 		}
 
 		if (usuario.getEstado() != EstadoUsuario.ACTIVA || !usuario.isCorreoVerificado()) {
 
-			throw new IllegalStateException("La cuenta no se encuentra activa.");
+			throw new ConflictoNegocioException("La cuenta no se encuentra activa.");
 		}
 
 		OffsetDateTime ahora = OffsetDateTime.now();
@@ -550,35 +556,35 @@ public class UsuarioService {
 
 		if (solicitud == null || textoVacio(solicitud.getCorreo()) || textoVacio(solicitud.getContrasena())) {
 
-			throw new IllegalArgumentException("Debes proporcionar el correo y la contraseña.");
+			throw new SesionRequeridaException("Debes proporcionar el correo y la contraseña.");
 		}
 
 		Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(solicitud.getCorreo().trim())
-				.orElseThrow(() -> new IllegalArgumentException("Correo o contraseña incorrectos."));
+				.orElseThrow(() -> new SesionRequeridaException("Correo o contraseña incorrectos."));
 
 		if (usuario.isRestringido()) {
-			throw new IllegalStateException(
+			throw new AccesoNoPermitidoException(
 					"Tu cuenta tiene una restricción administrativa. " + "Debes comunicarte con un Administrador.");
 		}
 
 		if (usuario.getIntentosFallidos() >= 5
 				|| "Bloqueo automático por intentos fallidos".equals(usuario.getMotivoBloqueo())) {
 
-			throw new IllegalStateException("Tu cuenta está bloqueada por intentos fallidos. "
+			throw new AccesoNoPermitidoException("Tu cuenta está bloqueada por intentos fallidos. "
 					+ "Debes solicitar su reactivación a un Administrador.");
 		}
 
 		if (usuario.getEstado() != EstadoUsuario.INACTIVA) {
-			throw new IllegalStateException("La cuenta no se encuentra desactivada.");
+			throw new AccesoNoPermitidoException("La cuenta no se encuentra desactivada.");
 		}
 
 		if (!usuario.isCorreoVerificado()) {
-			throw new IllegalStateException("Debes tener el correo verificado para reactivar tu cuenta.");
+			throw new AccesoNoPermitidoException("Debes tener el correo verificado para reactivar tu cuenta.");
 		}
 
 		if (!proteccionContrasena.verificar(solicitud.getContrasena(), usuario.getContrasenaHash())) {
 
-			throw new IllegalArgumentException("Correo o contraseña incorrectos.");
+			throw new SesionRequeridaException("Correo o contraseña incorrectos.");
 		}
 
 		usuario.setEstado(EstadoUsuario.ACTIVA);

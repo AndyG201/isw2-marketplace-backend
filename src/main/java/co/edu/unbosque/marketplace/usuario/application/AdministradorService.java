@@ -15,6 +15,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.usuario.application.dto.AdministradorUsuarioResponse;
@@ -60,26 +63,26 @@ public class AdministradorService {
 
 		if (idUsuario == null || solicitud == null || solicitud.tipoDocumento() == null
 				|| solicitud.documentoIdentidad() == null || solicitud.documentoIdentidad().isBlank()) {
-			throw new IllegalArgumentException("Debes proporcionar el tipo y el número de documento.");
+			throw new DatosInvalidosException("Debes proporcionar el tipo y el número de documento.");
 		}
 
 		String tipo = solicitud.tipoDocumento().trim().toUpperCase(Locale.ROOT);
 		if (Arrays.stream(TIPOS_DOCUMENTO).noneMatch(tipo::equals)) {
-			throw new IllegalArgumentException("El tipo de documento debe ser CC, CE, TI o PASAPORTE.");
+			throw new DatosInvalidosException("El tipo de documento debe ser CC, CE, TI o PASAPORTE.");
 		}
 
 		Usuario usuario = usuarioRepository.findById(idUsuario)
-				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+				.orElseThrow(() -> new DatosInvalidosException("Usuario no encontrado."));
 
 		ProteccionDocumento.DatosDocumento datos = proteccionDocumento
 				.protegerDocumento(tipo, solicitud.documentoIdentidad());
 
 		if (Arrays.equals(datos.documentoHash(), usuario.getDocumentoHash())) {
-			throw new IllegalStateException("La cuenta ya tiene registrado ese documento.");
+			throw new ConflictoNegocioException("La cuenta ya tiene registrado ese documento.");
 		}
 
 		if (usuarioRepository.existsByDocumentoHash(datos.documentoHash())) {
-			throw new IllegalStateException("Ya existe otra cuenta con ese documento.");
+			throw new ConflictoNegocioException("Ya existe otra cuenta con ese documento.");
 		}
 
 		String tipoAnterior = usuario.getTipoDocumento();
@@ -101,16 +104,16 @@ public class AdministradorService {
 	public void reactivarBloqueo(String correo) {
 
 		if (correo == null || correo.isBlank()) {
-			throw new IllegalArgumentException("Debes proporcionar el correo del usuario.");
+			throw new RecursoNoEncontradoException("Debes proporcionar el correo del usuario.");
 		}
 
 		Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(correo.trim())
-				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+				.orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));
 
 		if (usuario.getIntentosFallidos() < 5
 				|| !"Bloqueo automático por intentos fallidos".equals(usuario.getMotivoBloqueo())) {
 
-			throw new IllegalStateException("La cuenta no tiene un bloqueo automático pendiente de reactivación.");
+			throw new ConflictoNegocioException("La cuenta no tiene un bloqueo automático pendiente de reactivación.");
 		}
 
 		usuario.setIntentosFallidos(0);
@@ -127,14 +130,14 @@ public class AdministradorService {
 		if (idUsuario == null || solicitud == null || solicitud.getMotivo() == null || solicitud.getMotivo().isBlank()
 				|| solicitud.getMotivo().trim().length() > 255) {
 
-			throw new IllegalArgumentException("Debes proporcionar un motivo válido para la restricción.");
+			throw new DatosInvalidosException("Debes proporcionar un motivo válido para la restricción.");
 		}
 
 		Usuario usuario = usuarioRepository.findById(idUsuario)
-				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+				.orElseThrow(() -> new DatosInvalidosException("Usuario no encontrado."));
 
 		if (usuario.isRestringido()) {
-			throw new IllegalStateException("La cuenta ya tiene una restricción administrativa.");
+			throw new ConflictoNegocioException("La cuenta ya tiene una restricción administrativa.");
 		}
 
 		OffsetDateTime ahora = OffsetDateTime.now();
@@ -155,14 +158,14 @@ public class AdministradorService {
 	public void levantarRestriccion(UUID idUsuario) {
 
 		if (idUsuario == null) {
-			throw new IllegalArgumentException("Debes proporcionar el identificador del usuario.");
+			throw new DatosInvalidosException("Debes proporcionar el identificador del usuario.");
 		}
 
 		Usuario usuario = usuarioRepository.findById(idUsuario)
-				.orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+				.orElseThrow(() -> new DatosInvalidosException("Usuario no encontrado."));
 
 		if (!usuario.isRestringido()) {
-			throw new IllegalStateException("La cuenta no tiene una restricción administrativa vigente.");
+			throw new ConflictoNegocioException("La cuenta no tiene una restricción administrativa vigente.");
 		}
 
 		usuario.setRestringido(false);

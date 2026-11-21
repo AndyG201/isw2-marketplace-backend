@@ -83,22 +83,14 @@ public class VerficacionCorreoController {
                     .body("Debes proporcionar el correo y el código.");
         }
 
-        try {
+        verificacionCorreoService.confirmarCodigo(
+                correo,
+                codigo
+        );
 
-            verificacionCorreoService.confirmarCodigo(
-                    correo,
-                    codigo
-            );
-
-            return ResponseEntity.ok(
-                    "Correo verificado correctamente."
-            );
-
-        } catch (IllegalArgumentException | IllegalStateException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok(
+                "Correo verificado correctamente."
+        );
     }
 
     @Operation(
@@ -139,18 +131,10 @@ public class VerficacionCorreoController {
                     .body("Debes proporcionar un correo.");
         }
 
-        try {
+        verificacionCorreoService.reenviarCodigo(correo);
 
-            verificacionCorreoService.reenviarCodigo(correo);
-
-            return ResponseEntity.ok(
-                    "Se envió un nuevo código al correo electrónico."
-            );
-
-        } catch (IllegalArgumentException | IllegalStateException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok(
+                "Se envió un nuevo código al correo electrónico."
+        );
     }
 }

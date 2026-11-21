@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 
@@ -47,7 +48,7 @@ class CuentasSinVerificarServiceTest {
     @ParameterizedTest
     @ValueSource(longs = {0, -1})
     void rechazaHorasLimiteQueNoSeanPositivas(long horas) {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(DatosInvalidosException.class,
                 () -> new CuentasSinVerificarService(usuarioRepository, horas));
         verifyNoInteractions(usuarioRepository);
     }

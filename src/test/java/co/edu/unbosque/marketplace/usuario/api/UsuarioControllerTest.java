@@ -5,6 +5,9 @@ import co.edu.unbosque.marketplace.usuario.application.dto.ReactivarCuentaReques
 import co.edu.unbosque.marketplace.usuario.api.response.AutenticacionResponse;
 import co.edu.unbosque.marketplace.usuario.application.AutenticacionService;
 import co.edu.unbosque.marketplace.usuario.application.UsuarioService;
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
+import static co.edu.unbosque.marketplace.config.TraductorDeErroresPrueba.traducir;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -63,7 +67,7 @@ class UsuarioControllerTest {
 
         when(usuarioService.registrar(solicitud)).thenReturn(1);
 
-        var response = controller.registrar(solicitud);
+        var response = traducir(() -> controller.registrar(solicitud));
 
         assertAll(
             () -> assertEquals(
@@ -85,7 +89,7 @@ class UsuarioControllerTest {
 
         when(usuarioService.registrar(solicitud)).thenReturn(resultado);
 
-        var response = controller.registrar(solicitud);
+        var response = traducir(() -> controller.registrar(solicitud));
 
         assertAll(
             () -> assertEquals(
@@ -108,7 +112,7 @@ class UsuarioControllerTest {
         when(autenticacionService.iniciarSesion(solicitud))
             .thenReturn(token);
 
-        var response = controller.iniciarSesion(solicitud);
+        var response = traducir(() -> controller.iniciarSesion(solicitud));
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody() instanceof AutenticacionResponse);
@@ -125,40 +129,40 @@ class UsuarioControllerTest {
     }
 
     @Test
-    void iniciarSesionRetorna401AnteIllegalArgumentException() {
+    void iniciarSesionRetorna401AnteSesionRequeridaException() {
         AutenticacionRequest solicitud = solicitudLogin();
         String mensaje = "Credenciales incorrectas.";
 
         when(autenticacionService.iniciarSesion(solicitud))
-            .thenThrow(new IllegalArgumentException(mensaje));
+            .thenThrow(new SesionRequeridaException(mensaje));
 
-        var response = controller.iniciarSesion(solicitud);
+        var response = traducir(() -> controller.iniciarSesion(solicitud));
 
         assertAll(
             () -> assertEquals(
                 HttpStatus.UNAUTHORIZED, response.getStatusCode()
             ),
-            () -> assertEquals(mensaje, response.getBody())
+            () -> assertEquals(Map.of("mensaje", mensaje), response.getBody())
         );
 
         verify(autenticacionService).iniciarSesion(solicitud);
     }
 
     @Test
-    void iniciarSesionRetorna403AnteIllegalStateException() {
+    void iniciarSesionRetorna403AnteAccesoNoPermitidoException() {
         AutenticacionRequest solicitud = solicitudLogin();
         String mensaje = "La cuenta no tiene permitido iniciar sesión.";
 
         when(autenticacionService.iniciarSesion(solicitud))
-            .thenThrow(new IllegalStateException(mensaje));
+            .thenThrow(new AccesoNoPermitidoException(mensaje));
 
-        var response = controller.iniciarSesion(solicitud);
+        var response = traducir(() -> controller.iniciarSesion(solicitud));
 
         assertAll(
             () -> assertEquals(
                 HttpStatus.FORBIDDEN, response.getStatusCode()
             ),
-            () -> assertEquals(mensaje, response.getBody())
+            () -> assertEquals(Map.of("mensaje", mensaje), response.getBody())
         );
 
         verify(autenticacionService).iniciarSesion(solicitud);
@@ -168,7 +172,7 @@ class UsuarioControllerTest {
     void reactivarCuentaRetornaOk() {
         ReactivarCuentaRequest solicitud = solicitudReactivacion();
 
-        var response = controller.reactivarCuenta(solicitud);
+        var response = traducir(() -> controller.reactivarCuenta(solicitud));
 
         assertAll(
             () -> assertEquals(HttpStatus.OK, response.getStatusCode()),
@@ -183,40 +187,40 @@ class UsuarioControllerTest {
     }
 
     @Test
-    void reactivarCuentaRetorna401AnteIllegalArgumentException() {
+    void reactivarCuentaRetorna401AnteSesionRequeridaException() {
         ReactivarCuentaRequest solicitud = solicitudReactivacion();
         String mensaje = "Credenciales incorrectas.";
 
-        doThrow(new IllegalArgumentException(mensaje))
+        doThrow(new SesionRequeridaException(mensaje))
             .when(usuarioService).reactivarCuenta(solicitud);
 
-        var response = controller.reactivarCuenta(solicitud);
+        var response = traducir(() -> controller.reactivarCuenta(solicitud));
 
         assertAll(
             () -> assertEquals(
                 HttpStatus.UNAUTHORIZED, response.getStatusCode()
             ),
-            () -> assertEquals(mensaje, response.getBody())
+            () -> assertEquals(Map.of("mensaje", mensaje), response.getBody())
         );
 
         verify(usuarioService).reactivarCuenta(solicitud);
     }
 
     @Test
-    void reactivarCuentaRetorna403AnteIllegalStateException() {
+    void reactivarCuentaRetorna403AnteAccesoNoPermitidoException() {
         ReactivarCuentaRequest solicitud = solicitudReactivacion();
         String mensaje = "La cuenta no puede reactivarse.";
 
-        doThrow(new IllegalStateException(mensaje))
+        doThrow(new AccesoNoPermitidoException(mensaje))
             .when(usuarioService).reactivarCuenta(solicitud);
 
-        var response = controller.reactivarCuenta(solicitud);
+        var response = traducir(() -> controller.reactivarCuenta(solicitud));
 
         assertAll(
             () -> assertEquals(
                 HttpStatus.FORBIDDEN, response.getStatusCode()
             ),
-            () -> assertEquals(mensaje, response.getBody())
+            () -> assertEquals(Map.of("mensaje", mensaje), response.getBody())
         );
 
         verify(usuarioService).reactivarCuenta(solicitud);
