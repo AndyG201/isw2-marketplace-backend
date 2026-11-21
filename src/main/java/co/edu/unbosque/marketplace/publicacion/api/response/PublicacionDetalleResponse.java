@@ -31,6 +31,8 @@ public class PublicacionDetalleResponse {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String propietarioInmueble;
+    private String pais;
+    private String codigoPais;
 
     private List<ServicioPublicacionResponse> servicios;
     private List<ImagenPublicacionResponse> imagenes;
@@ -113,4 +115,13 @@ public class PublicacionDetalleResponse {
     }
 
     public String getPropietarioInmueble() { return propietarioInmueble; }
+
+    public PublicacionDetalleResponse conUbicacionPais(String nombrePais, String codigo) {
+        this.pais = nombrePais;
+        this.codigoPais = codigo;
+        return this;
+    }
+
+    public String getPais() { return pais; }
+    public String getCodigoPais() { return codigoPais; }
 }

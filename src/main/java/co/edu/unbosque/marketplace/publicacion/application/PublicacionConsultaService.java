@@ -153,7 +153,8 @@ public class PublicacionConsultaService {
                                 "No se encontró el alojamiento asociado."));
 
         return armarDetalle(publicacion, alojamiento)
-                .conPropietario(alojamiento.propietarioInmueble());
+                .conPropietario(alojamiento.propietarioInmueble())
+                .conUbicacionPais(alojamiento.pais(), alojamiento.codigoPais());
     }
 
     PublicacionDetalleResponse armarDetalle(
