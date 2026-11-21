@@ -10,9 +10,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import co.edu.unbosque.marketplace.cotizacion.application.port.CotizacionRepository;
 import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaInfo;
 import co.edu.unbosque.marketplace.cotizacion.domain.Cotizacion;
-import co.edu.unbosque.marketplace.cotizacion.infrastructure.persistence.CotizacionRepository;
 
 class CotizacionReservaQueryServiceTest {
 

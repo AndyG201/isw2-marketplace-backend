@@ -14,10 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
-import co.edu.unbosque.marketplace.publicacion.api.request.CrearPublicacionRequest;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAlojamientoResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionAlojamientoService;
-
+import co.edu.unbosque.marketplace.publicacion.application.dto.CrearPublicacionRequest;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAlojamientoResponse;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 

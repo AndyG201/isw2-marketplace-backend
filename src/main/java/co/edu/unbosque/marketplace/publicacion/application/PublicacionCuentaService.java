@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 
 @Service
 public class PublicacionCuentaService {

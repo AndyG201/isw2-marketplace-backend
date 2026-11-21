@@ -14,27 +14,27 @@ import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.PlazoVencidoException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
+import co.edu.unbosque.marketplace.pago.application.port.PagoRepository;
 import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
 import co.edu.unbosque.marketplace.pago.domain.Pago;
-import co.edu.unbosque.marketplace.pago.infrastructure.persistence.PagoRepository;
-import co.edu.unbosque.marketplace.reserva.api.response.ConfirmacionReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.dto.ConfirmacionReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.NocheReservaJdbcRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaConfirmacionDatos;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaConfirmacionRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 
 @Service
 public class ReservaConfirmacionService {
     private static final String PENDIENTE_PAGO = "PENDIENTE_PAGO";
     private final ReservaConfirmacionRepository reservas;
     private final PagoRepository pagos;
-    private final NocheReservaJdbcRepository noches;
+    private final NocheReservaRepository noches;
     private final PagoSandboxGateway pasarela;
     private final JdbcTemplate jdbc;
 
     public ReservaConfirmacionService(ReservaConfirmacionRepository reservas, PagoRepository pagos,
-            NocheReservaJdbcRepository noches, PagoSandboxGateway pasarela, JdbcTemplate jdbc) {
+            NocheReservaRepository noches, PagoSandboxGateway pasarela, JdbcTemplate jdbc) {
         this.reservas = reservas;
         this.pagos = pagos;
         this.noches = noches;

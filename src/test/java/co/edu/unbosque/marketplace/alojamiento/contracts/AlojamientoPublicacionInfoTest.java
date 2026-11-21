@@ -6,8 +6,6 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
-import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
-
 class AlojamientoPublicacionInfoTest {
 
     @Test

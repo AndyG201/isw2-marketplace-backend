@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaRepository;
 
 @Service
 public class ReservaCompletadaService {

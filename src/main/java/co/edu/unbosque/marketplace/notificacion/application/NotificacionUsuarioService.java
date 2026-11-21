@@ -5,10 +5,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.notificacion.contracts.CrearNotificacionUsuario;
 import co.edu.unbosque.marketplace.notificacion.contracts.NotificacionUsuarioCommand;
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
-import co.edu.unbosque.marketplace.notificacion.infrastructure.persistence.NotificacionRepository;
 
 @Service
 public class NotificacionUsuarioService implements NotificacionUsuarioCommand {

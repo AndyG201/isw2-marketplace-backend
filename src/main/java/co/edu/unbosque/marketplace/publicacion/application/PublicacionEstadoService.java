@@ -14,9 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.response.EstadoPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.EstadoPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 

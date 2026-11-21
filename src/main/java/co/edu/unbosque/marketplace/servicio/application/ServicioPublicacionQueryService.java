@@ -7,10 +7,10 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import co.edu.unbosque.marketplace.servicio.application.port.ServicioRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 import co.edu.unbosque.marketplace.servicio.domain.Servicio;
-import co.edu.unbosque.marketplace.servicio.infrastructure.persistence.ServicioRepository;
 
 @Service
 public class ServicioPublicacionQueryService

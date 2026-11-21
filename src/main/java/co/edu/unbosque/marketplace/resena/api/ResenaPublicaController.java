@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.resena.api.response.ResenasPublicacionResponse;
 import co.edu.unbosque.marketplace.resena.application.ResenaPublicaQueryService;
+import co.edu.unbosque.marketplace.resena.application.dto.ResenasPublicacionResponse;
 
 @RestController
 @RequestMapping("/publicaciones")

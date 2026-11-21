@@ -18,13 +18,13 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.unbosque.marketplace.cotizacion.api.request.CrearCotizacionRequest;
-import co.edu.unbosque.marketplace.cotizacion.api.response.CotizacionAdicionalResponse;
-import co.edu.unbosque.marketplace.cotizacion.api.response.CotizacionResponse;
+import co.edu.unbosque.marketplace.cotizacion.application.dto.CrearCotizacionRequest;
+import co.edu.unbosque.marketplace.cotizacion.application.dto.CotizacionAdicionalResponse;
+import co.edu.unbosque.marketplace.cotizacion.application.dto.CotizacionResponse;
 import co.edu.unbosque.marketplace.cotizacion.domain.Cotizacion;
 import co.edu.unbosque.marketplace.cotizacion.domain.CotizacionAdicional;
-import co.edu.unbosque.marketplace.cotizacion.infrastructure.persistence.CotizacionAdicionalRepository;
-import co.edu.unbosque.marketplace.cotizacion.infrastructure.persistence.CotizacionRepository;
+import co.edu.unbosque.marketplace.cotizacion.application.port.CotizacionAdicionalRepository;
+import co.edu.unbosque.marketplace.cotizacion.application.port.CotizacionRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalQuery;
 import co.edu.unbosque.marketplace.tarifa.contracts.ConfiguracionTarifaInfo;

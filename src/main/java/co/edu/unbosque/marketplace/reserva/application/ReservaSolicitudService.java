@@ -18,12 +18,12 @@ import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
-import co.edu.unbosque.marketplace.reserva.api.request.CrearReservaRequest;
-import co.edu.unbosque.marketplace.reserva.api.response.SolicitudReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.dto.CrearReservaRequest;
+import co.edu.unbosque.marketplace.reserva.application.dto.SolicitudReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudDatos;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudRepository;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaSolicitadaEvent;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaSolicitudDatos;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaSolicitudRepository;
 
 @Service
 public class ReservaSolicitudService {

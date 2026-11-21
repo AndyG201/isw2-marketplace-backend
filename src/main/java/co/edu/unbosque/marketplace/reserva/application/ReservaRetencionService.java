@@ -13,15 +13,15 @@ import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaReservaCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoReserva;
 import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaRetencionRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudDatos;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudRepository;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaRetencionVencidaEvent;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaRetenidaEvent;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaSolicitadaEvent;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.NocheReservaJdbcRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaRetencionRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaSolicitudDatos;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaSolicitudRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 
 @Service
 public class ReservaRetencionService {
@@ -32,12 +32,12 @@ public class ReservaRetencionService {
     private final ReservaRepository reservas;
     private final ReservaRetencionRepository retenciones;
     private final ReservaSolicitudRepository solicitudes;
-    private final NocheReservaJdbcRepository noches;
+    private final NocheReservaRepository noches;
     private final AuditoriaReservaCommand auditoria;
     private final ApplicationEventPublisher eventPublisher;
 
     public ReservaRetencionService(ReservaRepository reservas, ReservaRetencionRepository retenciones,
-            ReservaSolicitudRepository solicitudes, NocheReservaJdbcRepository noches,
+            ReservaSolicitudRepository solicitudes, NocheReservaRepository noches,
             AuditoriaReservaCommand auditoria, ApplicationEventPublisher eventPublisher) {
         this.reservas = reservas;
         this.retenciones = retenciones;

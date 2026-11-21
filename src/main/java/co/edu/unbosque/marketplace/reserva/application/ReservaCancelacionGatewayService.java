@@ -8,18 +8,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaCancelacionGateway;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaCancelacionInfo;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.NocheReservaJdbcRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaCancelacionJdbcRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaCancelacionRepository;
 
 @Service
 public class ReservaCancelacionGatewayService implements ReservaCancelacionGateway {
 
-    private final ReservaCancelacionJdbcRepository reservas;
-    private final NocheReservaJdbcRepository noches;
+    private final ReservaCancelacionRepository reservas;
+    private final NocheReservaRepository noches;
 
     public ReservaCancelacionGatewayService(
-            ReservaCancelacionJdbcRepository reservas,
-            NocheReservaJdbcRepository noches) {
+            ReservaCancelacionRepository reservas,
+            NocheReservaRepository noches) {
         this.reservas = reservas;
         this.noches = noches;
     }

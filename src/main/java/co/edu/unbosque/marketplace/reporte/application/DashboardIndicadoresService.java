@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.unbosque.marketplace.reporte.api.response.DashboardIndicadoresResponse;
-import co.edu.unbosque.marketplace.reporte.infrastructure.persistence.DashboardIndicadoresRepository;
+import co.edu.unbosque.marketplace.reporte.application.dto.DashboardIndicadoresResponse;
+import co.edu.unbosque.marketplace.reporte.application.port.DashboardIndicadoresRepository;
 
 @Service
 public class DashboardIndicadoresService {

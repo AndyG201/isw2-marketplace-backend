@@ -13,9 +13,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
+import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
 
 class ResumenesPublicacionTest {
 

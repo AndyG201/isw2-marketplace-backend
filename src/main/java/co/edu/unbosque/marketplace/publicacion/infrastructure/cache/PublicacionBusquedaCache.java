@@ -14,9 +14,8 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import co.edu.unbosque.marketplace.publicacion.api.response.PaginaPublicacionesResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PaginaPublicacionesResponse;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionBusquedaCriteria;
-
 
 @Component
 public class PublicacionBusquedaCache {

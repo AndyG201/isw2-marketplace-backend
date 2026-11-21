@@ -8,10 +8,10 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import co.edu.unbosque.marketplace.alojamiento.application.port.AlojamientoRepository;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.alojamiento.domain.Alojamiento;
-import co.edu.unbosque.marketplace.alojamiento.infrastructure.persistence.AlojamientoRepository;
 
 @Service
 public class AlojamientoPublicacionQueryService implements AlojamientoPublicacionQuery {

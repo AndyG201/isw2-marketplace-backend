@@ -8,13 +8,13 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
-import co.edu.unbosque.marketplace.auditoria.api.response.EventoAuditoriaResponse;
-import co.edu.unbosque.marketplace.auditoria.api.response.PaginaAuditoriaResponse;
+import co.edu.unbosque.marketplace.auditoria.application.dto.EventoAuditoriaResponse;
+import co.edu.unbosque.marketplace.auditoria.application.dto.PaginaAuditoriaResponse;
 import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
 import co.edu.unbosque.marketplace.auditoria.domain.FiltrosAuditoria;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.AuditoriaConsultaJdbcRepository;
+import co.edu.unbosque.marketplace.auditoria.application.port.AuditoriaConsultaRepository;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.ServicioNoDisponibleException;
@@ -24,11 +24,11 @@ public class AuditoriaConsultaService {
 
     private static final int TAMANO_MAXIMO = 100;
 
-    private final AuditoriaConsultaJdbcRepository repository;
+    private final AuditoriaConsultaRepository repository;
     private final ObjectProvider<AlmacenamientoInmutableAuditoria> backblazeProvider;
 
     public AuditoriaConsultaService(
-            AuditoriaConsultaJdbcRepository repository,
+            AuditoriaConsultaRepository repository,
             ObjectProvider<AlmacenamientoInmutableAuditoria> backblazeProvider) {
 
         this.repository = repository;

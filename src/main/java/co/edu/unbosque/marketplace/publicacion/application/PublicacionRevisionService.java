@@ -17,13 +17,13 @@ import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQ
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaPublicacionCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoPublicacion;
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.response.EnviarRevisionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.EnviarRevisionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.ImagenPublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionServicioRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioPublicacionQuery;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;

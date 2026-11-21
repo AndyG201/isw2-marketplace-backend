@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 
-import co.edu.unbosque.marketplace.usuario.api.request.ActualizarContrasenaRequest;
-import co.edu.unbosque.marketplace.usuario.api.request.ActualizarPerfilRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.ConfirmarCambioCorreoRequest;
-import co.edu.unbosque.marketplace.usuario.api.response.ConsultarCuentaResponse;
 import co.edu.unbosque.marketplace.usuario.application.UsuarioService;
+import co.edu.unbosque.marketplace.usuario.application.dto.ActualizarContrasenaRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.ActualizarPerfilRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.ConsultarCuentaResponse;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
 import io.swagger.v3.oas.annotations.Operation;

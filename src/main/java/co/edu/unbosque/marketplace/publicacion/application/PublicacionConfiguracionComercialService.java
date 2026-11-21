@@ -15,12 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionInfo;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.publicacion.api.request.ConfigurarConfiguracionComercialRequest;
-import co.edu.unbosque.marketplace.publicacion.api.request.ServicioAdicionalRequest;
-import co.edu.unbosque.marketplace.publicacion.api.response.ConfiguracionComercialPublicacionResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.ServicioAdicionalPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ConfiguracionComercialPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ConfigurarConfiguracionComercialRequest;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ServicioAdicionalPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ServicioAdicionalRequest;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalCommand;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalData;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalInfo;

@@ -10,11 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
-import co.edu.unbosque.marketplace.disponibilidad.api.request.PeriodoDisponibilidadRequest;
-import co.edu.unbosque.marketplace.disponibilidad.api.response.PeriodoDisponibilidadResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadRequest;
+import co.edu.unbosque.marketplace.disponibilidad.application.dto.PeriodoDisponibilidadResponse;
+import co.edu.unbosque.marketplace.disponibilidad.application.port.NocheReservadaRepository;
+import co.edu.unbosque.marketplace.disponibilidad.application.port.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplace.disponibilidad.domain.PeriodoDisponibilidad;
-import co.edu.unbosque.marketplace.disponibilidad.infrastructure.persistence.NocheReservadaRepository;
-import co.edu.unbosque.marketplace.disponibilidad.infrastructure.persistence.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 

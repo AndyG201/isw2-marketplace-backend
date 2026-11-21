@@ -5,7 +5,7 @@ import java.time.ZoneOffset;
 
 import org.springframework.stereotype.Component;
 
-import co.edu.unbosque.marketplace.pago.infrastructure.persistence.OperacionPendienteRepository;
+import co.edu.unbosque.marketplace.pago.application.port.OperacionPendienteRepository;
 
 @Component
 public class ReservaPagoConciliacionWorker {

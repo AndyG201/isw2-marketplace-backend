@@ -10,10 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
-import co.edu.unbosque.marketplace.resena.api.response.ResenaPublicacionItemResponse;
-import co.edu.unbosque.marketplace.resena.api.response.ResenasPublicacionResponse;
+import co.edu.unbosque.marketplace.resena.application.dto.ResenaPublicacionItemResponse;
+import co.edu.unbosque.marketplace.resena.application.dto.ResenasPublicacionResponse;
 import co.edu.unbosque.marketplace.resena.domain.Resena;
-import co.edu.unbosque.marketplace.resena.infrastructure.persistence.ResenaPublicaQueryRepository;
+import co.edu.unbosque.marketplace.resena.application.port.ResenaPublicaQueryRepository;
 
 @Service
 public class ResenaPublicaQueryService {

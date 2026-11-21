@@ -17,9 +17,9 @@ import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
-import co.edu.unbosque.marketplace.resena.api.response.OcultarResenaResponse;
+import co.edu.unbosque.marketplace.resena.application.dto.OcultarResenaResponse;
+import co.edu.unbosque.marketplace.resena.application.port.ResenaModeracionRepository;
 import co.edu.unbosque.marketplace.resena.domain.Resena;
-import co.edu.unbosque.marketplace.resena.infrastructure.persistence.ResenaModeracionRepository;
 
 @Service
 public class ResenaModeracionService {

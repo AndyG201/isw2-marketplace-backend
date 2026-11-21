@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.resena.api.request.CrearResenaRequest;
-import co.edu.unbosque.marketplace.resena.api.response.CrearResenaResponse;
 import co.edu.unbosque.marketplace.resena.application.ResenaService;
+import co.edu.unbosque.marketplace.resena.application.dto.CrearResenaRequest;
+import co.edu.unbosque.marketplace.resena.application.dto.CrearResenaResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController

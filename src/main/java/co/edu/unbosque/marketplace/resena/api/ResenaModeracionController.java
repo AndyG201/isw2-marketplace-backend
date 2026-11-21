@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.resena.api.request.OcultarResenaRequest;
-import co.edu.unbosque.marketplace.resena.api.response.OcultarResenaResponse;
 import co.edu.unbosque.marketplace.resena.application.ResenaModeracionService;
+import co.edu.unbosque.marketplace.resena.application.dto.OcultarResenaResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController

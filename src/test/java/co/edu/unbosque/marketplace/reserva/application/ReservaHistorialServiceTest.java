@@ -17,10 +17,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaHistorialDatos;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaHistorialDatos;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaHistorialRepository;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaHistorialRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ReservaHistorialServiceTest {

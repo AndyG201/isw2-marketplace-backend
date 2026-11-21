@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 
 import co.edu.unbosque.marketplace.publicacion.api.request.RechazarPublicacionRequest;
-import co.edu.unbosque.marketplace.publicacion.api.response.DecisionPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.RevisionAdministrativaService;
+import co.edu.unbosque.marketplace.publicacion.application.dto.DecisionPublicacionResponse;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 

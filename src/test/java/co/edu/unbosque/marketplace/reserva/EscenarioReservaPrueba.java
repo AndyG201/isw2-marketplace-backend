@@ -178,6 +178,7 @@ public final class EscenarioReservaPrueba {
         jdbc.update("DELETE FROM notificacion WHERE id_usuario IN (?, ?, ?)", usuariosPrueba);
         for (UUID idReserva : reservas) {
             jdbc.update("DELETE FROM notificacion WHERE id_reserva = ?", idReserva);
+            jdbc.update("DELETE FROM resena WHERE id_reserva = ?", idReserva);
             jdbc.update("DELETE FROM cancelacion WHERE id_reserva = ?", idReserva);
             jdbc.update("DELETE FROM operacion_pendiente WHERE id_reserva = ?", idReserva);
             jdbc.update("DELETE FROM pago WHERE id_reserva = ?", idReserva);

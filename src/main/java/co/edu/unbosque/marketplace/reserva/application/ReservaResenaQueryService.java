@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaResenaInfo;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaResenaQuery;
-import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaResenaQueryRepository;
+import co.edu.unbosque.marketplace.reserva.application.port.ReservaResenaQueryRepository;
 
 @Service
 public class ReservaResenaQueryService implements ReservaResenaQuery {

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAuditoria;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.AuditoriaIndiceJdbcRepository;
+import co.edu.unbosque.marketplace.auditoria.application.port.AuditoriaIndiceRepository;
 
 /**
  * Coordina el almacenamiento de eventos de auditoría.
@@ -22,11 +22,11 @@ import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.Auditori
 public class AlmacenAuditoriaInmutableJdbc {
 
     private final AlmacenamientoInmutableAuditoria almacenamiento;
-    private final AuditoriaIndiceJdbcRepository indiceRepository;
+    private final AuditoriaIndiceRepository indiceRepository;
 
     public AlmacenAuditoriaInmutableJdbc(
             AlmacenamientoInmutableAuditoria almacenamiento,
-            AuditoriaIndiceJdbcRepository indiceRepository) {
+            AuditoriaIndiceRepository indiceRepository) {
 
         this.almacenamiento = almacenamiento;
         this.indiceRepository = indiceRepository;

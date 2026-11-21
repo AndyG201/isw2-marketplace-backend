@@ -11,11 +11,11 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import co.edu.unbosque.marketplace.ubicacion.application.port.CiudadRepository;
+import co.edu.unbosque.marketplace.ubicacion.application.port.PaisRepository;
 import co.edu.unbosque.marketplace.ubicacion.contracts.CiudadUbicacionInfo;
 import co.edu.unbosque.marketplace.ubicacion.domain.Ciudad;
 import co.edu.unbosque.marketplace.ubicacion.domain.Pais;
-import co.edu.unbosque.marketplace.ubicacion.infrastructure.persistence.CiudadRepository;
-import co.edu.unbosque.marketplace.ubicacion.infrastructure.persistence.PaisRepository;
 
 class UbicacionServiceTest {
 

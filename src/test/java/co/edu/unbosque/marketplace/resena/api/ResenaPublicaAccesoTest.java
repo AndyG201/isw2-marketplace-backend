@@ -21,9 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.config.PasswordConfig;
-import co.edu.unbosque.marketplace.resena.api.response.ResenasPublicacionResponse;
 import co.edu.unbosque.marketplace.resena.application.ResenaPublicaQueryService;
 import co.edu.unbosque.marketplace.resena.application.ResenaService;
+import co.edu.unbosque.marketplace.resena.application.dto.ResenasPublicacionResponse;
 import co.edu.unbosque.marketplace.usuario.security.JwtAuthenticationFilter;
 import co.edu.unbosque.marketplace.usuario.security.JwtUtil;
 import co.edu.unbosque.marketplace.usuario.security.SecurityConfig;

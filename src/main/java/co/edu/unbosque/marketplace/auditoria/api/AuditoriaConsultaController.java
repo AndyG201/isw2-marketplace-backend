@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.auditoria.api.response.EventoAuditoriaResponse;
-import co.edu.unbosque.marketplace.auditoria.api.response.PaginaAuditoriaResponse;
 import co.edu.unbosque.marketplace.auditoria.application.AuditoriaConsultaService;
+import co.edu.unbosque.marketplace.auditoria.application.dto.EventoAuditoriaResponse;
+import co.edu.unbosque.marketplace.auditoria.application.dto.PaginaAuditoriaResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController

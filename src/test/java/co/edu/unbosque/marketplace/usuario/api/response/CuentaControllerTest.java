@@ -4,10 +4,11 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import co.edu.unbosque.marketplace.usuario.api.CuentaController;
-import co.edu.unbosque.marketplace.usuario.api.request.ActualizarContrasenaRequest;
-import co.edu.unbosque.marketplace.usuario.api.request.ActualizarPerfilRequest;
 import co.edu.unbosque.marketplace.usuario.api.request.ConfirmarCambioCorreoRequest;
 import co.edu.unbosque.marketplace.usuario.application.UsuarioService;
+import co.edu.unbosque.marketplace.usuario.application.dto.ActualizarContrasenaRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.ActualizarPerfilRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.ConsultarCuentaResponse;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
 import org.junit.jupiter.api.Test;

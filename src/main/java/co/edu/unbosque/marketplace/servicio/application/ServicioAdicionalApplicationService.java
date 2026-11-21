@@ -10,12 +10,12 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.servicio.application.port.ServicioAdicionalRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalCommand;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalData;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalQuery;
 import co.edu.unbosque.marketplace.servicio.domain.ServicioAdicional;
-import co.edu.unbosque.marketplace.servicio.infrastructure.persistence.ServicioAdicionalRepository;
 
 @Service
 public class ServicioAdicionalApplicationService

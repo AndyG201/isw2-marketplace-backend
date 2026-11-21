@@ -11,12 +11,12 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.unbosque.marketplace.tarifa.api.request.ConfigurarPorcentajesTarifaRequest;
-import co.edu.unbosque.marketplace.tarifa.api.response.ConfiguracionTarifaResponse;
+import co.edu.unbosque.marketplace.tarifa.application.dto.ConfiguracionTarifaResponse;
+import co.edu.unbosque.marketplace.tarifa.application.dto.ConfigurarPorcentajesTarifaRequest;
+import co.edu.unbosque.marketplace.tarifa.application.port.ConfiguracionTarifaRepository;
 import co.edu.unbosque.marketplace.tarifa.contracts.ConfiguracionTarifaInfo;
 import co.edu.unbosque.marketplace.tarifa.contracts.ConfiguracionTarifaQuery;
 import co.edu.unbosque.marketplace.tarifa.domain.ConfiguracionTarifa;
-import co.edu.unbosque.marketplace.tarifa.infrastructure.persistence.ConfiguracionTarifaRepository;
 
 @Service
 public class ConfiguracionTarifaService

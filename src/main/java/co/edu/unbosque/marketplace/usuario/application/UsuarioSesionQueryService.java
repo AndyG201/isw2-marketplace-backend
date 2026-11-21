@@ -6,9 +6,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioSesionInfo;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioSesionQuery;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 
 @Service
 public class UsuarioSesionQueryService implements UsuarioSesionQuery {

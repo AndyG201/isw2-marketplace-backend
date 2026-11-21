@@ -4,6 +4,7 @@ package co.edu.unbosque.marketplace.auditoria.infrastructure.persistence;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import co.edu.unbosque.marketplace.auditoria.application.port.AuditoriaIndiceRepository;
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAuditoria;
 
@@ -14,7 +15,7 @@ import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAudit
  * sin tener que recorrer todos los objetos del bucket.
  */
 @Repository
-public class AuditoriaIndiceJdbcRepository {
+public class AuditoriaIndiceJdbcRepository implements AuditoriaIndiceRepository {
 
     private static final String INSERTAR = """
             INSERT INTO public.evento_auditoria (
@@ -42,6 +43,7 @@ public class AuditoriaIndiceJdbcRepository {
         this.jdbc = jdbc;
     }
 
+    @Override
     public void registrar(
             BandejaSalidaAuditoria evento,
             ResultadoAlmacenamientoAuditoria almacenamiento) {

@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.reserva.api.response.ConfirmacionReservaResponse;
 import co.edu.unbosque.marketplace.reserva.application.ReservaPagoAprobadoService;
+import co.edu.unbosque.marketplace.reserva.application.dto.ConfirmacionReservaResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController

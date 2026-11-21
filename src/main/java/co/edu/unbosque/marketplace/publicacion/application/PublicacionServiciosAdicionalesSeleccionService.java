@@ -14,10 +14,10 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.unbosque.marketplace.publicacion.api.response.SeleccionServiciosAdicionalesResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.ServicioAdicionalPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.SeleccionServiciosAdicionalesResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.ServicioAdicionalPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
-import co.edu.unbosque.marketplace.publicacion.infrastructure.persistence.PublicacionRepository;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalQuery;
 

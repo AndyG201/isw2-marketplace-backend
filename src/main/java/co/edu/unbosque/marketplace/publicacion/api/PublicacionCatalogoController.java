@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.unbosque.marketplace.publicacion.api.response.PaginaPublicacionesResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionResumenResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionBusquedaService;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionCatalogoService;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PaginaPublicacionesResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionResumenResponse;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionBusquedaCriteria;
 
 @RestController

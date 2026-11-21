@@ -18,8 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionDetalleResponse;
-import co.edu.unbosque.marketplace.publicacion.api.response.PublicacionAdministracionResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionDetalleResponse;
+import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAdministracionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.PublicacionDetallePublicoService;
 
 @ExtendWith(MockitoExtension.class)

@@ -1,7 +1,7 @@
 package co.edu.unbosque.marketplace.usuario.api;
-import co.edu.unbosque.marketplace.usuario.api.request.AutenticacionRequest;
-import co.edu.unbosque.marketplace.usuario.api.request.RegistrarUsuarioRequest;
-import co.edu.unbosque.marketplace.usuario.api.request.ReactivarCuentaRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.AutenticacionRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.RegistrarUsuarioRequest;
+import co.edu.unbosque.marketplace.usuario.application.dto.ReactivarCuentaRequest;
 import co.edu.unbosque.marketplace.usuario.api.response.AutenticacionResponse;
 import co.edu.unbosque.marketplace.usuario.application.AutenticacionService;
 import co.edu.unbosque.marketplace.usuario.application.UsuarioService;

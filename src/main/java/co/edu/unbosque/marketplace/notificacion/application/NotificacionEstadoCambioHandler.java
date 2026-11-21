@@ -15,9 +15,9 @@ import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaPublicacionComma
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaReservaCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoPublicacion;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoReserva;
+import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
-import co.edu.unbosque.marketplace.notificacion.infrastructure.persistence.NotificacionDestinatarioRepository;
-import co.edu.unbosque.marketplace.notificacion.infrastructure.persistence.NotificacionRepository;
+import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionDestinatarioRepository;
 
 @Component
 public class NotificacionEstadoCambioHandler {

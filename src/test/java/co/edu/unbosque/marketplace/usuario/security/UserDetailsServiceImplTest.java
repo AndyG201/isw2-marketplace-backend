@@ -1,6 +1,5 @@
 package co.edu.unbosque.marketplace.usuario.security;
 
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -14,8 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
-import co.edu.unbosque.marketplace.usuario.infrastructure.persistence.UsuarioRepository;
 
 @ExtendWith(MockitoExtension.class)
 class UserDetailsServiceImplTest {
