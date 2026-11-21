@@ -59,8 +59,21 @@ jobs:
           java-version: '22'
           cache: maven
 
-      - name: Give execution permission to Maven Wrapper
-        run: chmod +x mvnw
+      - name: Cache Maven Wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: maven-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties') }}
+
+      - name: Prepare Maven Wrapper (with retries)
+        run: |
+          chmod +x mvnw
+          for intento in 1 2 3; do
+            ./mvnw -B -q --version && exit 0
+            echo "No se pudo descargar Maven (intento $intento de 3)"
+            sleep 15
+          done
+          exit 1
 
       - name: Build, test and generate coverage
         run: ./mvnw -B clean verify

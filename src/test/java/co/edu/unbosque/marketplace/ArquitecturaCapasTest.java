@@ -102,6 +102,14 @@ class ArquitecturaCapasTest {
     }
 
     @Test
+    void laAplicacionNoUsaClientesHttp() {
+        noClasses().that().resideInAPackage("..application..")
+                .should().dependOnClassesThat().resideInAPackage("java.net.http..")
+                .because("las integraciones externas (Stripe, etc.) son adaptadores de infraestructura detrás de un contrato")
+                .check(clases);
+    }
+
+    @Test
     void laAplicacionNoUsaJdbcDirectamente() {
         noClasses().that().resideInAPackage("..application..")
                 .should().dependOnClassesThat().resideInAnyPackage("org.springframework.jdbc..", "java.sql..")

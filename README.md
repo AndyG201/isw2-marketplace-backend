@@ -27,8 +27,8 @@ Las funcionalidades que se planean desarrollar son:
 
 Para el desarrollo del backend utilizaremos principalmente:
 
-- **Java 21:** lenguaje de programación.
-- **Spring Boot:** framework para desarrollar el backend.
+- **Java 22:** lenguaje de programación.
+- **Spring Boot 3.4.5:** framework para desarrollar el backend (con Spring Modulith para verificar los módulos).
 - **PostgreSQL:** base de datos principal.
 - **Redis:** almacenamiento temporal, caché y apoyo al procesamiento de tareas.
 - **Docker:** contenedores para ejecutar los componentes del sistema.
@@ -47,7 +47,9 @@ También utilizaremos las herramientas solicitadas en la asignatura:
 
 ## Arquitectura y patrones de diseño
 
-Para el backend se ha planteado una arquitectura de **monolito modular**, utilizando Spring Boot.
+El backend es un **monolito modular en capas** hecho con Spring Boot. La descripción completa (módulos, capas, reglas que se verifican en las pruebas, manejo de errores, procesos en segundo plano y concesiones conocidas) está en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md).
+
+Planteamiento general:
 
 El código se organizará en módulos según las funcionalidades del sistema, separando las responsabilidades de presentación, aplicación, dominio e infraestructura, y utilizando puertos y adaptadores para las integraciones externas.
 
@@ -72,11 +74,15 @@ También se realizarán pruebas y revisiones de calidad durante el desarrollo.
 
 ## Estado del proyecto
 
-Actualmente, el backend se encuentra en su etapa inicial de desarrollo.
+El backend cuenta con los módulos de usuarios, publicaciones y alojamientos, disponibilidad, tarifas y cotización, reservas y pagos (con reembolsos), cancelación, reseñas, notificaciones, auditoría y reportes. La estructura en capas está protegida por pruebas de arquitectura.
 
-Se comenzará con el módulo de autenticación, usuarios y perfiles, y posteriormente se implementarán los demás módulos de acuerdo con la planificación del proyecto.
+Para ejecutar las pruebas (requieren PostgreSQL y Redis; la integración continua los levanta automáticamente):
 
-Este README se actualizará a medida que avance el desarrollo.
+```bash
+./mvnw clean verify
+```
+
+El informe de cobertura queda en `target/site/jacoco/jacoco.xml`.
 
 ## Integrantes
 
