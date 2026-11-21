@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.resena.api.request.OcultarResenaRequest;
 import co.edu.unbosque.marketplace.resena.api.response.OcultarResenaResponse;
 import co.edu.unbosque.marketplace.resena.application.ResenaModeracionService;
@@ -42,8 +43,7 @@ public class ResenaModeracionController {
 
     private void validarAdministrador(UUID idAdministrador, Authentication autenticacion) {
         if (idAdministrador == null) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.UNAUTHORIZED,
+            throw new SesionRequeridaException(
                     "Debes iniciar sesión como administrador.");
         }
         boolean esAdministrador = autenticacion != null

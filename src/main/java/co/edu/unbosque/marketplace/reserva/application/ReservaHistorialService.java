@@ -3,11 +3,13 @@ package co.edu.unbosque.marketplace.reserva.application;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.reserva.api.response.MisReservasResponse;
 import co.edu.unbosque.marketplace.reserva.api.response.ReservaPropiaResponse;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
@@ -49,18 +51,15 @@ public class ReservaHistorialService {
         validarHuesped(idHuesped);
 
         Reserva reserva = reservas.findById(idReserva)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "La reserva no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("La reserva no existe."));
 
         if (!idHuesped.equals(reserva.getIdHuesped())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
+            throw new AccesoNoPermitidoException(
                     "No tienes permiso para consultar esta reserva.");
         }
 
         ReservaHistorialDatos datos = historial.consultarPorId(idReserva)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.CONFLICT,
+                .orElseThrow(() -> new ConflictoNegocioException(
                         "No fue posible recuperar la información de la reserva."));
 
         return convertir(datos);
@@ -68,8 +67,7 @@ public class ReservaHistorialService {
 
     private void validarHuesped(UUID idHuesped) {
         if (idHuesped == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
+            throw new SesionRequeridaException(
                     "Debes iniciar sesión como huésped.");
         }
     }

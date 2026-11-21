@@ -17,9 +17,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.reserva.api.response.ReservaAlojamientoResponse;
 import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaAnfitrionDatos;
 import co.edu.unbosque.marketplace.reserva.infrastructure.persistence.ReservaAnfitrionRepository;
@@ -74,9 +73,7 @@ class ReservaAnfitrionServiceTest {
         when(historial.consultarReservaPorAnfitrion(ID_ANFITRION, ID_RESERVA)).thenReturn(Optional.empty());
         when(reservas.existsById(ID_RESERVA)).thenReturn(true);
 
-        var error = assertThrows(ResponseStatusException.class,
+        assertThrows(AccesoNoPermitidoException.class,
                 () -> servicio.consultarReserva(ID_ANFITRION, ID_RESERVA));
-
-        assertEquals(HttpStatus.FORBIDDEN, error.getStatusCode());
     }
 }

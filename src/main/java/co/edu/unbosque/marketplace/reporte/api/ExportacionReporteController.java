@@ -2,7 +2,9 @@ package co.edu.unbosque.marketplace.reporte.api;
 
 import java.util.UUID;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import co.edu.unbosque.marketplace.reporte.api.request.SolicitarExportacionRequest;
 import co.edu.unbosque.marketplace.reporte.api.response.ExportacionReporteResponse;
+import co.edu.unbosque.marketplace.reporte.application.ArchivoExportado;
 import co.edu.unbosque.marketplace.reporte.application.ExportacionReporteService;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioSesionInfo;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioSesionQuery;
@@ -61,7 +64,13 @@ public class ExportacionReporteController {
             Authentication autenticacion) {
 
         UUID idAdministrador = obtenerIdAdministrador(autenticacion);
-        return servicio.descargar(idExportacion, idAdministrador);
+        ArchivoExportado archivo = servicio.descargar(idExportacion, idAdministrador);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(archivo.getTipoContenido()))
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + archivo.getNombre() + "\"")
+                .body(archivo.getContenido());
     }
 
     private UUID obtenerIdAdministrador(Authentication autenticacion) {

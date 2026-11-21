@@ -11,10 +11,8 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
@@ -23,6 +21,11 @@ import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionInfo
 import co.edu.unbosque.marketplace.cancelacion.contracts.PoliticaCancelacionQuery;
 import co.edu.unbosque.marketplace.cancelacion.domain.Cancelacion;
 import co.edu.unbosque.marketplace.cancelacion.infrastructure.persistence.CancelacionRepository;
+import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
+import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
+import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
+import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
+import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaCancelacionGateway;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaCancelacionInfo;
 
@@ -60,16 +63,16 @@ public class CancelacionReservaService {
     @Transactional
     public CancelarReservaResponse cancelar(UUID idHuesped, UUID idReserva, String motivo) {
         if (idHuesped == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Debes iniciar sesión como huésped.");
+            throw new SesionRequeridaException("Debes iniciar sesión como huésped.");
         }
         if (idReserva == null || motivo == null || motivo.isBlank() || motivo.trim().length() > 1000) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Indica un motivo de cancelación de máximo 1000 caracteres.");
+            throw new DatosInvalidosException("Indica un motivo de cancelación de máximo 1000 caracteres.");
         }
 
         ReservaCancelacionInfo reserva = reservas.bloquearYConsultar(idReserva)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La reserva no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("La reserva no existe."));
         if (!idHuesped.equals(reserva.idHuesped())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "La reserva no pertenece al huésped autenticado.");
+            throw new AccesoNoPermitidoException("La reserva no pertenece al huésped autenticado.");
         }
 
         var cancelacionExistente = cancelaciones.findByIdReserva(idReserva);
@@ -79,22 +82,22 @@ public class CancelacionReservaService {
         }
 
         if (!ESTADOS_CANCELABLES.contains(reserva.estado())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "La reserva no se puede cancelar en su estado actual: " + reserva.estado() + ".");
         }
         if (PAGO_PENDIENTE.equals(reserva.estadoPago())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ConflictoNegocioException(
                     "La reserva tiene un pago pendiente de confirmación; inténtalo de nuevo cuando finalice el intento.");
         }
 
         PoliticaCancelacionInfo politica = politicas.consultarPorId(reserva.idPoliticaAplicada())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.CONFLICT, "No se encontró la política aplicada a la reserva."));
+                .orElseThrow(() -> new ConflictoNegocioException(
+                        "No se encontró la política aplicada a la reserva."));
         PoliticaDevolucionStrategy estrategia = estrategias.stream()
                 .filter(candidata -> candidata.aplicaA(politica.nombre()))
                 .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.CONFLICT, "La política de cancelación no tiene una estrategia de devolución."));
+                .orElseThrow(() -> new ConflictoNegocioException(
+                        "La política de cancelación no tiene una estrategia de devolución."));
 
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
         long diasAnticipacion = reserva.fechaEntrada() == null
