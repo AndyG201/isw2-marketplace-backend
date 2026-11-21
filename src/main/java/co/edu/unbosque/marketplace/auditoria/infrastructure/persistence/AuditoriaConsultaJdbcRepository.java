@@ -1,3 +1,4 @@
+
 package co.edu.unbosque.marketplace.auditoria.infrastructure.persistence;
 
 import java.sql.ResultSet;
@@ -8,93 +9,128 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Repository;
 
-import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoria;
+import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
 import co.edu.unbosque.marketplace.auditoria.domain.FiltrosAuditoria;
 
+/**
+ * Repositorio de consulta del índice de auditoría almacenado
+ * en la base de datos principal de Marketplace.
+ *
+ * Los documentos JSON originales permanecen en Backblaze B2.
+ */
 @Repository
 public class AuditoriaConsultaJdbcRepository {
 
     private static final String COLUMNAS = """
-            id_evento, id_usuario, fecha_evento, accion, resultado,
-            entidad_afectada, id_entidad_afectada, detalle::text AS detalle_json,
-            id_correlacion
+            id_evento,
+            id_usuario,
+            fecha_evento,
+            accion,
+            resultado,
+            entidad_afectada,
+            id_entidad_afectada,
+            id_correlacion,
+            clave_objeto,
+            sha256,
+            version_objeto
             """;
 
     private final JdbcTemplate jdbc;
-    private final String url;
 
-    public AuditoriaConsultaJdbcRepository(
-            @Value("$" + "{app.auditoria.almacen.url:}") String url,
-            @Value("$" + "{app.auditoria.almacen.username:}") String usuario,
-            @Value("$" + "{app.auditoria.almacen.password:}") String contrasena) {
-        this.url = url;
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setUrl(url == null ? "" : url);
-        dataSource.setUsername(usuario == null ? "" : usuario);
-        dataSource.setPassword(contrasena == null ? "" : contrasena);
-        this.jdbc = new JdbcTemplate(dataSource);
+    public AuditoriaConsultaJdbcRepository(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
 
-    public List<EventoAuditoria> consultar(
+    public List<EventoAuditoriaIndice> consultar(
             FiltrosAuditoria filtros,
             int limite,
             long desplazamiento) {
-        validarConfiguracion();
+
+        validarPaginacion(limite, desplazamiento);
+
         List<Object> parametros = new ArrayList<>();
         String where = construirWhere(filtros, parametros);
+
         parametros.add(limite);
         parametros.add(desplazamiento);
+
         String sql = "SELECT " + COLUMNAS
-                + " FROM public.evento_auditoria" + where
-                + " ORDER BY fecha_evento DESC, id_evento DESC LIMIT ? OFFSET ?";
+                + " FROM public.evento_auditoria"
+                + where
+                + " ORDER BY fecha_evento DESC, id_evento DESC"
+                + " LIMIT ? OFFSET ?";
+
         return jdbc.query(sql, this::mapear, parametros.toArray());
     }
 
     public long contar(FiltrosAuditoria filtros) {
-        validarConfiguracion();
+
         List<Object> parametros = new ArrayList<>();
         String where = construirWhere(filtros, parametros);
+
         Long total = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM public.evento_auditoria" + where,
                 Long.class,
-                parametros.toArray());
+                parametros.toArray()
+        );
+
         return total == null ? 0 : total;
     }
 
-    public Optional<EventoAuditoria> buscar(UUID idEvento) {
-        validarConfiguracion();
-        List<EventoAuditoria> resultados = jdbc.query(
+    public Optional<EventoAuditoriaIndice> buscar(UUID idEvento) {
+
+        if (idEvento == null) {
+            return Optional.empty();
+        }
+
+        List<EventoAuditoriaIndice> resultados = jdbc.query(
                 "SELECT " + COLUMNAS
-                        + " FROM public.evento_auditoria WHERE id_evento = ?",
+                        + " FROM public.evento_auditoria"
+                        + " WHERE id_evento = ?",
                 this::mapear,
-                idEvento);
+                idEvento
+        );
+
         return resultados.stream().findFirst();
     }
 
-    private String construirWhere(FiltrosAuditoria filtros, List<Object> parametros) {
+    private String construirWhere(
+            FiltrosAuditoria filtros,
+            List<Object> parametros) {
+
         StringBuilder where = new StringBuilder(" WHERE 1 = 1");
+
+        if (filtros == null) {
+            return where.toString();
+        }
+
         if (filtros.idUsuario() != null) {
             where.append(" AND id_usuario = ?");
             parametros.add(filtros.idUsuario());
         }
+
         if (filtros.desde() != null) {
             where.append(" AND fecha_evento >= ?");
             parametros.add(filtros.desde());
         }
+
         if (filtros.hasta() != null) {
             where.append(" AND fecha_evento <= ?");
             parametros.add(filtros.hasta());
         }
+
         agregarFiltro(where, parametros, "accion", filtros.accion());
         agregarFiltro(where, parametros, "resultado", filtros.resultado());
-        agregarFiltro(where, parametros, "entidad_afectada", filtros.entidadAfectada());
+        agregarFiltro(
+                where,
+                parametros,
+                "entidad_afectada",
+                filtros.entidadAfectada()
+        );
+
         return where.toString();
     }
 
@@ -103,21 +139,26 @@ public class AuditoriaConsultaJdbcRepository {
             List<Object> parametros,
             String columna,
             String valor) {
+
         if (valor != null && !valor.isBlank()) {
             where.append(" AND ").append(columna).append(" = ?");
             parametros.add(valor.trim());
         }
     }
 
-    private void validarConfiguracion() {
-        if (url == null || url.isBlank()) {
-            throw new DataAccessResourceFailureException(
-                    "El almacén de auditoría no está configurado.");
+    private void validarPaginacion(int limite, long desplazamiento) {
+
+        if (limite <= 0 || desplazamiento < 0) {
+            throw new IllegalArgumentException(
+                    "Los parámetros de paginación no son válidos.");
         }
     }
 
-    private EventoAuditoria mapear(ResultSet rs, int fila) throws SQLException {
-        return new EventoAuditoria(
+    private EventoAuditoriaIndice mapear(
+            ResultSet rs,
+            int fila) throws SQLException {
+
+        return new EventoAuditoriaIndice(
                 rs.getObject("id_evento", UUID.class),
                 rs.getObject("id_usuario", UUID.class),
                 rs.getObject("fecha_evento", OffsetDateTime.class),
@@ -125,7 +166,10 @@ public class AuditoriaConsultaJdbcRepository {
                 rs.getString("resultado"),
                 rs.getString("entidad_afectada"),
                 rs.getObject("id_entidad_afectada", UUID.class),
-                rs.getString("detalle_json"),
-                rs.getString("id_correlacion"));
+                rs.getString("id_correlacion"),
+                rs.getString("clave_objeto"),
+                rs.getString("sha256"),
+                rs.getString("version_objeto")
+        );
     }
 }
