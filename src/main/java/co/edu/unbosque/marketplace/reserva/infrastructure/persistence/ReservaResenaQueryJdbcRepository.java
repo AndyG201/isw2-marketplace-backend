@@ -30,11 +30,10 @@ public class ReservaResenaQueryJdbcRepository implements ReservaResenaQueryRepos
                        r.id_huesped AS "idHuesped",
                        r.estado AS "estado",
                        c.id_publicacion AS "idPublicacion",
-                       a.id_alojamiento AS "idAlojamiento"
+                       p.id_alojamiento AS "idAlojamiento"
                 FROM public.reserva r
-                JOIN public.cotizacion c ON c.id_cotizacion = r.id_cotizacion
-                JOIN public.publicacion p ON p.id_publicacion = c.id_publicacion
-                JOIN public.alojamiento a ON a.id_alojamiento = p.id_alojamiento
+                JOIN public.vista_cotizacion c ON c.id_cotizacion = r.id_cotizacion
+                JOIN public.vista_publicacion p ON p.id_publicacion = c.id_publicacion
                 WHERE r.id_reserva = ?
                 """, mapper, idReserva);
         return resultado.stream().findFirst();

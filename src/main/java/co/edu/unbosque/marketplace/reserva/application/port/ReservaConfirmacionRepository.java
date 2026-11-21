@@ -21,22 +21,12 @@ public interface ReservaConfirmacionRepository extends JpaRepository<Reserva, UU
     Optional<Reserva> bloquearPorId(@Param("id") UUID id);
 
     @Query(value = """
-            SELECT a.id_alojamiento AS "idAlojamiento",
+            SELECT p.id_alojamiento AS "idAlojamiento",
                    c.fecha_entrada AS "fechaEntrada",
                    c.fecha_salida AS "fechaSalida",
-                   ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
-                    + c.tarifa_limpieza
-                    + ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
-                       * ct.porcentaje_servicio / 100)
-                    - ((c.precio_noche_aplicado * (c.fecha_salida - c.fecha_entrada))
-                       * ct.porcentaje_descuento / 100)
-                    + COALESCE((SELECT SUM(ca.cantidad * ca.precio_aplicado)
-                                FROM public.cotizacion_adicional ca
-                                WHERE ca.id_cotizacion = c.id_cotizacion), 0)) AS "montoTotal"
-            FROM public.cotizacion c
-            JOIN public.publicacion p ON p.id_publicacion = c.id_publicacion
-            JOIN public.alojamiento a ON a.id_alojamiento = p.id_alojamiento
-            JOIN public.configuracion_tarifa ct ON ct.id_configuracion = c.id_configuracion
+                   c.monto_total AS "montoTotal"
+            FROM public.vista_cotizacion c
+            JOIN public.vista_publicacion p ON p.id_publicacion = c.id_publicacion
             WHERE c.id_cotizacion = :idCotizacion
             """, nativeQuery = true)
     Optional<ReservaConfirmacionDatos> consultarDatos(@Param("idCotizacion") UUID idCotizacion);

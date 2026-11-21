@@ -25,7 +25,7 @@ public class ResenaPublicaQueryJdbcRepository implements ResenaPublicaQueryRepos
     @Override
     public boolean existePublicacion(UUID idPublicacion) {
         Boolean existe = jdbc.queryForObject(
-                "SELECT EXISTS (SELECT 1 FROM public.publicacion WHERE id_publicacion = ?)",
+                "SELECT EXISTS (SELECT 1 FROM public.vista_publicacion WHERE id_publicacion = ?)",
                 Boolean.class,
                 idPublicacion);
         return Boolean.TRUE.equals(existe);
@@ -41,8 +41,8 @@ public class ResenaPublicaQueryJdbcRepository implements ResenaPublicaQueryRepos
                        r.visible,
                        r.fecha_publicacion
                 FROM public.resena r
-                JOIN public.reserva re ON re.id_reserva = r.id_reserva
-                JOIN public.cotizacion c ON c.id_cotizacion = re.id_cotizacion
+                JOIN public.vista_reserva re ON re.id_reserva = r.id_reserva
+                JOIN public.vista_cotizacion c ON c.id_cotizacion = re.id_cotizacion
                 WHERE c.id_publicacion = ?
                   AND r.visible = TRUE
                 ORDER BY r.fecha_publicacion DESC, r.id_resena
