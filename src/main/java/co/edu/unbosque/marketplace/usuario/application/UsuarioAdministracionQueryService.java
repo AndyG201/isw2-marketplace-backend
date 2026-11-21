@@ -1,13 +1,16 @@
 
 package co.edu.unbosque.marketplace.usuario.application;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioAdministracionQuery;
+import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
 @Service
@@ -32,6 +35,13 @@ public class UsuarioAdministracionQueryService
         return usuarioRepository.findById(idUsuario)
                 .map(this::tieneRolAdministrador)
                 .orElse(false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> consultarAdministradoresActivos() {
+
+        return usuarioRepository.buscarIdsAdministradores(EstadoUsuario.ACTIVA);
     }
 
     private boolean tieneRolAdministrador(Usuario usuario) {
