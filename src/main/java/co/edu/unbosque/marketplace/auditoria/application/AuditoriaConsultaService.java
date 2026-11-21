@@ -12,11 +12,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import co.edu.unbosque.marketplace.auditoria.api.response.EventoAuditoriaResponse;
 import co.edu.unbosque.marketplace.auditoria.api.response.PaginaAuditoriaResponse;
+import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
 import co.edu.unbosque.marketplace.auditoria.domain.FiltrosAuditoria;
 import co.edu.unbosque.marketplace.auditoria.infrastructure.persistence.AuditoriaConsultaJdbcRepository;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.storage.BackblazeAuditoriaService;
 
 @Service
 public class AuditoriaConsultaService {
@@ -24,11 +24,11 @@ public class AuditoriaConsultaService {
     private static final int TAMANO_MAXIMO = 100;
 
     private final AuditoriaConsultaJdbcRepository repository;
-    private final ObjectProvider<BackblazeAuditoriaService> backblazeProvider;
+    private final ObjectProvider<AlmacenamientoInmutableAuditoria> backblazeProvider;
 
     public AuditoriaConsultaService(
             AuditoriaConsultaJdbcRepository repository,
-            ObjectProvider<BackblazeAuditoriaService> backblazeProvider) {
+            ObjectProvider<AlmacenamientoInmutableAuditoria> backblazeProvider) {
 
         this.repository = repository;
         this.backblazeProvider = backblazeProvider;
@@ -71,7 +71,7 @@ public class AuditoriaConsultaService {
                 eventos = List.of();
             } else {
 
-                BackblazeAuditoriaService almacenamiento =
+                AlmacenamientoInmutableAuditoria almacenamiento =
                         obtenerAlmacenamiento();
 
                 eventos = indices.stream()
@@ -125,7 +125,7 @@ public class AuditoriaConsultaService {
                             HttpStatus.NOT_FOUND,
                             "El evento de auditoría no existe."));
 
-            BackblazeAuditoriaService almacenamiento =
+            AlmacenamientoInmutableAuditoria almacenamiento =
                     obtenerAlmacenamiento();
 
             EventoAuditoria evento = almacenamiento.obtenerEvento(
@@ -147,9 +147,9 @@ public class AuditoriaConsultaService {
         }
     }
 
-    private BackblazeAuditoriaService obtenerAlmacenamiento() {
+    private AlmacenamientoInmutableAuditoria obtenerAlmacenamiento() {
 
-        BackblazeAuditoriaService servicio =
+        AlmacenamientoInmutableAuditoria servicio =
                 backblazeProvider.getIfAvailable();
 
         if (servicio == null) {

@@ -20,13 +20,15 @@ class CotizacionReservaInfoTest {
                 idCotizacion,
                 idPublicacion,
                 fechaEntrada,
-                fechaSalida
+                fechaSalida,
+                3
         );
 
         assertEquals(idCotizacion, info.idCotizacion());
         assertEquals(idPublicacion, info.idPublicacion());
         assertEquals(fechaEntrada, info.fechaEntrada());
         assertEquals(fechaSalida, info.fechaSalida());
+        assertEquals(3, info.cantidadHuespedes());
     }
 
     @Test
@@ -35,7 +37,8 @@ class CotizacionReservaInfoTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                0
         );
 
         assertNull(info.idCotizacion());
@@ -52,11 +55,11 @@ class CotizacionReservaInfoTest {
         LocalDate fechaSalida = LocalDate.of(2026, 12, 15);
 
         CotizacionReservaInfo primero = new CotizacionReservaInfo(
-                idCotizacion, idPublicacion, fechaEntrada, fechaSalida
+                idCotizacion, idPublicacion, fechaEntrada, fechaSalida, 2
         );
 
         CotizacionReservaInfo segundo = new CotizacionReservaInfo(
-                idCotizacion, idPublicacion, fechaEntrada, fechaSalida
+                idCotizacion, idPublicacion, fechaEntrada, fechaSalida, 2
         );
 
         assertEquals(primero, segundo);
@@ -69,14 +72,16 @@ class CotizacionReservaInfoTest {
                 UUID.randomUUID(),
                 UUID.randomUUID(),
                 LocalDate.of(2026, 12, 10),
-                LocalDate.of(2026, 12, 15)
+                LocalDate.of(2026, 12, 15),
+                2
         );
 
         CotizacionReservaInfo segundo = new CotizacionReservaInfo(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
                 LocalDate.of(2026, 12, 11),
-                LocalDate.of(2026, 12, 16)
+                LocalDate.of(2026, 12, 16),
+                4
         );
 
         assertNotEquals(primero, segundo);
@@ -91,7 +96,8 @@ class CotizacionReservaInfoTest {
                 idCotizacion,
                 idPublicacion,
                 LocalDate.of(2026, 12, 10),
-                LocalDate.of(2026, 12, 15)
+                LocalDate.of(2026, 12, 15),
+                2
         );
 
         assertTrue(info.toString().contains(idCotizacion.toString()));

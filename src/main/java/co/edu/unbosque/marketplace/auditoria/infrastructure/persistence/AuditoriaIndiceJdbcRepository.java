@@ -5,7 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import co.edu.unbosque.marketplace.auditoria.domain.BandejaSalidaAuditoria;
-import co.edu.unbosque.marketplace.auditoria.infrastructure.storage.ResultadoAlmacenamientoAuditoria;
+import co.edu.unbosque.marketplace.auditoria.domain.ResultadoAlmacenamientoAuditoria;
 
 /**
  * Registra el índice de los eventos archivados en Backblaze.
