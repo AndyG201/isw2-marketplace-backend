@@ -295,6 +295,91 @@ class ReservaFlujoIntegracionTest {
     }
 
     @Test
+    void unaNuevaRetencionLimpiaLasNochesDeUnaReservaDePagoVencidaSinEjecutarElScheduler()
+            throws Exception {
+        escenario = escenario("INMEDIATA");
+
+        UUID reservaVencida = reservaRetenida();
+        escenario.vencerRetencion(reservaVencida);
+
+        // La nueva solicitud puede crearse porque la retención anterior ya venció,
+        // aunque sus filas físicas todavía no hayan sido retiradas por el scheduler.
+        UUID nuevaReserva = escenario.solicitarReserva(
+                escenario.idOtroHuesped,
+                escenario.nuevaCotizacion(30, 2));
+
+        assertEquals(2, nochesDeReserva(reservaVencida));
+
+        MvcResult nuevaRetencion = escenario.retener(
+                escenario.idOtroHuesped,
+                nuevaReserva);
+
+        assertEquals(200, nuevaRetencion.getResponse().getStatus());
+        assertEquals(0, nochesDeReserva(reservaVencida));
+        assertEquals(2, nochesDeReserva(nuevaReserva));
+        assertEquals(2, escenario.nochesOcupadas());
+
+        // El scheduler puede ejecutarse después: liberar una reserva ya limpiada
+        // no debe borrar las noches que ahora pertenecen a la nueva reserva.
+        expiracionRetenciones.expirarReservasSinPago();
+
+        assertEquals("EXPIRADA", escenario.estadoReserva(reservaVencida));
+        assertEquals(2, nochesDeReserva(nuevaReserva));
+        assertEquals(2, escenario.nochesOcupadas());
+    }
+
+    @Test
+    void unaSolicitudDeAprobacionConRetencionVigenteSigueBloqueandoLasNoches() throws Exception {
+        escenario = escenario("APROBACION");
+
+        UUID reservaVigente = escenario.solicitarReserva(
+                escenario.idHuesped,
+                escenario.nuevaCotizacion(30, 2));
+
+        MvcResult nuevaSolicitud = escenario.solicitar(
+                escenario.idOtroHuesped,
+                escenario.nuevaCotizacion(30, 2),
+                "solicitud-no-debe-robar-noches-" + reservaVigente);
+
+        assertEquals(409, nuevaSolicitud.getResponse().getStatus());
+        assertEquals("PENDIENTE_APROBACION", escenario.estadoReserva(reservaVigente));
+        assertEquals(2, nochesDeReserva(reservaVigente));
+        assertEquals(2, escenario.nochesOcupadas());
+    }
+
+    @Test
+    void unaNuevaSolicitudLimpiaLasNochesDeUnaSolicitudAprobacionVencidaSinEjecutarElScheduler()
+            throws Exception {
+        escenario = escenario("APROBACION");
+
+        UUID solicitudVencida = escenario.solicitarReserva(
+                escenario.idHuesped,
+                escenario.nuevaCotizacion(30, 2));
+        assertEquals(2, nochesDeReserva(solicitudVencida));
+
+        escenario.vencerRetencion(solicitudVencida);
+
+        // La nueva solicitud dispara su listener de retención. Ese flujo debe
+        // retirar las noches vencidas anteriores antes de insertar las nuevas.
+        UUID nuevaSolicitud = escenario.solicitarReserva(
+                escenario.idOtroHuesped,
+                escenario.nuevaCotizacion(30, 2));
+
+        assertEquals("PENDIENTE_APROBACION", escenario.estadoReserva(solicitudVencida));
+        assertEquals(0, nochesDeReserva(solicitudVencida));
+        assertEquals(2, nochesDeReserva(nuevaSolicitud));
+        assertEquals(2, escenario.nochesOcupadas());
+
+        // La conciliación automática posterior de la solicitud vieja debe ser
+        // idempotente y no liberar las noches que ya tiene la nueva solicitud.
+        expiracionSolicitudes.rechazarSolicitudesVencidas();
+
+        assertEquals("RECHAZADA", escenario.estadoReserva(solicitudVencida));
+        assertEquals(2, nochesDeReserva(nuevaSolicitud));
+        assertEquals(2, escenario.nochesOcupadas());
+    }
+
+    @Test
     void pagarConLaRetencionVencidaRespondeQueElPlazoTermino() throws Exception {
         escenario = escenario("INMEDIATA");
         UUID idReserva = reservaRetenida();
@@ -362,6 +447,14 @@ class ReservaFlujoIntegracionTest {
         UUID idReserva = escenario.solicitarReserva(escenario.idHuesped, escenario.nuevaCotizacion(30, 2));
         assertEquals(200, escenario.retener(escenario.idHuesped, idReserva).getResponse().getStatus());
         return idReserva;
+    }
+
+    private int nochesDeReserva(UUID idReserva) {
+        Integer total = jdbc.queryForObject(
+                "SELECT count(*) FROM public.reserva_noche WHERE id_reserva = ?",
+                Integer.class,
+                idReserva);
+        return total == null ? 0 : total;
     }
 
     private void pasarelaAprueba() {

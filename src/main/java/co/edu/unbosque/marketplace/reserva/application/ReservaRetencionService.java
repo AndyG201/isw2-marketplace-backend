@@ -26,8 +26,10 @@ import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 
 @Service
 public class ReservaRetencionService {
+
     private static final String MODO_APROBACION = "APROBACION";
     private static final String PENDIENTE_APROBACION = "PENDIENTE_APROBACION";
+    private static final String RECHAZADA = "RECHAZADA";
     private static final String MOTIVO_VENCIMIENTO = "VENCIMIENTO_PLAZO_24_HORAS";
 
     private final ReservaRepository reservas;
@@ -38,9 +40,14 @@ public class ReservaRetencionService {
     private final AuditoriaReservaCommand auditoria;
     private final ApplicationEventPublisher eventPublisher;
 
-    public ReservaRetencionService(ReservaRepository reservas, ReservaRetencionRepository retenciones,
-            ReservaSolicitudRepository solicitudes, NocheReservaRepository noches, PeriodosHabilitadosQuery periodos,
-            AuditoriaReservaCommand auditoria, ApplicationEventPublisher eventPublisher) {
+    public ReservaRetencionService(
+            ReservaRepository reservas,
+            ReservaRetencionRepository retenciones,
+            ReservaSolicitudRepository solicitudes,
+            NocheReservaRepository noches,
+            PeriodosHabilitadosQuery periodos,
+            AuditoriaReservaCommand auditoria,
+            ApplicationEventPublisher eventPublisher) {
         this.reservas = reservas;
         this.retenciones = retenciones;
         this.solicitudes = solicitudes;
@@ -53,63 +60,128 @@ public class ReservaRetencionService {
     @EventListener
     @Transactional
     public void retenerSolicitud(ReservaSolicitadaEvent evento) {
-        if (evento == null || evento.idReserva() == null
+        if (evento == null
+                || evento.idReserva() == null
                 || !MODO_APROBACION.equals(evento.modoAceptacion())) {
             return;
         }
-        Reserva reserva = reservas.findById(evento.idReserva()).orElseThrow(() ->
-                new RecursoNoEncontradoException("La reserva solicitada ya no existe."));
+
+        // El bloqueo evita que un evento repetido y el scheduler retengan o
+        // liberen simultáneamente la misma solicitud.
+        Reserva reserva = retenciones.bloquearPorId(evento.idReserva())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "La reserva solicitada ya no existe."));
+
         if (!MODO_APROBACION.equals(reserva.getModoAceptacion())
                 || !PENDIENTE_APROBACION.equals(reserva.getEstado())) {
             return;
         }
+
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
-        if (reserva.getRetencionHasta() != null && reserva.getRetencionHasta().isAfter(ahora)) {
+
+        if (reserva.getRetencionHasta() != null
+                && reserva.getRetencionHasta().isAfter(ahora)) {
             return;
         }
-        ReservaSolicitudDatos datos = solicitudes.consultarDatosCotizacion(reserva.getIdCotizacion())
-                .orElseThrow(() -> new ConflictoNegocioException(
-                        "No fue posible recuperar las fechas de la solicitud."));
+
+        ReservaSolicitudDatos datos = solicitudes
+                .consultarDatosCotizacion(reserva.getIdCotizacion())
+                .orElse(null);
+
+        OffsetDateTime fechaVencimiento = reserva.getRetencionHasta() != null
+                ? reserva.getRetencionHasta()
+                : reserva.getFechaSolicitud().plusHours(24);
+
+        // Un evento retrasado o repetido no puede reactivar una solicitud cuyo
+        // plazo de 24 horas ya venció.
+        if (!fechaVencimiento.isAfter(ahora)) {
+            rechazarPorVencimiento(reserva, datos, fechaVencimiento, ahora);
+            return;
+        }
+
+        if (datos == null) {
+            throw new ConflictoNegocioException(
+                    "No fue posible recuperar las fechas de la solicitud.");
+        }
+
         if (!"ACTIVA".equals(datos.getEstadoPublicacion())) {
             throw new ConflictoNegocioException(
                     "La publicación dejó de estar disponible para recibir reservas.");
         }
-        OffsetDateTime fechaVencimiento = reserva.getFechaSolicitud().plusHours(24);
-        if (!periodos.rangoHabilitado(datos.getIdAlojamiento(), datos.getFechaEntrada(), datos.getFechaSalida())
-                || !noches.reservarRango(datos.getIdAlojamiento(), reserva.getIdReserva(),
-                        datos.getFechaEntrada(), datos.getFechaSalida())) {
+
+        if (!periodos.rangoHabilitado(
+                datos.getIdAlojamiento(),
+                datos.getFechaEntrada(),
+                datos.getFechaSalida())
+                || !noches.reservarRango(
+                        datos.getIdAlojamiento(),
+                        reserva.getIdReserva(),
+                        datos.getFechaEntrada(),
+                        datos.getFechaSalida())) {
             throw new ConflictoNegocioException(
                     "El periodo ya fue ocupado por otra reserva o no está disponible.");
         }
+
         reserva.setRetencionHasta(fechaVencimiento);
         reservas.saveAndFlush(reserva);
-        eventPublisher.publishEvent(new ReservaRetenidaEvent(datos.getIdAnfitrion(), reserva.getIdHuesped(),
-                reserva.getIdReserva(), datos.getIdPublicacion(), fechaVencimiento));
+
+        eventPublisher.publishEvent(new ReservaRetenidaEvent(
+                datos.getIdAnfitrion(),
+                reserva.getIdHuesped(),
+                reserva.getIdReserva(),
+                datos.getIdPublicacion(),
+                fechaVencimiento));
     }
 
     @Transactional
     public void rechazarRetencionesVencidas() {
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
+
         for (UUID idReserva : retenciones.buscarRetencionesVencidas(ahora)) {
             retenciones.bloquearPorId(idReserva).ifPresent(reserva -> {
                 OffsetDateTime limite = reserva.getRetencionHasta();
                 if (!PENDIENTE_APROBACION.equals(reserva.getEstado())
-                        || limite == null || limite.isAfter(ahora)) {
+                        || limite == null
+                        || limite.isAfter(ahora)) {
                     return;
                 }
-                ReservaSolicitudDatos datos = solicitudes.consultarDatosCotizacion(reserva.getIdCotizacion())
+
+                ReservaSolicitudDatos datos = solicitudes
+                        .consultarDatosCotizacion(reserva.getIdCotizacion())
                         .orElse(null);
-                noches.liberar(idReserva);
-                reserva.setEstado("RECHAZADA");
-                reserva.setRetencionHasta(null);
-                reservas.save(reserva);
-                String detalle = "{\"motivo\":\"" + MOTIVO_VENCIMIENTO
-                        + "\",\"fechaVencimiento\":\"" + limite + "\"}";
-                auditoria.registrarEvento(new RegistrarEventoReserva(null, idReserva, ahora,
-                        "RECHAZO_AUTOMATICO_POR_VENCIMIENTO", "RECHAZADA", detalle));
-                eventPublisher.publishEvent(new ReservaRetencionVencidaEvent(reserva.getIdHuesped(), idReserva,
-                        datos == null ? null : datos.getIdPublicacion(), ahora, MOTIVO_VENCIMIENTO));
+
+                rechazarPorVencimiento(reserva, datos, limite, ahora);
             });
         }
+    }
+
+    private void rechazarPorVencimiento(
+            Reserva reserva,
+            ReservaSolicitudDatos datos,
+            OffsetDateTime limite,
+            OffsetDateTime ahora) {
+
+        noches.liberar(reserva.getIdReserva());
+        reserva.setEstado(RECHAZADA);
+        reserva.setRetencionHasta(null);
+        reservas.saveAndFlush(reserva);
+
+        String detalle = "{\"motivo\":\"" + MOTIVO_VENCIMIENTO
+                + "\",\"fechaVencimiento\":\"" + limite + "\"}";
+
+        auditoria.registrarEvento(new RegistrarEventoReserva(
+                null,
+                reserva.getIdReserva(),
+                ahora,
+                "RECHAZO_AUTOMATICO_POR_VENCIMIENTO",
+                RECHAZADA,
+                detalle));
+
+        eventPublisher.publishEvent(new ReservaRetencionVencidaEvent(
+                reserva.getIdHuesped(),
+                reserva.getIdReserva(),
+                datos == null ? null : datos.getIdPublicacion(),
+                ahora,
+                MOTIVO_VENCIMIENTO));
     }
 }
