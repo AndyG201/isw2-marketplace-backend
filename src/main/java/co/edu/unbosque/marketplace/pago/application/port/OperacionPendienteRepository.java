@@ -6,21 +6,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
 import co.edu.unbosque.marketplace.pago.domain.OperacionPendiente;
 
-@Repository
-public interface OperacionPendienteRepository extends JpaRepository<OperacionPendiente, UUID> {
+public interface OperacionPendienteRepository {
 
+    <S extends OperacionPendiente> S save(S entidad);
+    <S extends OperacionPendiente> List<S> saveAll(Iterable<S> entidades);
+    <S extends OperacionPendiente> S saveAndFlush(S entidad);
+    Optional<OperacionPendiente> findById(UUID id);
+    List<OperacionPendiente> findAll();
+    boolean existsById(UUID id);
+    long count();
+    void delete(OperacionPendiente entidad);
+    void deleteById(UUID id);
+    void flush();
     Optional<OperacionPendiente> findByClaveIdempotencia(String claveIdempotencia);
-
-    Optional<OperacionPendiente> findFirstByIdReservaAndEstadoIn(
-            UUID idReserva,
-            Collection<String> estados);
-
-    List<OperacionPendiente> findTop25ByEstadoAndProximaEjecucionLessThanEqualOrderByProximaEjecucionAsc(
-            String estado,
-            OffsetDateTime fecha);
+    Optional<OperacionPendiente> findFirstByIdReservaAndEstadoIn(UUID idReserva, Collection<String> estados);
+    List<OperacionPendiente> findTop25ByEstadoAndProximaEjecucionLessThanEqualOrderByProximaEjecucionAsc(String estado, OffsetDateTime fecha);
 }

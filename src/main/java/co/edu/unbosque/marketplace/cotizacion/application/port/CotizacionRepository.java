@@ -1,16 +1,22 @@
 package co.edu.unbosque.marketplace.cotizacion.application.port;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import co.edu.unbosque.marketplace.cotizacion.domain.Cotizacion;
 
-@Repository
-public interface CotizacionRepository
-        extends JpaRepository<Cotizacion, UUID> {
+public interface CotizacionRepository {
 
+    <S extends Cotizacion> S save(S entidad);
+    <S extends Cotizacion> List<S> saveAll(Iterable<S> entidades);
+    <S extends Cotizacion> S saveAndFlush(S entidad);
+    Optional<Cotizacion> findById(UUID id);
+    List<Cotizacion> findAll();
+    boolean existsById(UUID id);
+    long count();
+    void delete(Cotizacion entidad);
+    void deleteById(UUID id);
+    void flush();
     List<Cotizacion> findByIdPublicacion(UUID idPublicacion);
 }

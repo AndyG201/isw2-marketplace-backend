@@ -5,32 +5,20 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
-import jakarta.persistence.LockModeType;
-
 import co.edu.unbosque.marketplace.tarifa.domain.ConfiguracionTarifa;
 
-@Repository
-public interface ConfiguracionTarifaRepository
-        extends JpaRepository<ConfiguracionTarifa, UUID> {
+public interface ConfiguracionTarifaRepository {
 
-    Optional<ConfiguracionTarifa>
-    findFirstByVigenteHastaIsNullAndVigenteDesdeLessThanEqualOrderByVigenteDesdeDesc(
-            OffsetDateTime instante);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT c
-            FROM ConfiguracionTarifa c
-            WHERE c.vigenteHasta IS NULL
-              AND c.vigenteDesde <= :instante
-            ORDER BY c.vigenteDesde DESC
-            """)
-    List<ConfiguracionTarifa> bloquearConfiguracionesVigentes(
-            @Param("instante") OffsetDateTime instante);
+    <S extends ConfiguracionTarifa> S save(S entidad);
+    <S extends ConfiguracionTarifa> List<S> saveAll(Iterable<S> entidades);
+    <S extends ConfiguracionTarifa> S saveAndFlush(S entidad);
+    Optional<ConfiguracionTarifa> findById(UUID id);
+    List<ConfiguracionTarifa> findAll();
+    boolean existsById(UUID id);
+    long count();
+    void delete(ConfiguracionTarifa entidad);
+    void deleteById(UUID id);
+    void flush();
+    Optional<ConfiguracionTarifa> findFirstByVigenteHastaIsNullAndVigenteDesdeLessThanEqualOrderByVigenteDesdeDesc(OffsetDateTime instante);
+    List<ConfiguracionTarifa> bloquearConfiguracionesVigentes(OffsetDateTime instante);
 }

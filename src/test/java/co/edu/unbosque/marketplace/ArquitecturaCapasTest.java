@@ -92,6 +92,20 @@ class ArquitecturaCapasTest {
                 .check(clases);
     }
 
+    /**
+     * Los repositorios de la aplicación son interfaces puras (application/port); la parte de Spring Data
+     * (JpaRepository, @Query, @Lock) vive en infrastructure/persistence. Se permiten los tipos de valor
+     * org.springframework.data.domain (Sort, Pageable).
+     */
+    @Test
+    void laAplicacionNoDependeDeSpringDataJpa() {
+        noClasses().that().resideInAPackage("..application..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "org.springframework.data.jpa..", "org.springframework.data.repository..")
+                .because("los repositorios son puertos puros; Spring Data se implementa en infraestructura")
+                .check(clases);
+    }
+
     @Test
     void laAplicacionNoUsaJdbcDirectamente() {
         noClasses().that().resideInAPackage("..application..")

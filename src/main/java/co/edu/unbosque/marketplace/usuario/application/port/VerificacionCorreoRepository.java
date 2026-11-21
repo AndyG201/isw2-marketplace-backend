@@ -1,40 +1,26 @@
-
 package co.edu.unbosque.marketplace.usuario.application.port;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
 
-@Repository
-public interface VerificacionCorreoRepository
-        extends JpaRepository<VerificacionCorreo, UUID> {
+public interface VerificacionCorreoRepository {
 
-    Optional<VerificacionCorreo>
-            findByUsuarioAndVerificadoFalse(Usuario usuario);
-
-    Optional<VerificacionCorreo>
-            findTopByUsuarioAndVerificadoFalseOrderByFechaExpiracionDesc(
-                    Usuario usuario
-            );
-
-    @Modifying
-    @Query("""
-        UPDATE VerificacionCorreo v
-        SET v.fechaExpiracion = :fecha
-        WHERE v.usuario = :usuario
-        AND v.verificado = false
-    """)
-    int invalidarCodigosPendientes(
-            @Param("usuario") Usuario usuario,
-            @Param("fecha") OffsetDateTime fecha
-    );
+    <S extends VerificacionCorreo> S save(S entidad);
+    <S extends VerificacionCorreo> List<S> saveAll(Iterable<S> entidades);
+    <S extends VerificacionCorreo> S saveAndFlush(S entidad);
+    Optional<VerificacionCorreo> findById(UUID id);
+    List<VerificacionCorreo> findAll();
+    boolean existsById(UUID id);
+    long count();
+    void delete(VerificacionCorreo entidad);
+    void deleteById(UUID id);
+    void flush();
+    Optional<VerificacionCorreo> findByUsuarioAndVerificadoFalse(Usuario usuario);
+    Optional<VerificacionCorreo> findTopByUsuarioAndVerificadoFalseOrderByFechaExpiracionDesc(Usuario usuario);
+    int invalidarCodigosPendientes(Usuario usuario, OffsetDateTime fecha);
 }

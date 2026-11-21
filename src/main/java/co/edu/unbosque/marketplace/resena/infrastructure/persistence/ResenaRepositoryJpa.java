@@ -1,0 +1,17 @@
+package co.edu.unbosque.marketplace.resena.infrastructure.persistence;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import co.edu.unbosque.marketplace.resena.domain.Resena;
+import co.edu.unbosque.marketplace.resena.application.port.ResenaRepository;
+
+@Repository
+public interface ResenaRepositoryJpa extends JpaRepository<Resena, UUID>,
+        ResenaRepository {
+
+    Optional<Resena> findByIdReserva(UUID idReserva);
+}

@@ -1,18 +1,22 @@
 package co.edu.unbosque.marketplace.servicio.application.port;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import co.edu.unbosque.marketplace.servicio.domain.ServicioAdicional;
 
-@Repository
-public interface ServicioAdicionalRepository
-        extends JpaRepository<ServicioAdicional, UUID> {
+public interface ServicioAdicionalRepository {
 
-    List<ServicioAdicional> findByIdPublicacionAndActivoTrueOrderByNombreAsc(
-            UUID idPublicacion
-    );
+    <S extends ServicioAdicional> S save(S entidad);
+    <S extends ServicioAdicional> List<S> saveAll(Iterable<S> entidades);
+    <S extends ServicioAdicional> S saveAndFlush(S entidad);
+    Optional<ServicioAdicional> findById(UUID id);
+    List<ServicioAdicional> findAll();
+    boolean existsById(UUID id);
+    long count();
+    void delete(ServicioAdicional entidad);
+    void deleteById(UUID id);
+    void flush();
+    List<ServicioAdicional> findByIdPublicacionAndActivoTrueOrderByNombreAsc(UUID idPublicacion);
 }

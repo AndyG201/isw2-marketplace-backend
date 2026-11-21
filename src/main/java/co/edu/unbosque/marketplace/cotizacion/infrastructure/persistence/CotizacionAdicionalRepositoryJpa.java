@@ -1,0 +1,13 @@
+package co.edu.unbosque.marketplace.cotizacion.infrastructure.persistence;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import co.edu.unbosque.marketplace.cotizacion.domain.CotizacionAdicional;
+import co.edu.unbosque.marketplace.cotizacion.domain.CotizacionAdicionalId;
+import co.edu.unbosque.marketplace.cotizacion.application.port.CotizacionAdicionalRepository;
+
+@Repository
+public interface CotizacionAdicionalRepositoryJpa extends JpaRepository<CotizacionAdicional, CotizacionAdicionalId>,
+        CotizacionAdicionalRepository {
+}

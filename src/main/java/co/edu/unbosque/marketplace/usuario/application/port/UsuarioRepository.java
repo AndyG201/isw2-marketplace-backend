@@ -5,48 +5,26 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 
-@Repository
-public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
+public interface UsuarioRepository {
 
-	Optional<Usuario> findByCorreo(String correo);
-
-	boolean existsByDocumentoHash(byte[] documentoHash);
-
-	boolean existsByTelefono(String telefono);
-
-	Optional<Usuario> findByCorreoIgnoreCase(String correo);
-	
-	boolean existsByCorreoIgnoreCaseAndIdUsuarioNot(
-	        String correo,
-	        UUID idUsuario
-	);
-
-	@Modifying
-	@Query("""
-	        delete from Usuario u
-	        where u.estado = :estado
-	          and u.correoVerificado = false
-	          and u.fechaRegistro < :limite
-	        """)
-	int eliminarSinVerificarRegistradosAntesDe(
-	        @Param("estado") EstadoUsuario estado,
-	        @Param("limite") OffsetDateTime limite
-	);
-
-	@Query("""
-	        select u.idUsuario from Usuario u
-	        where u.rol.nombre = 'ADMINISTRADOR'
-	          and u.estado = :estado
-	          and u.restringido = false
-	        """)
-	List<UUID> buscarIdsAdministradores(@Param("estado") EstadoUsuario estado);
+    <S extends Usuario> S save(S entidad);
+    <S extends Usuario> List<S> saveAll(Iterable<S> entidades);
+    <S extends Usuario> S saveAndFlush(S entidad);
+    Optional<Usuario> findById(UUID id);
+    List<Usuario> findAll();
+    boolean existsById(UUID id);
+    long count();
+    void delete(Usuario entidad);
+    void deleteById(UUID id);
+    void flush();
+    Optional<Usuario> findByCorreo(String correo);
+    boolean existsByDocumentoHash(byte[] documentoHash);
+    boolean existsByTelefono(String telefono);
+    Optional<Usuario> findByCorreoIgnoreCase(String correo);
+    boolean existsByCorreoIgnoreCaseAndIdUsuarioNot(String correo, UUID idUsuario);
+    int eliminarSinVerificarRegistradosAntesDe(EstadoUsuario estado, OffsetDateTime limite);
+    List<UUID> buscarIdsAdministradores(EstadoUsuario estado);
 }

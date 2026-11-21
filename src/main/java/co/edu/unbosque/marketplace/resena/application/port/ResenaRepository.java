@@ -1,15 +1,22 @@
 package co.edu.unbosque.marketplace.resena.application.port;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
 import co.edu.unbosque.marketplace.resena.domain.Resena;
 
-@Repository
-public interface ResenaRepository extends JpaRepository<Resena, UUID> {
+public interface ResenaRepository {
 
+    <S extends Resena> S save(S entidad);
+    <S extends Resena> List<S> saveAll(Iterable<S> entidades);
+    <S extends Resena> S saveAndFlush(S entidad);
+    Optional<Resena> findById(UUID id);
+    List<Resena> findAll();
+    boolean existsById(UUID id);
+    long count();
+    void delete(Resena entidad);
+    void deleteById(UUID id);
+    void flush();
     Optional<Resena> findByIdReserva(UUID idReserva);
 }
