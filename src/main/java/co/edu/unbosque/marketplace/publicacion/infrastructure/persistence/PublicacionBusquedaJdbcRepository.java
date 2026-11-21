@@ -20,11 +20,90 @@ import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionBusquedaCrit
 @Repository
 public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRepository {
 
-    private static final String FROM_AND_WHERE = """
+    private static final UUID SIN_SERVICIOS = new UUID(0L, 0L);
+
+    private static final String FILTROS = """
             FROM public.publicacion p
             INNER JOIN public.alojamiento a
                 ON a.id_alojamiento = p.id_alojamiento
             WHERE p.estado = 'ACTIVA'
+              AND (CAST(:ciudad AS text) IS NULL
+                   OR translate(lower(a.ciudad), :conTilde, :sinTilde)
+                      LIKE CAST(:ciudad AS text) ESCAPE '\\')
+              AND (CAST(:tipoAlojamiento AS text) IS NULL
+                   OR lower(a.tipo_alojamiento) = CAST(:tipoAlojamiento AS text))
+              AND (CAST(:capacidad AS integer) IS NULL
+                   OR a.capacidad >= CAST(:capacidad AS integer))
+              AND (CAST(:precioMinimo AS numeric) IS NULL
+                   OR p.precio_por_noche >= CAST(:precioMinimo AS numeric))
+              AND (CAST(:precioMaximo AS numeric) IS NULL
+                   OR p.precio_por_noche <= CAST(:precioMaximo AS numeric))
+              AND (:cantidadServicios = 0
+                   OR p.id_publicacion IN (
+                       SELECT ps.id_publicacion
+                       FROM public.publicacion_servicio ps
+                       WHERE ps.id_servicio IN (:servicios)
+                       GROUP BY ps.id_publicacion
+                       HAVING COUNT(DISTINCT ps.id_servicio) = :cantidadServicios
+                   ))
+              AND (CAST(:fechaInicio AS date) IS NULL
+                   OR NOT EXISTS (
+                       SELECT 1
+                       FROM generate_series(
+                           CAST(:fechaInicio AS date),
+                           CAST(:fechaFin AS date) - 1,
+                           INTERVAL '1 day'
+                       ) AS noche(fecha)
+                       WHERE NOT EXISTS (
+                           SELECT 1
+                           FROM public.periodo_disponibilidad pd
+                           WHERE pd.id_alojamiento = a.id_alojamiento
+                             AND pd.habilitado = true
+                             AND pd.fecha_inicio <= CAST(noche.fecha AS date)
+                             AND pd.fecha_fin > CAST(noche.fecha AS date)
+                       )
+                       OR EXISTS (
+                           SELECT 1
+                           FROM public.noche_reservada nr
+                           INNER JOIN public.reserva_noche rn
+                               ON rn.id_noche = nr.id_noche
+                           INNER JOIN public.reserva r
+                               ON r.id_reserva = rn.id_reserva
+                           WHERE nr.id_alojamiento = a.id_alojamiento
+                             AND nr.fecha = CAST(noche.fecha AS date)
+                             AND (
+                                 r.estado IN ('PENDIENTE_APROBACION', 'CONFIRMADA', 'COMPLETADA')
+                                 OR (r.estado = 'PENDIENTE_PAGO'
+                                     AND r.retencion_hasta > CURRENT_TIMESTAMP)
+                             )
+                       )
+                   ))
+            """;
+
+    private static final String CONTAR = "SELECT COUNT(*) " + FILTROS;
+
+    private static final String CONSULTAR = """
+            SELECT p.id_publicacion,
+                   a.id_alojamiento,
+                   p.titulo,
+                   a.ciudad,
+                   a.pais,
+                   a.codigo_pais,
+                   a.tipo_alojamiento,
+                   a.capacidad,
+                   p.precio_por_noche,
+                   p.estado,
+                   p.fecha_creacion,
+                   (
+                       SELECT i.ruta_imagen
+                       FROM public.imagen_publicacion i
+                       WHERE i.id_publicacion = p.id_publicacion
+                       ORDER BY i.es_portada DESC, i.orden ASC
+                       LIMIT 1
+                   ) AS imagen_portada
+            """ + FILTROS + """
+            ORDER BY p.fecha_creacion DESC, p.id_publicacion ASC
+            LIMIT :tamano OFFSET :offset
             """;
 
     private static final String CON_TILDE = "áàäâéèëêíìïîóòöôúùüûñç";
@@ -44,158 +123,31 @@ public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRep
     public PaginaPublicacionesResponse buscar(
             PublicacionBusquedaCriteria criteria) {
 
-        StringBuilder condiciones = new StringBuilder(FROM_AND_WHERE);
         MapSqlParameterSource parametros = new MapSqlParameterSource()
                 .addValue("tamano", criteria.tamano())
-                .addValue(
-                        "offset",
-                        (long) criteria.pagina() * criteria.tamano()
-                );
+                .addValue("offset", (long) criteria.pagina() * criteria.tamano())
+                .addValue("conTilde", CON_TILDE)
+                .addValue("sinTilde", SIN_TILDE)
+                .addValue("ciudad", criteria.ciudad() == null
+                        ? null
+                        : "%" + patronCiudad(criteria.ciudad()) + "%")
+                .addValue("tipoAlojamiento", criteria.tipoAlojamiento() == null
+                        ? null
+                        : criteria.tipoAlojamiento().toLowerCase(Locale.ROOT))
+                .addValue("capacidad", criteria.capacidad())
+                .addValue("precioMinimo", criteria.precioMinimo())
+                .addValue("precioMaximo", criteria.precioMaximo())
+                .addValue("servicios", criteria.servicios().isEmpty()
+                        ? List.of(SIN_SERVICIOS)
+                        : criteria.servicios())
+                .addValue("cantidadServicios", criteria.servicios().size())
+                .addValue("fechaInicio", criteria.fechaInicio())
+                .addValue("fechaFin", criteria.fechaFin());
 
-        if (criteria.ciudad() != null) {
-            condiciones.append(" AND translate(lower(a.ciudad), :conTilde, :sinTilde)"
-                    + " LIKE :ciudad ESCAPE '\\'");
-            parametros.addValue("conTilde", CON_TILDE);
-            parametros.addValue("sinTilde", SIN_TILDE);
-            parametros.addValue("ciudad", "%" + patronCiudad(criteria.ciudad()) + "%");
-        }
-
-        if (criteria.tipoAlojamiento() != null) {
-            condiciones.append(
-                    " AND lower(a.tipo_alojamiento) = :tipoAlojamiento"
-            );
-            parametros.addValue(
-                    "tipoAlojamiento",
-                    criteria.tipoAlojamiento()
-                            .toLowerCase(java.util.Locale.ROOT)
-            );
-        }
-
-        if (criteria.capacidad() != null) {
-            condiciones.append(" AND a.capacidad >= :capacidad");
-            parametros.addValue("capacidad", criteria.capacidad());
-        }
-
-        if (criteria.precioMinimo() != null) {
-            condiciones.append(
-                    " AND p.precio_por_noche >= :precioMinimo"
-            );
-            parametros.addValue(
-                    "precioMinimo",
-                    criteria.precioMinimo()
-            );
-        }
-
-        if (criteria.precioMaximo() != null) {
-            condiciones.append(
-                    " AND p.precio_por_noche <= :precioMaximo"
-            );
-            parametros.addValue(
-                    "precioMaximo",
-                    criteria.precioMaximo()
-            );
-        }
-
-        if (!criteria.servicios().isEmpty()) {
-            condiciones.append("""
-                     AND p.id_publicacion IN (
-                        SELECT ps.id_publicacion
-                        FROM public.publicacion_servicio ps
-                        WHERE ps.id_servicio IN (:servicios)
-                        GROUP BY ps.id_publicacion
-                        HAVING COUNT(DISTINCT ps.id_servicio)
-                            = :cantidadServicios
-                    )
-                    """);
-            parametros.addValue("servicios", criteria.servicios());
-            parametros.addValue(
-                    "cantidadServicios",
-                    criteria.servicios().size()
-            );
-        }
-
-        if (criteria.fechaInicio() != null) {
-            condiciones.append("""
-                     AND NOT EXISTS (
-                        SELECT 1
-                        FROM generate_series(
-                            CAST(:fechaInicio AS date),
-                            CAST(:fechaFin AS date) - 1,
-                            INTERVAL '1 day'
-                        ) AS noche(fecha)
-                        WHERE NOT EXISTS (
-                            SELECT 1
-                            FROM public.periodo_disponibilidad pd
-                            WHERE pd.id_alojamiento = a.id_alojamiento
-                              AND pd.habilitado = true
-                              AND pd.fecha_inicio
-                                  <= CAST(noche.fecha AS date)
-                              AND pd.fecha_fin
-                                  > CAST(noche.fecha AS date)
-                        )
-                        OR EXISTS (
-                            SELECT 1
-                            FROM public.noche_reservada nr
-                            INNER JOIN public.reserva_noche rn
-                                ON rn.id_noche = nr.id_noche
-                            INNER JOIN public.reserva r
-                                ON r.id_reserva = rn.id_reserva
-                            WHERE nr.id_alojamiento = a.id_alojamiento
-                              AND nr.fecha = CAST(noche.fecha AS date)
-                              AND (
-                                  r.estado IN (
-                                      'PENDIENTE_APROBACION',
-                                      'CONFIRMADA',
-                                      'COMPLETADA'
-                                  )
-                                  OR (
-                                      r.estado = 'PENDIENTE_PAGO'
-                                      AND r.retencion_hasta > CURRENT_TIMESTAMP
-                                  )
-                              )
-                        )
-                    )
-                    """);
-            parametros.addValue("fechaInicio", criteria.fechaInicio());
-            parametros.addValue("fechaFin", criteria.fechaFin());
-        }
-
-        String where = condiciones.toString();
-
-        Long total = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) " + where,
-                parametros,
-                Long.class
-        );
+        Long total = jdbcTemplate.queryForObject(CONTAR, parametros, Long.class);
 
         List<PublicacionResumenResponse> publicaciones =
-                jdbcTemplate.query(
-                        """
-                        SELECT p.id_publicacion,
-                               a.id_alojamiento,
-                               p.titulo,
-                               a.ciudad,
-                               a.pais,
-                               a.codigo_pais,
-                               a.tipo_alojamiento,
-                               a.capacidad,
-                               p.precio_por_noche,
-                               p.estado,
-                               p.fecha_creacion,
-                               (
-                                   SELECT i.ruta_imagen
-                                   FROM public.imagen_publicacion i
-                                   WHERE i.id_publicacion = p.id_publicacion
-                                   ORDER BY i.es_portada DESC, i.orden ASC
-                                   LIMIT 1
-                               ) AS imagen_portada
-                        """ + where
-                                + " ORDER BY p.fecha_creacion DESC,"
-                                + " p.id_publicacion ASC"
-                                + " LIMIT :tamano OFFSET :offset",
-                        parametros,
-                        ROW_MAPPER
-                );
+                jdbcTemplate.query(CONSULTAR, parametros, ROW_MAPPER);
 
         long cantidad = total == null ? 0 : total;
         int totalPaginas = (int) Math.min(
