@@ -1,6 +1,7 @@
 package co.edu.unbosque.marketplace.usuario.application.port;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,4 +41,12 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
 	        @Param("estado") EstadoUsuario estado,
 	        @Param("limite") OffsetDateTime limite
 	);
+
+	@Query("""
+	        select u.idUsuario from Usuario u
+	        where u.rol.nombre = 'ADMINISTRADOR'
+	          and u.estado = :estado
+	          and u.restringido = false
+	        """)
+	List<UUID> buscarIdsAdministradores(@Param("estado") EstadoUsuario estado);
 }

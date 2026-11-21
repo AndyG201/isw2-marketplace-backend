@@ -17,7 +17,6 @@ import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoPublicacio
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoReserva;
 import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
-import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionDestinatarioRepository;
 
 @Component
 public class NotificacionEstadoCambioHandler {
@@ -29,13 +28,13 @@ public class NotificacionEstadoCambioHandler {
     private static final List<String> DECISIONES_RESERVA_NOTIFICADAS = List.of("PENDIENTE_PAGO", "RECHAZADA");
 
     private final NotificacionRepository notificaciones;
-    private final NotificacionDestinatarioRepository destinatarios;
+    private final DestinatariosNotificacion destinatarios;
     private final AuditoriaReservaCommand auditoriaReservas;
     private final AuditoriaPublicacionCommand auditoriaPublicaciones;
 
     public NotificacionEstadoCambioHandler(
             NotificacionRepository notificaciones,
-            NotificacionDestinatarioRepository destinatarios,
+            DestinatariosNotificacion destinatarios,
             AuditoriaReservaCommand auditoriaReservas,
             AuditoriaPublicacionCommand auditoriaPublicaciones) {
         this.notificaciones = notificaciones;
