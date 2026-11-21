@@ -181,6 +181,7 @@ public final class EscenarioReservaPrueba {
             jdbc.update("DELETE FROM resena WHERE id_reserva = ?", idReserva);
             jdbc.update("DELETE FROM cancelacion WHERE id_reserva = ?", idReserva);
             jdbc.update("DELETE FROM operacion_pendiente WHERE id_reserva = ?", idReserva);
+            jdbc.update("DELETE FROM reembolso_pago WHERE id_reserva = ?", idReserva);
             jdbc.update("DELETE FROM pago WHERE id_reserva = ?", idReserva);
             jdbc.update("DELETE FROM reserva_noche WHERE id_reserva = ?", idReserva);
             jdbc.update("DELETE FROM bandeja_salida_auditoria WHERE id_entidad_afectada = ?", idReserva);

@@ -6,7 +6,6 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +18,7 @@ import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.pago.contracts.PagoInfo;
 import co.edu.unbosque.marketplace.pago.contracts.RegistroPagos;
 import co.edu.unbosque.marketplace.reserva.application.dto.PagoSimuladoResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.BloqueoClaveIdempotencia;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
@@ -36,17 +36,17 @@ public class ReservaPagoIntentoService {
 
     private final ReservaConfirmacionRepository reservas;
     private final RegistroPagos pagos;
-    private final JdbcTemplate jdbc;
+    private final BloqueoClaveIdempotencia bloqueo;
     private final NocheReservaRepository noches;
 
     public ReservaPagoIntentoService(
             ReservaConfirmacionRepository reservas,
             RegistroPagos pagos,
-            JdbcTemplate jdbc,
+            BloqueoClaveIdempotencia bloqueo,
             NocheReservaRepository noches) {
         this.reservas = reservas;
         this.pagos = pagos;
-        this.jdbc = jdbc;
+        this.bloqueo = bloqueo;
         this.noches = noches;
     }
 
@@ -59,7 +59,7 @@ public class ReservaPagoIntentoService {
             throw new DatosInvalidosException("El identificador de la reserva es obligatorio.");
         }
         String claveNormalizada = normalizarClave(clave);
-        bloquearClave(claveNormalizada);
+        bloqueo.bloquear("pago", claveNormalizada);
 
         Reserva reserva = reservas.bloquearPorId(idReserva)
                 .orElseThrow(() -> new RecursoNoEncontradoException("La reserva no existe."));
@@ -224,15 +224,5 @@ public class ReservaPagoIntentoService {
                     "Debes enviar Idempotency-Key de máximo 100 caracteres.");
         }
         return clave.trim();
-    }
-
-    private void bloquearClave(String clave) {
-        jdbc.query(
-                "SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
-                resultado -> {
-                    resultado.next();
-                    return null;
-                },
-                "pago:" + clave);
     }
 }

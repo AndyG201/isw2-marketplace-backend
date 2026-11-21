@@ -13,10 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import co.edu.unbosque.marketplace.pago.contracts.PagoInfo;
 import co.edu.unbosque.marketplace.pago.contracts.RegistroPagos;
+import co.edu.unbosque.marketplace.reserva.application.port.BloqueoClaveIdempotencia;
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
@@ -26,7 +26,7 @@ class ReservaPagoIntentoReembolsoTest {
 
     @Mock private ReservaConfirmacionRepository reservas;
     @Mock private RegistroPagos pagos;
-    @Mock private JdbcTemplate jdbc;
+    @Mock private BloqueoClaveIdempotencia bloqueo;
     @Mock private NocheReservaRepository noches;
     @InjectMocks private ReservaPagoIntentoService servicio;
 

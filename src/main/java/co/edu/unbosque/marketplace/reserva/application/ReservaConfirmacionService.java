@@ -4,7 +4,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +18,7 @@ import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
 import co.edu.unbosque.marketplace.pago.contracts.RegistroPagos;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
 import co.edu.unbosque.marketplace.reserva.application.dto.ConfirmacionReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.BloqueoClaveIdempotencia;
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
@@ -33,17 +33,17 @@ public class ReservaConfirmacionService {
     private final NocheReservaRepository noches;
     private final PeriodosHabilitadosQuery periodos;
     private final PagoSandboxGateway pasarela;
-    private final JdbcTemplate jdbc;
+    private final BloqueoClaveIdempotencia bloqueo;
 
     public ReservaConfirmacionService(ReservaConfirmacionRepository reservas, RegistroPagos pagos,
             NocheReservaRepository noches, PeriodosHabilitadosQuery periodos, PagoSandboxGateway pasarela,
-            JdbcTemplate jdbc) {
+            BloqueoClaveIdempotencia bloqueo) {
         this.reservas = reservas;
         this.pagos = pagos;
         this.noches = noches;
         this.periodos = periodos;
         this.pasarela = pasarela;
-        this.jdbc = jdbc;
+        this.bloqueo = bloqueo;
     }
 
     @Transactional
@@ -77,7 +77,7 @@ public class ReservaConfirmacionService {
         }
         String idempotencia = clave.trim();
         Reserva reserva = bloquearYValidarPropietario(idUsuario, idReserva);
-        bloquearClaveIdempotencia(idempotencia);
+        bloqueo.bloquear("pago", idempotencia);
 
         var pagoPrevio = pagos.buscarPorClave(idempotencia);
         if (pagoPrevio.isPresent()) {
@@ -137,16 +137,6 @@ public class ReservaConfirmacionService {
                 }
             });
         }
-    }
-
-    private void bloquearClaveIdempotencia(String clave) {
-        jdbc.query(
-                "SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
-                resultado -> {
-                    resultado.next();
-                    return null;
-                },
-                "pago:" + clave);
     }
 
     private Reserva bloquearYValidarPropietario(UUID usuario, UUID idReserva) {

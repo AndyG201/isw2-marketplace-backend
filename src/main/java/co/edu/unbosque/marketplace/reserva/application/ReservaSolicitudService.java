@@ -8,7 +8,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +19,7 @@ import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoExceptio
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.reserva.application.dto.CrearReservaRequest;
 import co.edu.unbosque.marketplace.reserva.application.dto.SolicitudReservaResponse;
+import co.edu.unbosque.marketplace.reserva.application.port.BloqueoClaveIdempotencia;
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudRepository;
@@ -40,7 +40,7 @@ public class ReservaSolicitudService {
     private final NocheReservaRepository noches;
     private final PeriodosHabilitadosQuery periodos;
     private final ApplicationEventPublisher eventPublisher;
-    private final JdbcTemplate jdbc;
+    private final BloqueoClaveIdempotencia bloqueo;
     private AuditoriaEventoCommand auditoria;
 
     public ReservaSolicitudService(
@@ -48,12 +48,12 @@ public class ReservaSolicitudService {
             NocheReservaRepository noches,
             PeriodosHabilitadosQuery periodos,
             ApplicationEventPublisher eventPublisher,
-            JdbcTemplate jdbc) {
+            BloqueoClaveIdempotencia bloqueo) {
         this.reservaRepository = reservaRepository;
         this.noches = noches;
         this.periodos = periodos;
         this.eventPublisher = eventPublisher;
-        this.jdbc = jdbc;
+        this.bloqueo = bloqueo;
     }
 
     @Autowired
@@ -75,7 +75,7 @@ public class ReservaSolicitudService {
         validarSolicitud(solicitud, claveIdempotencia);
 
         String idempotencia = claveIdempotencia.trim();
-        bloquearClaveIdempotencia(idempotencia);
+        bloqueo.bloquear("reserva", idempotencia);
 
         Optional<Reserva> repetida = reservaRepository
                 .findByClaveIdempotencia(idempotencia);
@@ -179,16 +179,6 @@ public class ReservaSolicitudService {
         }
 
         return convertirRespuesta(guardada);
-    }
-
-    private void bloquearClaveIdempotencia(String clave) {
-        jdbc.query(
-                "SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
-                resultado -> {
-                    resultado.next();
-                    return null;
-                },
-                "reserva:" + clave);
     }
 
     private void validarSolicitud(
