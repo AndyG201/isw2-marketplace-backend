@@ -16,6 +16,8 @@ public class ReservaStripeWebhookSecurityConfiguration {
     SecurityFilterChain stripeWebhookSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .securityMatcher("/reservas/webhooks/stripe")
+                // Seguro sin CSRF: Stripe llama desde su servidor, sin cookies ni sesión de navegador, y
+                // ReservaStripeWebhookService rechaza cualquier llamada cuya firma Stripe-Signature no sea válida.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(autorizacion -> autorizacion.anyRequest().permitAll())

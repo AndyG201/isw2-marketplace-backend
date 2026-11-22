@@ -108,7 +108,10 @@ class PublicacionServicioIdTest {
 
     @Test
     void debeRetornarFalseAlCompararseConOtroTipoDeObjeto() {
-        assertNotEquals("PublicacionServicioId", id);
+        // Un objeto de otro tipo, visto como Object: equals debe devolver false sin fallar.
+        Object deOtroTipo = "PublicacionServicioId";
+
+        assertNotEquals(id, deOtroTipo);
     }
 
     @Test

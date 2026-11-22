@@ -29,7 +29,10 @@ class ProteccionDocumentoRegistrosTest {
         assertNotEquals(base, new TextoCifrado(new byte[] {1, 2, 4}, new byte[] {9}));
         assertNotEquals(base, new TextoCifrado(new byte[] {1, 2, 3}, new byte[] {8}));
         assertNotEquals(base, null);
-        assertNotEquals(base, "texto");
+
+        // Un objeto de otro tipo, visto como Object: equals debe devolver false sin fallar.
+        Object deOtroTipo = "texto";
+        assertNotEquals(base, deOtroTipo);
     }
 
     @Test
