@@ -1,0 +1,118 @@
+# A3: despliegue local solo del backend. No incluye frontend ni autoheal/backups (A4/A5).
+# Usar: docker compose --env-file .env.docker -p marketplace-a3 up -d --build
+name: marketplace-a3
+
+x-backend: &backend
+  image: marketplace-backend:a3
+  build:
+    context: .
+    dockerfile: Dockerfile
+  env_file:
+    - .env.docker
+  environment:
+    SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/marketplace
+    SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:?Falta SPRING_DATASOURCE_USERNAME en .env.docker}
+    SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?Falta SPRING_DATASOURCE_PASSWORD en .env.docker}
+    SPRING_DATA_REDIS_HOST: redis
+    SPRING_DATA_REDIS_PORT: "6379"
+    # Evita que la aplicacion agote las conexiones de esta base compartida.
+    DB_POOL_SIZE: "5"
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  volumes:
+    - marketplace_uploads:/app/uploads
+    - marketplace_reportes:/app/reportes
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 45s
+  networks:
+    - backend
+
+services:
+  postgres:
+    image: postgres:18.6
+    environment:
+      POSTGRES_DB: marketplace
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:?Falta SPRING_DATASOURCE_USERNAME en .env.docker}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?Falta SPRING_DATASOURCE_PASSWORD en .env.docker}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+    volumes:
+      # PostgreSQL 18 utiliza /var/lib/postgresql como raiz del volumen.
+      - marketplace_postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\" -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - marketplace_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - backend
+
+  api:
+    <<: *backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/marketplace
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:?Falta SPRING_DATASOURCE_USERNAME en .env.docker}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?Falta SPRING_DATASOURCE_PASSWORD en .env.docker}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      DB_POOL_SIZE: "5"
+    ports:
+      - "127.0.0.1:8082:8080"
+    healthcheck:
+      # Readiness incluye PostgreSQL/Redis, ademas de la aplicacion.
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --connect-timeout 2 --max-time 4 http://127.0.0.1:8080/actuator/health/readiness >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 180s
+      retries: 3
+
+  worker:
+    <<: *backend
+    environment:
+      # NO pasar '--worker': el entrypoint de A2 lo bloquea intencionalmente.
+      SPRING_PROFILES_ACTIVE: docker,worker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/marketplace
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:?Falta SPRING_DATASOURCE_USERNAME en .env.docker}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?Falta SPRING_DATASOURCE_PASSWORD en .env.docker}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      DB_POOL_SIZE: "5"
+    # Puerto HTTP solo dentro del contenedor; no se publica en el equipo.
+    healthcheck:
+      # Liveness verifica el proceso; NO garantiza el exito de tareas programadas.
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --connect-timeout 2 --max-time 4 http://127.0.0.1:8080/actuator/health/liveness >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 180s
+      retries: 3
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  marketplace_postgres:
+  marketplace_redis:
+  marketplace_uploads:
+  marketplace_reportes:
