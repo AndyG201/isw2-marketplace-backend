@@ -49,3 +49,4 @@ logs/
 # Reportes generados por el worker
 reportes/
 /backups/
+.factorypath
