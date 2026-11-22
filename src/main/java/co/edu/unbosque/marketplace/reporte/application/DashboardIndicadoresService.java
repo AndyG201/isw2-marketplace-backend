@@ -11,14 +11,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.reporte.application.dto.DashboardIndicadoresResponse;
 import co.edu.unbosque.marketplace.reporte.application.port.DashboardIndicadoresRepository;
+import co.edu.unbosque.marketplace.reporte.application.port.RepartoReservasRepository;
+import co.edu.unbosque.marketplace.reporte.domain.CalculadoraReparto;
+import co.edu.unbosque.marketplace.reporte.domain.ResumenFinanciero;
 
 @Service
 public class DashboardIndicadoresService {
 
     private final DashboardIndicadoresRepository indicadores;
+    private final RepartoReservasRepository repartos;
 
-    public DashboardIndicadoresService(DashboardIndicadoresRepository indicadores) {
+    public DashboardIndicadoresService(
+            DashboardIndicadoresRepository indicadores,
+            RepartoReservasRepository repartos) {
         this.indicadores = indicadores;
+        this.repartos = repartos;
     }
 
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -44,7 +51,13 @@ public class DashboardIndicadoresService {
                 indicadores.contarPublicacionesActivas(),
                 reservasPorEstado,
                 indicadores.calcularIngresosEstimados(),
+                finanzas(),
                 ciudades,
                 OffsetDateTime.now(ZoneOffset.UTC));
+    }
+
+    /** Pagado, devuelto y repartido entre la plataforma y los anfitriones, según las reservas pagadas. */
+    private ResumenFinanciero finanzas() {
+        return ResumenFinanciero.de(repartos.pagosAprobados().stream().map(CalculadoraReparto::repartir).toList());
     }
 }

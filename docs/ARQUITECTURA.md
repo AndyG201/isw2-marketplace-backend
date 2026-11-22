@@ -106,6 +106,18 @@ Los servicios lanzan excepciones de `compartido.domain` y `ErroresApiHandler` la
   contrato por puerto se ejecuta contra la versión en memoria y contra la real con Redis, para que no se parezcan solo en apariencia.
   Son dobles de prueba: no se despliegan.
 
+### Dinero: pagado, devoluciones y reparto
+
+El módulo `reporte` calcula cuánto dinero hay y quién se lo queda, a partir de los pagos aprobados (`pago.estado = PAGADO`):
+
+- La cotización suma `noches + limpieza + comisión + servicios adicionales - descuento`; la comisión y el descuento son porcentajes del valor de las noches.
+- **La plataforma** se queda con `comisión - descuento` (el descuento lo asume ella). **El anfitrión** se queda con el resto (noches, limpieza y servicios adicionales).
+- Si la reserva se cancela, la devolución (`cancelacion.valor_devolucion`, calculada con la política de cancelación sobre lo pagado) sale de ambos **en la misma proporción**.
+- Los porcentajes son los de la tarifa con la que se cotizó (`cotizacion.id_configuracion`), no los de la tarifa vigente hoy.
+- La lógica es una clase pura (`CalculadoraReparto`, en `reporte/domain`), sin acceso a la base de datos; el puerto `RepartoReservasRepository` solo entrega los pagos con sus datos.
+- Se muestra en el tablero del administrador (`finanzas`), en los reportes PDF y Excel, y al anfitrión en `GET /anfitrion/ingresos` (solo lo suyo).
+- `ingresosEstimados` se conserva en el tablero con su significado anterior (suma de pagos aprobados, sin restar devoluciones) para no romper a quien lo use.
+
 ## 6. Concesiones conocidas
 
 Estas dependencias técnicas siguen dentro de las capas y están aceptadas por ahora:

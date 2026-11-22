@@ -7,11 +7,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import co.edu.unbosque.marketplace.reporte.domain.ResumenFinanciero;
+
 public record DashboardIndicadoresResponse(
         IndicadoresUsuarios usuarios,
         long publicacionesActivas,
         Map<String, Long> reservasPorEstado,
         BigDecimal ingresosEstimados,
+        ResumenFinanciero finanzas,
         List<DemandaCiudad> ciudadesConMayorDemanda,
         OffsetDateTime fechaCorteDatos) {
 

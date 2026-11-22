@@ -66,7 +66,11 @@ public class ReporteArchivoGenerator {
         r.add(new String[] {"Huéspedes", Long.toString(d.usuarios().huespedes())});
         r.add(new String[] {"Anfitriones", Long.toString(d.usuarios().anfitriones())});
         r.add(new String[] {"Publicaciones activas", Long.toString(d.publicacionesActivas())});
-        r.add(new String[] {"Ingresos estimados", d.ingresosEstimados().toPlainString()});
+        r.add(new String[] {"Pagado por huéspedes", d.finanzas().pagadoPorHuespedes().toPlainString()});
+        r.add(new String[] {"Devoluciones por cancelaciones", d.finanzas().devoluciones().toPlainString()});
+        r.add(new String[] {"Ingresos netos", d.finanzas().ingresosNetos().toPlainString()});
+        r.add(new String[] {"Comisión de la plataforma", d.finanzas().comisionPlataforma().toPlainString()});
+        r.add(new String[] {"Ganancias de los anfitriones", d.finanzas().gananciasAnfitriones().toPlainString()});
         d.reservasPorEstado().forEach(
                 (estado, cantidad) -> r.add(new String[] {"Reservas " + estado, cantidad.toString()}));
         d.ciudadesConMayorDemanda().forEach(
