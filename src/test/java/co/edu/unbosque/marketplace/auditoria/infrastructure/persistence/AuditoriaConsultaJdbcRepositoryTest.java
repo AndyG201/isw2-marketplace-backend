@@ -86,9 +86,9 @@ class AuditoriaConsultaJdbcRepositoryTest {
         );
 
         assertTrue(sql.getValue().contains("public.evento_auditoria"));
-        assertTrue(sql.getValue().contains("id_usuario = ?"));
-        assertTrue(sql.getValue().contains("fecha_evento >= ?"));
-        assertTrue(sql.getValue().contains("fecha_evento <= ?"));
+        assertTrue(sql.getValue().contains("id_usuario = CAST(? AS uuid)"));
+        assertTrue(sql.getValue().contains("fecha_evento >= CAST(? AS timestamptz)"));
+        assertTrue(sql.getValue().contains("fecha_evento <= CAST(? AS timestamptz)"));
         assertTrue(sql.getValue().contains("ORDER BY fecha_evento DESC"));
         assertTrue(sql.getValue().contains("LIMIT ? OFFSET ?"));
     }

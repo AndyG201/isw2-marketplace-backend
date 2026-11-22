@@ -4,6 +4,7 @@ package co.edu.unbosque.marketplace.usuario.security;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
@@ -161,11 +162,59 @@ public class ProteccionDocumento {
         }
     }
 
-    public record TextoCifrado(byte[] contenido, byte[] nonce) { }
+    /**
+     * Dos valores son iguales si tienen los mismos bytes (no la misma referencia al arreglo). El texto no
+     * muestra los bytes: es información cifrada y no debe terminar en un log.
+     */
+    public record TextoCifrado(byte[] contenido, byte[] nonce) {
 
+        @Override
+        public boolean equals(Object otro) {
+            return otro instanceof TextoCifrado(byte[] otroContenido, byte[] otroNonce)
+                    && Arrays.equals(contenido, otroContenido)
+                    && Arrays.equals(nonce, otroNonce);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Arrays.hashCode(contenido) + Arrays.hashCode(nonce);
+        }
+
+        @Override
+        public String toString() {
+            return "TextoCifrado[contenido=" + longitud(contenido) + ", nonce=" + longitud(nonce) + "]";
+        }
+    }
+
+    /** Igual que {@link TextoCifrado}: igualdad por contenido y un texto que no muestra los bytes. */
     public record DatosDocumento(
             byte[] documentoCifrado,
             byte[] documentoNonce,
             byte[] documentoHash) {
+
+        @Override
+        public boolean equals(Object otro) {
+            return otro instanceof DatosDocumento(byte[] otroCifrado, byte[] otroNonce, byte[] otroHash)
+                    && Arrays.equals(documentoCifrado, otroCifrado)
+                    && Arrays.equals(documentoNonce, otroNonce)
+                    && Arrays.equals(documentoHash, otroHash);
+        }
+
+        @Override
+        public int hashCode() {
+            int resultado = Arrays.hashCode(documentoCifrado);
+            resultado = 31 * resultado + Arrays.hashCode(documentoNonce);
+            return 31 * resultado + Arrays.hashCode(documentoHash);
+        }
+
+        @Override
+        public String toString() {
+            return "DatosDocumento[documentoCifrado=" + longitud(documentoCifrado) + ", documentoNonce="
+                    + longitud(documentoNonce) + ", documentoHash=" + longitud(documentoHash) + "]";
+        }
+    }
+
+    private static String longitud(byte[] bytes) {
+        return bytes == null ? "null" : bytes.length + " bytes";
     }
 }

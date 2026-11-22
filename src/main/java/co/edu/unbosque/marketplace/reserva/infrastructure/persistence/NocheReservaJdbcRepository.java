@@ -3,7 +3,6 @@ package co.edu.unbosque.marketplace.reserva.infrastructure.persistence;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -136,6 +135,18 @@ public class NocheReservaJdbcRepository implements NocheReservaRepository {
             )
             """;
 
+    /** Suelta de una vez las noches de una reserva: quita sus vínculos y borra las noches que quedaron libres. */
+    private static final String LIBERAR_NOCHES_DE_RESERVA = """
+            WITH enlaces_eliminados AS (
+                DELETE FROM public.reserva_noche
+                WHERE id_reserva = ?
+                RETURNING id_noche
+            )
+            DELETE FROM public.noche_reservada nr
+            USING enlaces_eliminados e
+            WHERE nr.id_noche = e.id_noche
+            """;
+
     private final JdbcTemplate jdbc;
 
     public NocheReservaJdbcRepository(JdbcTemplate jdbc) {
@@ -233,23 +244,7 @@ public class NocheReservaJdbcRepository implements NocheReservaRepository {
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void liberar(UUID idReserva) {
-        List<UUID> idsNoches = jdbc.query(
-                "SELECT id_noche FROM public.reserva_noche WHERE id_reserva = ?",
-                (rs, rowNum) -> rs.getObject("id_noche", UUID.class),
-                idReserva);
-
-        if (idsNoches.isEmpty()) {
-            return;
-        }
-
-        jdbc.update(
-                "DELETE FROM public.reserva_noche WHERE id_reserva = ?",
-                idReserva);
-
-        String parametros = String.join(",", Collections.nCopies(idsNoches.size(), "?"));
-        jdbc.update(
-                "DELETE FROM public.noche_reservada WHERE id_noche IN (" + parametros + ")",
-                idsNoches.toArray());
+        jdbc.update(LIBERAR_NOCHES_DE_RESERVA, idReserva);
     }
 
     @Override

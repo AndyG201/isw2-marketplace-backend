@@ -95,7 +95,10 @@ class PublicacionServicioIdTest {
 
     @Test
     void debeRetornarTrueAlCompararseConsigoMismo() {
-        assertEquals(id, id);
+        // Es el mismo objeto visto desde otra variable: así se recorre la rama "this == otro" de equals.
+        PublicacionServicioId mismoObjeto = id;
+
+        assertEquals(id, mismoObjeto);
     }
 
     @Test

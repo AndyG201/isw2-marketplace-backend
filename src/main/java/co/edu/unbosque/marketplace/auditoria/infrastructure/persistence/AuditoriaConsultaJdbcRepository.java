@@ -40,6 +40,27 @@ public class AuditoriaConsultaJdbcRepository implements AuditoriaConsultaReposit
             version_objeto
             """;
 
+    /**
+     * Cada filtro se escribe como "si no viene, no filtra". Así la consulta es siempre la misma
+     * (no se arma texto SQL con piezas variables) y los valores viajan solo como parámetros.
+     */
+    private static final String FILTROS = """
+             WHERE (CAST(? AS uuid) IS NULL OR id_usuario = CAST(? AS uuid))
+               AND (CAST(? AS timestamptz) IS NULL OR fecha_evento >= CAST(? AS timestamptz))
+               AND (CAST(? AS timestamptz) IS NULL OR fecha_evento <= CAST(? AS timestamptz))
+               AND (CAST(? AS text) IS NULL OR accion = CAST(? AS text))
+               AND (CAST(? AS text) IS NULL OR resultado = CAST(? AS text))
+               AND (CAST(? AS text) IS NULL OR entidad_afectada = CAST(? AS text))
+            """;
+
+    private static final String CONSULTA = "SELECT " + COLUMNAS
+            + " FROM public.evento_auditoria"
+            + FILTROS
+            + " ORDER BY fecha_evento DESC, id_evento DESC"
+            + " LIMIT ? OFFSET ?";
+
+    private static final String CONTEO = "SELECT COUNT(*) FROM public.evento_auditoria" + FILTROS;
+
     private final JdbcTemplate jdbc;
 
     public AuditoriaConsultaJdbcRepository(JdbcTemplate jdbc) {
@@ -54,31 +75,20 @@ public class AuditoriaConsultaJdbcRepository implements AuditoriaConsultaReposit
 
         validarPaginacion(limite, desplazamiento);
 
-        List<Object> parametros = new ArrayList<>();
-        String where = construirWhere(filtros, parametros);
-
+        List<Object> parametros = valoresDeLosFiltros(filtros);
         parametros.add(limite);
         parametros.add(desplazamiento);
 
-        String sql = "SELECT " + COLUMNAS
-                + " FROM public.evento_auditoria"
-                + where
-                + " ORDER BY fecha_evento DESC, id_evento DESC"
-                + " LIMIT ? OFFSET ?";
-
-        return jdbc.query(sql, this::mapear, parametros.toArray());
+        return jdbc.query(CONSULTA, this::mapear, parametros.toArray());
     }
 
     @Override
     public long contar(FiltrosAuditoria filtros) {
 
-        List<Object> parametros = new ArrayList<>();
-        String where = construirWhere(filtros, parametros);
-
         Long total = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM public.evento_auditoria" + where,
+                CONTEO,
                 Long.class,
-                parametros.toArray()
+                valoresDeLosFiltros(filtros).toArray()
         );
 
         return total == null ? 0 : total;
@@ -102,53 +112,35 @@ public class AuditoriaConsultaJdbcRepository implements AuditoriaConsultaReposit
         return resultados.stream().findFirst();
     }
 
-    private String construirWhere(
-            FiltrosAuditoria filtros,
-            List<Object> parametros) {
+    /**
+     * Los valores de los filtros en el mismo orden que {@link #FILTROS}. Cada uno va dos veces:
+     * una para preguntar si viene y otra para comparar.
+     */
+    private List<Object> valoresDeLosFiltros(FiltrosAuditoria filtros) {
 
-        StringBuilder where = new StringBuilder(" WHERE 1 = 1");
+        List<Object> valores = new ArrayList<>();
 
         if (filtros == null) {
-            return where.toString();
+            filtros = new FiltrosAuditoria(null, null, null, null, null, null);
         }
 
-        if (filtros.idUsuario() != null) {
-            where.append(" AND id_usuario = ?");
-            parametros.add(filtros.idUsuario());
-        }
+        agregarDos(valores, filtros.idUsuario() == null ? null : filtros.idUsuario().toString());
+        agregarDos(valores, filtros.desde());
+        agregarDos(valores, filtros.hasta());
+        agregarDos(valores, textoONulo(filtros.accion()));
+        agregarDos(valores, textoONulo(filtros.resultado()));
+        agregarDos(valores, textoONulo(filtros.entidadAfectada()));
 
-        if (filtros.desde() != null) {
-            where.append(" AND fecha_evento >= ?");
-            parametros.add(filtros.desde());
-        }
-
-        if (filtros.hasta() != null) {
-            where.append(" AND fecha_evento <= ?");
-            parametros.add(filtros.hasta());
-        }
-
-        agregarFiltro(where, parametros, "accion", filtros.accion());
-        agregarFiltro(where, parametros, "resultado", filtros.resultado());
-        agregarFiltro(
-                where,
-                parametros,
-                "entidad_afectada",
-                filtros.entidadAfectada()
-        );
-
-        return where.toString();
+        return valores;
     }
 
-    private void agregarFiltro(
-            StringBuilder where,
-            List<Object> parametros,
-            String columna,
-            String valor) {
+    private void agregarDos(List<Object> valores, Object valor) {
+        valores.add(valor);
+        valores.add(valor);
+    }
 
-        if (valor != null && !valor.isBlank()) {
-            where.append(" AND ").append(columna).append(" = ?");
-            parametros.add(valor.trim());
-        }
+    private String textoONulo(String valor) {
+        return valor == null || valor.isBlank() ? null : valor.trim();
     }
 
     private void validarPaginacion(int limite, long desplazamiento) {
