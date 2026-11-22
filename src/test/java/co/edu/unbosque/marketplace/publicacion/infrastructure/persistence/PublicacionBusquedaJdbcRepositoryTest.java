@@ -42,7 +42,8 @@ class PublicacionBusquedaJdbcRepositoryTest {
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<MapSqlParameterSource> parametros = ArgumentCaptor.forClass(MapSqlParameterSource.class);
         verify(jdbc).queryForObject(sql.capture(), parametros.capture(), eq(Long.class));
-        assertTrue(sql.getValue().contains("translate(lower(a.ciudad), :conTilde, :sinTilde)"));
+        assertTrue(sql.getValue().contains("a.ciudad_normalizada"));
+        assertTrue(!sql.getValue().contains("translate("));
         assertTrue(sql.getValue().contains("LIKE CAST(:ciudad AS text)"));
         assertEquals("%bogota%", parametros.getValue().getValue("ciudad"));
     }

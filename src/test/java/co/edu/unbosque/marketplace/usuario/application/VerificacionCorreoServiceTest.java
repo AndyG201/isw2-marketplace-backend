@@ -13,7 +13,6 @@ import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.application.port.VerificacionCorreoRepository;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
-import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
 
@@ -44,9 +43,9 @@ class VerificacionCorreoServiceTest {
 
     @Mock private VerificacionCorreoRepository verificacionRepository;
     @Mock private UsuarioRepository usuarioRepository;
-    @Mock private ServicioCorreo servicioCorreo;
     @Mock private AlmacenTemporal almacenTemporal;
-    @Mock private CorreoOutboxService correoOutboxService;    @InjectMocks private VerificacionCorreoService service;
+    @Mock private CorreoOutboxService correoOutboxService;
+    @InjectMocks private VerificacionCorreoService service;
 
     private Usuario encontrarUsuario() {
         Usuario u = new Usuario();
@@ -79,7 +78,7 @@ class VerificacionCorreoServiceTest {
     }
 
     private void verificarSinEnvio() {
-        verifyNoInteractions(verificacionRepository, servicioCorreo, correoOutboxService);
+        verifyNoInteractions(verificacionRepository, correoOutboxService);
     }
 
     @ParameterizedTest
@@ -96,7 +95,7 @@ class VerificacionCorreoServiceTest {
                 () -> assertEquals("Debes proporcionar un correo electrónico.",
                         assertThrows(DatosInvalidosException.class,
                                 () -> service.confirmarCodigo(correo, CODIGO)).getMessage()));
-        verifyNoInteractions(usuarioRepository, almacenTemporal, verificacionRepository, servicioCorreo);
+        verifyNoInteractions(usuarioRepository, almacenTemporal, verificacionRepository);
     }
 
     @Test
@@ -181,7 +180,7 @@ class VerificacionCorreoServiceTest {
     }
 
     @Test
-    void enviarCodigoLiberaEsperaSiFallaCorreo() {
+    void enviarCodigoLiberaEsperaSiFallaElEncolado() {
         encontrarUsuario();
         usarRedis();
         RuntimeException fallo = new RuntimeException("Error de correo");
@@ -202,7 +201,7 @@ class VerificacionCorreoServiceTest {
 
         service.reenviarCodigo(CORREO);
 
-        verify(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), anyString());
+        verify(correoOutboxService).encolarCodigoVerificacion(eq(CORREO), anyString());
         verify(verificacionRepository).save(any(VerificacionCorreo.class));
         if (numero == 1) {
             verify(almacenTemporal).asignarVigencia(CONTADOR, Duration.ofMinutes(60L));
@@ -268,12 +267,12 @@ class VerificacionCorreoServiceTest {
 
     @ParameterizedTest
     @MethodSource("contadoresTrasFallo")
-    void reenviarCodigoDevuelveCupoYLiberaEsperaSiFallaEnvio(Long contadorActual) {
+    void reenviarCodigoDevuelveCupoYLiberaEsperaSiFallaElEncolado(Long contadorActual) {
         encontrarUsuario();
         permitirReenvio(2);
         when(almacenTemporal.decrementar(CONTADOR)).thenReturn(contadorActual);
         RuntimeException fallo = new RuntimeException("Error de correo");
-        doThrow(fallo).when(servicioCorreo).enviarCodigoVerificacion(eq(CORREO), anyString());
+        doThrow(fallo).when(correoOutboxService).encolarCodigoVerificacion(eq(CORREO), anyString());
 
         assertSame(fallo, assertThrows(RuntimeException.class, () -> service.reenviarCodigo(CORREO)));
 

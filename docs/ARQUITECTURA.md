@@ -75,11 +75,14 @@ Los servicios lanzan excepciones de `compartido.domain` y `ErroresApiHandler` la
 
 - Los procesos periódicos corren solo con el perfil `worker` (conciliación de pagos, expiración de retenciones, reembolsos,
   envío de correos, copia de auditoría, exportación de reportes). **En producción hay que activarlo**; sin él esos procesos no se ejecutan.
-- Correo de verificación: patrón *transactional outbox* (`correo_pendiente`), con el código cifrado, reintentos y reclamo por lease.
+- Correo de verificación (registro y reenvío del código): patrón *transactional outbox* (`correo_pendiente`), con el código cifrado, reintentos y reclamo por lease.
+  Los correos de recuperación de contraseña y de cambio de correo se siguen enviando directo, porque la persona espera la respuesta en la misma petición.
 - Reembolsos de Stripe: tabla `reembolso_pago` con clave de idempotencia, reintentos y recuperación de trabajos atascados.
 - Reservas: las noches se retienen en `noche_reservada` bajo un candado por alojamiento; una retención vencida se libera al
   retener de nuevo, sin esperar al proceso automático.
 - La base de datos se versiona con Flyway (`src/main/resources/db/migration`).
+- Búsqueda por ciudad sin tildes: la columna generada `alojamiento.ciudad_normalizada` tiene un índice de trigramas (`pg_trgm`, migración V11);
+  con 100 000 alojamientos la consulta pasó de 111 ms (recorrido completo) a 4 ms (uso del índice).
 
 ## 6. Concesiones conocidas
 
@@ -96,8 +99,10 @@ Estas dependencias técnicas siguen dentro de las capas y están aceptadas por a
 
 - `./mvnw clean verify` ejecuta las pruebas y genera el informe JaCoCo en `target/site/jacoco/jacoco.xml`.
   Las pruebas de integración necesitan PostgreSQL 18 y Redis 7 (la CI los levanta como servicios).
-- Estado medido tras la última integración: **1716 pruebas**, cobertura total de **84,1 % de líneas** y **72,0 % de ramas**.
+- Estado medido tras la última integración: **1754 pruebas**, cobertura total de **85,3 % de líneas** y **73,2 % de ramas**.
   Los módulos con menor cobertura de líneas son `servicio` (24 %), `reporte` (47 %) y `config` (62 %).
+- Pruebas de carga: `BusquedaConcurrenciaIntegracionTest` (en la suite) lanza búsquedas simultáneas contra la aplicación completa, y
+  `pruebas-carga/busqueda.js` (k6, se ejecuta a mano contra un servidor) mide tiempos con umbrales; ver `pruebas-carga/README.md`.
 - GitHub Actions (`.github/workflows/backend-ci.yml`) compila con Java 22, corre las pruebas, verifica que exista el informe
   JaCoCo, lo envía a SonarCloud y publica los informes como artefacto.
 - SonarCloud exige en código nuevo: cobertura mínima y duplicación máxima del 3 %. Por eso los PR agregan pruebas para el código que cambian.
