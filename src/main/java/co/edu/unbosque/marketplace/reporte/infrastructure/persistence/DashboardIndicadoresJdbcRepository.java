@@ -15,6 +15,9 @@ import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 @Repository
 public class DashboardIndicadoresJdbcRepository implements DashboardIndicadoresRepository {
 
+    private static final String PUBLICACIONES_ACTIVAS =
+            "SELECT COUNT(*) FROM public.vista_publicacion WHERE estado = 'ACTIVA'";
+
     private static final List<String> ESTADOS_RESERVA = EstadoReserva.nombres();
 
     private final JdbcTemplate jdbcTemplate;
@@ -50,7 +53,7 @@ public class DashboardIndicadoresJdbcRepository implements DashboardIndicadoresR
     @Override
     public long contarPublicacionesActivas() {
         Long cantidad = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM public.vista_publicacion WHERE estado = '" + EstadoPublicacion.ACTIVA.name() + "'",
+                PUBLICACIONES_ACTIVAS,
                 Long.class);
         return cantidad == null ? 0L : cantidad;
     }

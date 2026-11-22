@@ -97,11 +97,6 @@ public enum EstadoReserva {
         throw new FallaInternaException("La reserva tiene un estado desconocido: " + texto);
     }
 
-    /** Lista para usar dentro de un {@code IN (...)} de SQL, por ejemplo {@code 'CONFIRMADA', 'COMPLETADA'}. */
-    public static String enSql(Set<EstadoReserva> estados) {
-        return estados.stream().sorted().map(estado -> "'" + estado.name() + "'").collect(Collectors.joining(", "));
-    }
-
     /** Nombres (los textos guardados en la base de datos) de un conjunto de estados. */
     public static Set<String> nombres(Set<EstadoReserva> estados) {
         return estados.stream().map(Enum::name).collect(Collectors.toUnmodifiableSet());

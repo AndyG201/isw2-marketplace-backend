@@ -87,10 +87,7 @@ class EstadoReservaTest {
     }
 
     @Test
-    void generaListasParaSqlYNombres() {
-        assertEquals("'CONFIRMADA', 'COMPLETADA'", EstadoReserva.enSql(EstadoReserva.QUE_OCUPAN_NOCHES));
-        assertEquals("'PENDIENTE_PAGO', 'PENDIENTE_APROBACION'", EstadoReserva.enSql(EstadoReserva.CON_RETENCION));
-        assertEquals("'RECHAZADA', 'CANCELADA', 'EXPIRADA'", EstadoReserva.enSql(EstadoReserva.QUE_LIBERAN_NOCHES));
+    void generaNombres() {
         assertEquals(List.of("PENDIENTE_PAGO", "PENDIENTE_APROBACION", "CONFIRMADA", "RECHAZADA", "CANCELADA",
                 "COMPLETADA", "EXPIRADA"), EstadoReserva.nombres());
         assertEquals(Set.of("CONFIRMADA", "COMPLETADA"), EstadoReserva.nombres(EstadoReserva.QUE_OCUPAN_NOCHES));

@@ -14,11 +14,17 @@ import org.springframework.stereotype.Repository;
 
 import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaCancelacionRepository;
-import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaCancelacionInfo;
 
 @Repository
 public class ReservaCancelacionJdbcRepository implements ReservaCancelacionRepository {
+
+    private static final String MARCAR_CANCELADA = """
+            UPDATE public.reserva
+            SET estado = 'CANCELADA', retencion_hasta = NULL
+            WHERE id_reserva = ?
+              AND estado IN ('PENDIENTE_PAGO', 'PENDIENTE_APROBACION', 'CONFIRMADA')
+            """;
 
     private static final String CONSULTAR_Y_BLOQUEAR = """
             SELECT r.id_reserva AS "idReserva",
@@ -48,12 +54,7 @@ public class ReservaCancelacionJdbcRepository implements ReservaCancelacionRepos
 
     @Override
     public void marcarCancelada(UUID idReserva) {
-        int actualizadas = jdbc.update("""
-                UPDATE public.reserva
-                SET estado = '%s', retencion_hasta = NULL
-                WHERE id_reserva = ?
-                  AND estado IN (%s)
-                """.formatted(EstadoReserva.CANCELADA.name(), EstadoReserva.enSql(EstadoReserva.CANCELABLES)), idReserva);
+        int actualizadas = jdbc.update(MARCAR_CANCELADA, idReserva);
         if (actualizadas != 1) {
             throw new ConflictoNegocioException("La reserva cambió de estado durante la cancelación.");
         }

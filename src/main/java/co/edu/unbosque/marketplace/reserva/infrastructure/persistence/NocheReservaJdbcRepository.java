@@ -13,14 +13,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
-import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 
 @Repository
 public class NocheReservaJdbcRepository implements NocheReservaRepository {
-
-    private static final String OCUPAN = EstadoReserva.enSql(EstadoReserva.QUE_OCUPAN_NOCHES);
-    private static final String CON_RETENCION = EstadoReserva.enSql(EstadoReserva.CON_RETENCION);
-    private static final String LIBERAN = EstadoReserva.enSql(EstadoReserva.QUE_LIBERAN_NOCHES);
 
     private static final String NOCHES_OCUPADAS = """
             FROM public.noche_reservada nr
@@ -28,14 +23,14 @@ public class NocheReservaJdbcRepository implements NocheReservaRepository {
             JOIN public.reserva r ON r.id_reserva = rn.id_reserva
             WHERE nr.id_alojamiento = ?
               AND (
-                    r.estado IN (%1$s)
+                    r.estado IN ('CONFIRMADA', 'COMPLETADA')
                     OR (
-                        r.estado IN (%2$s)
+                        r.estado IN ('PENDIENTE_APROBACION', 'PENDIENTE_PAGO')
                         AND r.retencion_hasta IS NOT NULL
                         AND r.retencion_hasta > CURRENT_TIMESTAMP
                     )
               )
-            """.formatted(OCUPAN, CON_RETENCION, LIBERAN);
+            """;
 
     private static final String EN_RANGO = " AND nr.fecha >= ? AND nr.fecha < ?";
 
@@ -67,9 +62,9 @@ public class NocheReservaJdbcRepository implements NocheReservaRepository {
                 JOIN public.reserva r ON r.id_reserva = rn.id_reserva
                 WHERE nr.id_alojamiento = ?
                   AND (
-                        r.estado IN (%3$s)
+                        r.estado IN ('RECHAZADA', 'CANCELADA', 'EXPIRADA')
                         OR (
-                            r.estado IN (%2$s)
+                            r.estado IN ('PENDIENTE_APROBACION', 'PENDIENTE_PAGO')
                             AND (
                                 r.retencion_hasta IS NULL
                                 OR r.retencion_hasta <= CURRENT_TIMESTAMP
@@ -87,7 +82,7 @@ public class NocheReservaJdbcRepository implements NocheReservaRepository {
             DELETE FROM public.noche_reservada nr
             USING enlaces_eliminados e
             WHERE nr.id_noche = e.id_noche
-            """.formatted(OCUPAN, CON_RETENCION, LIBERAN);
+            """;
 
     private static final String LIMPIAR_NOCHES_HUERFANAS = """
             DELETE FROM public.noche_reservada nr
@@ -132,14 +127,14 @@ public class NocheReservaJdbcRepository implements NocheReservaRepository {
                 FROM public.reserva r
                 WHERE r.id_reserva = ?
                   AND (
-                        r.estado IN (%1$s)
+                        r.estado IN ('CONFIRMADA', 'COMPLETADA')
                         OR (
-                            r.estado IN (%2$s)
+                            r.estado IN ('PENDIENTE_APROBACION', 'PENDIENTE_PAGO')
                             AND r.retencion_hasta > CURRENT_TIMESTAMP
                         )
                   )
             )
-            """.formatted(OCUPAN, CON_RETENCION, LIBERAN);
+            """;
 
     private final JdbcTemplate jdbc;
 

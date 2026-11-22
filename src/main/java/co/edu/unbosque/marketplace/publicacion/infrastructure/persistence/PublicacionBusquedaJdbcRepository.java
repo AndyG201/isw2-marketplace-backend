@@ -27,7 +27,7 @@ public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRep
             FROM public.publicacion p
             INNER JOIN public.vista_alojamiento a
                 ON a.id_alojamiento = p.id_alojamiento
-            WHERE p.estado = '%s'
+            WHERE p.estado = 'ACTIVA'
               AND (CAST(:ciudad AS text) IS NULL
                    OR a.ciudad_normalizada
                       LIKE CAST(:ciudad AS text) ESCAPE '\\')
@@ -69,7 +69,7 @@ public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRep
                              AND nr.fecha = CAST(noche.fecha AS date)
                        )
                    ))
-            """.formatted(EstadoPublicacion.ACTIVA.name());
+            """;
 
     private static final String CONTAR = "SELECT COUNT(*) " + FILTROS;
 
