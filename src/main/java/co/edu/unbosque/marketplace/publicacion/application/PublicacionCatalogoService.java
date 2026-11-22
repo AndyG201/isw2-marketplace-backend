@@ -15,12 +15,12 @@ import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQ
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionResumenResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 
 @Service
 public class PublicacionCatalogoService {
 
-    private static final String ESTADO_ACTIVA = "ACTIVA";
 
     private final PublicacionRepository publicacionRepository;
     private final AlojamientoPublicacionQuery alojamientoQuery;
@@ -42,7 +42,7 @@ public class PublicacionCatalogoService {
         List<Publicacion> publicaciones =
                 publicacionRepository
                         .findByEstadoOrderByFechaCreacionDesc(
-                                ESTADO_ACTIVA
+                                EstadoPublicacion.ACTIVA.name()
                         );
 
         if (publicaciones.isEmpty()) {

@@ -54,7 +54,7 @@ class RevisionAdministrativaServiceTest {
     @Mock
     private RevisionPublicacionRepository revisionRepository;
 
-    @Mock
+    @Mock(answer = org.mockito.Answers.CALLS_REAL_METHODS)
     private Publicacion publicacion;
 
     @Mock

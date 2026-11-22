@@ -21,13 +21,14 @@ import co.edu.unbosque.marketplace.resena.application.dto.CrearResenaRequest;
 import co.edu.unbosque.marketplace.resena.application.dto.CrearResenaResponse;
 import co.edu.unbosque.marketplace.resena.application.port.ResenaRepository;
 import co.edu.unbosque.marketplace.resena.domain.Resena;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaResenaInfo;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaResenaQuery;
 
 @Service
 public class ResenaService {
 
-    private static final String RESERVA_COMPLETADA = "COMPLETADA";
+    private static final String RESERVA_COMPLETADA = EstadoReserva.COMPLETADA.name();
 
     private final ResenaRepository resenas;
     private final ReservaResenaQuery reservas;

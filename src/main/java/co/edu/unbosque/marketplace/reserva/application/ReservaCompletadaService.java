@@ -7,12 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 
 @Service
 public class ReservaCompletadaService {
-
-    private static final String COMPLETADA = "COMPLETADA";
 
     private final ReservaRepository reservas;
 
@@ -23,7 +22,7 @@ public class ReservaCompletadaService {
     @Transactional
     public int completarReservasFinalizadas(LocalDate hoy) {
         List<Reserva> finalizadas = reservas.buscarConfirmadasFinalizadas(hoy);
-        finalizadas.forEach(reserva -> reserva.setEstado(COMPLETADA));
+        finalizadas.forEach(reserva -> reserva.cambiarEstado(EstadoReserva.COMPLETADA));
         reservas.saveAllAndFlush(finalizadas);
         return finalizadas.size();
     }

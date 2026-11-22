@@ -18,6 +18,7 @@ import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaRetencionRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.contracts.PeriodosHabilitadosQuery;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaRetencionVencidaEvent;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaRetenidaEvent;
@@ -28,8 +29,6 @@ import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 public class ReservaRetencionService {
 
     private static final String MODO_APROBACION = "APROBACION";
-    private static final String PENDIENTE_APROBACION = "PENDIENTE_APROBACION";
-    private static final String RECHAZADA = "RECHAZADA";
     private static final String MOTIVO_VENCIMIENTO = "VENCIMIENTO_PLAZO_24_HORAS";
 
     private final ReservaRepository reservas;
@@ -73,7 +72,7 @@ public class ReservaRetencionService {
                         "La reserva solicitada ya no existe."));
 
         if (!MODO_APROBACION.equals(reserva.getModoAceptacion())
-                || !PENDIENTE_APROBACION.equals(reserva.getEstado())) {
+                || !reserva.estaEn(EstadoReserva.PENDIENTE_APROBACION)) {
             return;
         }
 
@@ -140,7 +139,7 @@ public class ReservaRetencionService {
         for (UUID idReserva : retenciones.buscarRetencionesVencidas(ahora)) {
             retenciones.bloquearPorId(idReserva).ifPresent(reserva -> {
                 OffsetDateTime limite = reserva.getRetencionHasta();
-                if (!PENDIENTE_APROBACION.equals(reserva.getEstado())
+                if (!reserva.estaEn(EstadoReserva.PENDIENTE_APROBACION)
                         || limite == null
                         || limite.isAfter(ahora)) {
                     return;
@@ -162,7 +161,7 @@ public class ReservaRetencionService {
             OffsetDateTime ahora) {
 
         noches.liberar(reserva.getIdReserva());
-        reserva.setEstado(RECHAZADA);
+        reserva.cambiarEstado(EstadoReserva.RECHAZADA);
         reserva.setRetencionHasta(null);
         reservas.saveAndFlush(reserva);
 
@@ -174,7 +173,7 @@ public class ReservaRetencionService {
                 reserva.getIdReserva(),
                 ahora,
                 "RECHAZO_AUTOMATICO_POR_VENCIMIENTO",
-                RECHAZADA,
+                EstadoReserva.RECHAZADA.name(),
                 detalle));
 
         eventPublisher.publishEvent(new ReservaRetencionVencidaEvent(

@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -149,6 +151,25 @@ public class Publicacion {
 
 	public void setEstado(String estado) {
 		this.estado = estado;
+	}
+
+	/** Estado actual como enumeración. */
+	public EstadoPublicacion estadoActual() {
+		return EstadoPublicacion.desde(getEstado());
+	}
+
+	public boolean estaEn(EstadoPublicacion... estados) {
+		for (EstadoPublicacion candidato : estados) {
+			if (candidato.name().equals(getEstado())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Cambia el estado validando la transición contra la tabla de EstadoPublicacion. */
+	public void cambiarEstado(EstadoPublicacion nuevo) {
+		setEstado(estadoActual().transicionarA(nuevo).name());
 	}
 
 	public OffsetDateTime getFechaCreacion() {

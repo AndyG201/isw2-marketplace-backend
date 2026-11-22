@@ -54,6 +54,8 @@ public class AlmacenTemporalRedis implements AlmacenTemporal {
 
     @Override
     public Long segundosRestantes(String clave) {
-        return redis.getExpire(clave, TimeUnit.SECONDS);
+        Long segundos = redis.getExpire(clave, TimeUnit.SECONDS);
+        // Redis responde -2 si la clave no existe y -1 si no vence; el puerto promete nulo en ambos casos.
+        return segundos == null || segundos < 0 ? null : segundos;
     }
 }

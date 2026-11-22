@@ -20,6 +20,7 @@ import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
 import co.edu.unbosque.marketplace.reserva.application.dto.ConfirmacionReservaResponse;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 
@@ -27,8 +28,6 @@ import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaReposito
 public class ReservaPagoAprobadoService {
 
     private static final String MODO_APROBACION = "APROBACION";
-    private static final String PENDIENTE_PAGO = "PENDIENTE_PAGO";
-    private static final String CONFIRMADA = "CONFIRMADA";
 
     private final ReservaConfirmacionRepository reservas;
     private final RegistroPagos pagos;
@@ -104,14 +103,14 @@ public class ReservaPagoAprobadoService {
 
         if (resultado.aprobado()) {
             if (reserva.getRetencionHasta() != null && reserva.getRetencionHasta().isAfter(momento)) {
-                reserva.setEstado(CONFIRMADA);
+                reserva.cambiarEstado(EstadoReserva.CONFIRMADA);
                 reserva.setFechaConfirmacion(momento);
                 reserva.setRetencionHasta(null);
                 reservas.saveAndFlush(reserva);
             } else {
                 pagos.programarReembolso(claveNormalizada, momento);
                 noches.liberar(idReserva);
-                reserva.setEstado("EXPIRADA");
+                reserva.cambiarEstado(EstadoReserva.EXPIRADA);
                 reserva.setRetencionHasta(null);
                 reservas.saveAndFlush(reserva);
             }
@@ -121,7 +120,7 @@ public class ReservaPagoAprobadoService {
             reservas.saveAndFlush(reserva);
         }
 
-        String mensajeFinal = resultado.aprobado() && "EXPIRADA".equals(reserva.getEstado())
+        String mensajeFinal = resultado.aprobado() && reserva.estaEn(EstadoReserva.EXPIRADA)
                 ? "Stripe aprobó el pago después del vencimiento. El reembolso quedó programado."
                 : resultado.mensaje();
         return respuesta(reserva, pago, datos.getMontoTotal(), mensajeFinal);
@@ -129,7 +128,7 @@ public class ReservaPagoAprobadoService {
 
     private void validarReservaAprobada(Reserva reserva) {
         if (!MODO_APROBACION.equals(reserva.getModoAceptacion())
-                || !PENDIENTE_PAGO.equals(reserva.getEstado())) {
+                || !reserva.estaEn(EstadoReserva.PENDIENTE_PAGO)) {
             throw new ConflictoNegocioException(
                     "La reserva no está aprobada y pendiente de pago.");
         }

@@ -8,19 +8,14 @@ import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.reporte.application.port.DashboardIndicadoresRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 
 @Repository
 public class DashboardIndicadoresJdbcRepository implements DashboardIndicadoresRepository {
 
-    private static final List<String> ESTADOS_RESERVA = List.of(
-            "PENDIENTE_PAGO",
-            "PENDIENTE_APROBACION",
-            "CONFIRMADA",
-            "RECHAZADA",
-            "CANCELADA",
-            "COMPLETADA",
-            "EXPIRADA");
+    private static final List<String> ESTADOS_RESERVA = EstadoReserva.nombres();
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -55,7 +50,7 @@ public class DashboardIndicadoresJdbcRepository implements DashboardIndicadoresR
     @Override
     public long contarPublicacionesActivas() {
         Long cantidad = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM public.vista_publicacion WHERE estado = 'ACTIVA'",
+                "SELECT COUNT(*) FROM public.vista_publicacion WHERE estado = '" + EstadoPublicacion.ACTIVA.name() + "'",
                 Long.class);
         return cantidad == null ? 0L : cantidad;
     }

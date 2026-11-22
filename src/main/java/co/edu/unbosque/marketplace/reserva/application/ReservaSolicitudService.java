@@ -23,6 +23,7 @@ import co.edu.unbosque.marketplace.reserva.application.port.BloqueoClaveIdempote
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.contracts.PeriodosHabilitadosQuery;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaSolicitadaEvent;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
@@ -32,9 +33,6 @@ public class ReservaSolicitudService {
 
     private static final String MODO_INMEDIATA = "INMEDIATA";
     private static final String MODO_APROBACION = "APROBACION";
-    private static final String ESTADO_PENDIENTE_PAGO = "PENDIENTE_PAGO";
-    private static final String ESTADO_PENDIENTE_APROBACION =
-            "PENDIENTE_APROBACION";
 
     private final ReservaSolicitudRepository reservaRepository;
     private final NocheReservaRepository noches;
@@ -151,8 +149,8 @@ public class ReservaSolicitudService {
                 datos.getIdPolitica(),
                 modo,
                 requiereAprobacion
-                        ? ESTADO_PENDIENTE_APROBACION
-                        : ESTADO_PENDIENTE_PAGO,
+                        ? EstadoReserva.PENDIENTE_APROBACION.name()
+                        : EstadoReserva.PENDIENTE_PAGO.name(),
                 null,
                 idempotencia,
                 requiereAprobacion,

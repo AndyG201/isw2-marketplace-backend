@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,16 +27,16 @@ import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaCancelacionGateway;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaCancelacionInfo;
 
 @Service
 public class CancelacionReservaService {
 
-    private static final List<String> ESTADOS_CANCELABLES = List.of(
-            "PENDIENTE_PAGO", "PENDIENTE_APROBACION", "CONFIRMADA");
+    private static final Set<String> ESTADOS_CANCELABLES = EstadoReserva.nombres(EstadoReserva.CANCELABLES);
     private static final String PAGO_PENDIENTE = "PENDIENTE";
-    private static final String ESTADO_CANCELADA = "CANCELADA";
+    private static final String ESTADO_CANCELADA = EstadoReserva.CANCELADA.name();
     private static final BigDecimal CERO = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
     private final ReservaCancelacionGateway reservas;

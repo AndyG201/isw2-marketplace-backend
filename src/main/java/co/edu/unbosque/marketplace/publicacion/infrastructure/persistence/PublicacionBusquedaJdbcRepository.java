@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PaginaPublicacionesResponse;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionResumenResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionBusquedaRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionBusquedaCriteria;
 
 @Repository
@@ -26,7 +27,7 @@ public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRep
             FROM public.publicacion p
             INNER JOIN public.vista_alojamiento a
                 ON a.id_alojamiento = p.id_alojamiento
-            WHERE p.estado = 'ACTIVA'
+            WHERE p.estado = '%s'
               AND (CAST(:ciudad AS text) IS NULL
                    OR a.ciudad_normalizada
                       LIKE CAST(:ciudad AS text) ESCAPE '\\')
@@ -68,7 +69,7 @@ public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRep
                              AND nr.fecha = CAST(noche.fecha AS date)
                        )
                    ))
-            """;
+            """.formatted(EstadoPublicacion.ACTIVA.name());
 
     private static final String CONTAR = "SELECT COUNT(*) " + FILTROS;
 

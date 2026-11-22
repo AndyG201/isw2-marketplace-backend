@@ -71,7 +71,7 @@ class PublicacionDetallePublicoServiceTest {
     }
 
     private Publicacion publicacion(String estado) {
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(publicacion.getEstado()).thenReturn(estado);
         return publicacion;
     }
@@ -142,7 +142,7 @@ class PublicacionDetallePublicoServiceTest {
 
     @Test
     void laAdministracionVeLaPublicacionEnCualquierEstado() {
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(publicacion.getIdAlojamiento()).thenReturn(ALOJAMIENTO);
         when(publicacion.getIdPolitica()).thenReturn(POLITICA);
         AlojamientoPublicacionInfo alojamiento = new AlojamientoPublicacionInfo(

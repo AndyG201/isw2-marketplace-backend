@@ -38,7 +38,7 @@ class ModeracionPublicacionServiceExcepcionesTest {
     private final UUID idPublicacion = UUID.randomUUID();
 
     private Publicacion publicacionEnEstado(String estado) {
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(publicacion.getEstado()).thenReturn(estado);
         when(publicacionRepository.findById(idPublicacion)).thenReturn(Optional.of(publicacion));
         return publicacion;

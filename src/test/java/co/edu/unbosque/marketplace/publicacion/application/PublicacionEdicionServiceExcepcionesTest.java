@@ -77,7 +77,7 @@ class PublicacionEdicionServiceExcepcionesTest {
     }
 
     private void publicacionYAlojamiento() {
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(publicacion.getIdAlojamiento()).thenReturn(idAlojamiento);
         lenient().when(publicacion.getEstado()).thenReturn("BORRADOR");
         when(publicacionRepository.findById(idPublicacion)).thenReturn(Optional.of(publicacion));

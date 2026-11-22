@@ -23,8 +23,10 @@ import co.edu.unbosque.marketplace.cotizacion.contracts.CotizacionReservaQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.EditarPublicacionRequest;
 import co.edu.unbosque.marketplace.publicacion.application.dto.SolicitudCambioResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.SolicitudCambioPublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.SolicitudCambioPublicacion;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaAfectadaInfo;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaAfectadaQuery;
 
@@ -33,9 +35,8 @@ public class CambiosPublicacionService {
 
     static final int MAXIMO_MENSAJE = 1000;
     private static final String SEPARADOR = "\n";
-    private static final Set<String> ESTADOS_APROBADOS = Set.of("ACTIVA", "PAUSADA");
-    private static final Set<String> RESERVAS_VIGENTES =
-            Set.of("PENDIENTE_APROBACION", "PENDIENTE_PAGO", "CONFIRMADA");
+    private static final Set<String> ESTADOS_APROBADOS = EstadoPublicacion.nombres(EstadoPublicacion.APROBADAS);
+    private static final Set<String> RESERVAS_VIGENTES = EstadoReserva.nombres(EstadoReserva.VIGENTES);
 
     private final SolicitudCambioPublicacionRepository solicitudes;
     private final CotizacionReservaQuery cotizaciones;

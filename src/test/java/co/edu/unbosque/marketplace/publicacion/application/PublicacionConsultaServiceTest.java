@@ -142,7 +142,7 @@ class PublicacionConsultaServiceTest {
         when(alojamiento.tipoAlojamiento()).thenReturn("Apartamento");
         when(alojamiento.capacidad()).thenReturn(3);
 
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
 
         OffsetDateTime fecha = OffsetDateTime.now();
 
@@ -183,7 +183,7 @@ class PublicacionConsultaServiceTest {
         AlojamientoPublicacionInfo alojamiento =
                 crearAlojamientoInfo();
 
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
 
         when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
                 .thenReturn(List.of(alojamiento));
@@ -272,7 +272,7 @@ class PublicacionConsultaServiceTest {
         when(alojamientoPublicacionQuery.consultarPorAnfitrion(idAnfitrion))
                 .thenReturn(List.of(alojamiento));
 
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(publicacion.getIdAlojamiento()).thenReturn(UUID.randomUUID());
         when(publicacionRepository.findByIdPublicacionAndIdAlojamientoIn(
                 idPublicacion, List.of(idAlojamiento)))
@@ -301,7 +301,7 @@ class PublicacionConsultaServiceTest {
         when(alojamiento.pais()).thenReturn("Perú");
         when(alojamiento.codigoPais()).thenReturn("PE");
 
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         ImagenPublicacion imagen = mock(ImagenPublicacion.class);
         PublicacionServicio relacion = mock(PublicacionServicio.class);
         ServicioInfo servicio = mock(ServicioInfo.class);

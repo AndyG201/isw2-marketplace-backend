@@ -3,6 +3,8 @@ package co.edu.unbosque.marketplace.reserva.domain;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -112,6 +114,25 @@ public class Reserva {
 
 	public void setEstado(String estado) {
 		this.estado = estado;
+	}
+
+	/** Estado actual como enumeración. */
+	public EstadoReserva estadoActual() {
+		return EstadoReserva.desde(getEstado());
+	}
+
+	public boolean estaEn(EstadoReserva... estados) {
+		for (EstadoReserva candidato : estados) {
+			if (candidato.name().equals(getEstado())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Cambia el estado validando la transición contra la tabla de EstadoReserva. */
+	public void cambiarEstado(EstadoReserva nuevo) {
+		setEstado(estadoActual().transicionarA(nuevo).name());
 	}
 
 	public OffsetDateTime getRetencionHasta() {

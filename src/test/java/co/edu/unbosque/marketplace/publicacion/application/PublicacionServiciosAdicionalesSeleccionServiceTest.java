@@ -64,7 +64,7 @@ class PublicacionServiciosAdicionalesSeleccionServiceTest {
 
     @Test
     void enElMarketplaceSoloMuestraLosServiciosDePublicacionesActivas() {
-        Publicacion activa = mock(Publicacion.class);
+        Publicacion activa = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(activa.getEstado()).thenReturn("ACTIVA");
         when(publicacionRepository.findById(PUBLICACION)).thenReturn(Optional.of(activa));
         registrarDesayuno();
@@ -74,7 +74,7 @@ class PublicacionServiciosAdicionalesSeleccionServiceTest {
 
     @Test
     void noMuestraLosServiciosDeUnaPublicacionQueNoEstaActiva() {
-        Publicacion enRevision = mock(Publicacion.class);
+        Publicacion enRevision = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(enRevision.getEstado()).thenReturn("PENDIENTE_REVISION");
         when(publicacionRepository.findById(PUBLICACION)).thenReturn(Optional.of(enRevision));
 

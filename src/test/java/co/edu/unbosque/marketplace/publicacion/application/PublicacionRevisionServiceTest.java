@@ -72,7 +72,7 @@ class PublicacionRevisionServiceTest {
     @Mock
     private AlojamientoPublicacionInfo alojamiento;
 
-    @Mock
+    @Mock(answer = org.mockito.Answers.CALLS_REAL_METHODS)
     private Publicacion publicacion;
 
     @InjectMocks

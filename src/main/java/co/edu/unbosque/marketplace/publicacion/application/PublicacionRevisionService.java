@@ -24,6 +24,7 @@ import co.edu.unbosque.marketplace.publicacion.application.dto.EnviarRevisionRes
 import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
@@ -110,12 +111,12 @@ public class PublicacionRevisionService {
 
         String estadoActual = publicacion.getEstado();
 
-        if ("BLOQUEADA".equals(estadoActual)) {
+        if (publicacion.estaEn(EstadoPublicacion.BLOQUEADA)) {
             throw new ConflictoNegocioException(
                     "No puedes enviar a revisión una publicación bloqueada.");
         }
 
-        if (!"BORRADOR".equals(estadoActual)) {
+        if (!publicacion.estaEn(EstadoPublicacion.BORRADOR)) {
             throw new ConflictoNegocioException(
                     "Solamente las publicaciones en estado BORRADOR pueden enviarse a revisión.");
         }
@@ -124,7 +125,7 @@ public class PublicacionRevisionService {
 
         OffsetDateTime ahora = OffsetDateTime.now();
 
-        publicacion.setEstado("PENDIENTE_REVISION");
+        publicacion.cambiarEstado(EstadoPublicacion.PENDIENTE_REVISION);
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);

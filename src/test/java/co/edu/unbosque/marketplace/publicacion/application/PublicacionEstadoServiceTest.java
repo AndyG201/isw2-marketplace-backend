@@ -39,7 +39,7 @@ class PublicacionEstadoServiceTest {
     @Mock
     private UsuarioPublicacionQuery usuarioPublicacionQuery;
 
-    @Mock
+    @Mock(answer = org.mockito.Answers.CALLS_REAL_METHODS)
     private Publicacion publicacion;
 
     @Mock
