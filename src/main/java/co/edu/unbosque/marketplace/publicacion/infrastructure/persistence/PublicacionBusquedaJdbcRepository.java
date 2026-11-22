@@ -28,7 +28,7 @@ public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRep
                 ON a.id_alojamiento = p.id_alojamiento
             WHERE p.estado = 'ACTIVA'
               AND (CAST(:ciudad AS text) IS NULL
-                   OR translate(lower(a.ciudad), :conTilde, :sinTilde)
+                   OR a.ciudad_normalizada
                       LIKE CAST(:ciudad AS text) ESCAPE '\\')
               AND (CAST(:tipoAlojamiento AS text) IS NULL
                    OR lower(a.tipo_alojamiento) = CAST(:tipoAlojamiento AS text))
@@ -96,9 +96,6 @@ public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRep
             LIMIT :tamano OFFSET :offset
             """;
 
-    private static final String CON_TILDE = "áàäâéèëêíìïîóòöôúùüûñç";
-    private static final String SIN_TILDE = "aaaaeeeeiiiioooouuuunc";
-
     private static final RowMapper<PublicacionResumenResponse> ROW_MAPPER =
             PublicacionBusquedaJdbcRepository::mapearPublicacion;
 
@@ -116,8 +113,6 @@ public class PublicacionBusquedaJdbcRepository implements PublicacionBusquedaRep
         MapSqlParameterSource parametros = new MapSqlParameterSource()
                 .addValue("tamano", criteria.tamano())
                 .addValue("offset", (long) criteria.pagina() * criteria.tamano())
-                .addValue("conTilde", CON_TILDE)
-                .addValue("sinTilde", SIN_TILDE)
                 .addValue("ciudad", criteria.ciudad() == null
                         ? null
                         : "%" + patronCiudad(criteria.ciudad()) + "%")

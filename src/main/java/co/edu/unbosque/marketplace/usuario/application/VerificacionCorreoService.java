@@ -18,7 +18,6 @@ import co.edu.unbosque.marketplace.compartido.domain.FallaInternaException;
 import co.edu.unbosque.marketplace.usuario.domain.EstadoUsuario;
 import co.edu.unbosque.marketplace.usuario.domain.Usuario;
 import co.edu.unbosque.marketplace.usuario.domain.VerificacionCorreo;
-import co.edu.unbosque.marketplace.usuario.domain.ServicioCorreo;
 import co.edu.unbosque.marketplace.usuario.application.port.UsuarioRepository;
 import co.edu.unbosque.marketplace.usuario.application.port.VerificacionCorreoRepository;
 
@@ -27,7 +26,6 @@ public class VerificacionCorreoService {
 
     private final VerificacionCorreoRepository verificacionRepository;
     private final UsuarioRepository usuarioRepository;
-    private final ServicioCorreo servicioCorreo;
     private final AlmacenTemporal almacenTemporal;
     private final CorreoOutboxService correoOutboxService;
 
@@ -41,13 +39,11 @@ public class VerificacionCorreoService {
     public VerificacionCorreoService(
             VerificacionCorreoRepository verificacionRepository,
             UsuarioRepository usuarioRepository,
-            ServicioCorreo servicioCorreo,
             AlmacenTemporal almacenTemporal,
             CorreoOutboxService correoOutboxService) {
 
         this.verificacionRepository = verificacionRepository;
         this.usuarioRepository = usuarioRepository;
-        this.servicioCorreo = servicioCorreo;
         this.almacenTemporal = almacenTemporal;
         this.correoOutboxService = correoOutboxService;
     }
@@ -71,7 +67,7 @@ public class VerificacionCorreoService {
 
         try {
 
-            generarYEnviarCodigo(usuario, true);
+            generarYEncolarCodigo(usuario);
 
         } catch (RuntimeException e) {
 
@@ -144,7 +140,7 @@ public class VerificacionCorreoService {
 
         try {
 
-            generarYEnviarCodigo(usuario, false);
+            generarYEncolarCodigo(usuario);
 
         } catch (RuntimeException e) {
 
@@ -167,7 +163,7 @@ public class VerificacionCorreoService {
     // GENERAR E INVALIDAR CÓDIGOS ANTERIORES
     // =====================================================
 
-    private void generarYEnviarCodigo(Usuario usuario, boolean usarOutbox) {
+    private void generarYEncolarCodigo(Usuario usuario) {
 
         String codigo = String.format(
                 "%06d",
@@ -201,11 +197,8 @@ public class VerificacionCorreoService {
 
         verificacionRepository.save(verificacion);
 
-        if (usarOutbox) {
-            correoOutboxService.encolarCodigoVerificacion(usuario.getCorreo(), codigo);
-        } else {
-            servicioCorreo.enviarCodigoVerificacion(usuario.getCorreo(), codigo);
-        }
+        // El correo sale por la cola (outbox) en la misma transacción: si el SMTP falla se reintenta en segundo plano.
+        correoOutboxService.encolarCodigoVerificacion(usuario.getCorreo(), codigo);
     }
 
     // =====================================================
