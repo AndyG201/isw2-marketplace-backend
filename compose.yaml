@@ -1,4 +1,4 @@
-# A4: backend, worker y auto-recuperacion selectiva. A5 (backups) sigue pendiente.
+# A5: API, worker, PostgreSQL, Redis, autoheal y respaldo diario de PostgreSQL.
 # Usar: docker compose --env-file .env.docker -p marketplace-a3 up -d --build
 name: marketplace-a3
 
@@ -49,6 +49,41 @@ services:
       retries: 12
       start_period: 30s
     restart: unless-stopped
+    networks:
+      - backend
+
+  postgres-backup:
+    # A5: solo lee PostgreSQL por red; los .dump quedan en el host Windows.
+    build:
+      context: ./deploy/backup
+      dockerfile: Dockerfile
+    image: marketplace-postgres-backup:a5
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: marketplace
+      PGUSER: ${SPRING_DATASOURCE_USERNAME:?Falta SPRING_DATASOURCE_USERNAME en .env.docker}
+      PGPASSWORD: ${SPRING_DATASOURCE_PASSWORD:?Falta SPRING_DATASOURCE_PASSWORD en .env.docker}
+      PGCONNECT_TIMEOUT: "10"
+      TZ: America/Bogota
+      BACKUP_DIR: /backups
+      BACKUP_HOUR: ${BACKUP_HOUR:-3}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # En Windows: <carpeta-del-proyecto>/backups/postgres/
+      - ./backups/postgres:/backups
+    healthcheck:
+      # Vigencia de la ultima copia exitosa (<25 horas); no se reinicia por autoheal.
+      test: ["CMD", "/bin/sh", "/usr/local/bin/backup-postgres.sh", "health"]
+      interval: 5m
+      timeout: 5s
+      retries: 3
+      start_period: 10m
+    restart: unless-stopped
+    init: true
     networks:
       - backend
 
