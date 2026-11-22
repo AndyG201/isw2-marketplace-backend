@@ -6,13 +6,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionDisponibilidadQuery;
 
 @Service
 public class PublicacionDisponibilidadQueryService
         implements PublicacionDisponibilidadQuery {
 
-    private static final String ESTADO_ACTIVA = "ACTIVA";
 
     private final PublicacionRepository publicacionRepository;
 
@@ -33,7 +33,7 @@ public class PublicacionDisponibilidadQueryService
 
         return publicacionRepository.findByIdAlojamiento(idAlojamiento)
                 .map(publicacion ->
-                        ESTADO_ACTIVA.equals(publicacion.getEstado())
+                        publicacion.estaEn(EstadoPublicacion.ACTIVA)
                 )
                 .orElse(false);
     }

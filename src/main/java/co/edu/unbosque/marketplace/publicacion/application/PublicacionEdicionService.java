@@ -37,6 +37,7 @@ import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoIm
 import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
@@ -49,8 +50,7 @@ import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 @Service
 public class PublicacionEdicionService {
 
-    private static final String EN_REVISION = "PENDIENTE_REVISION";
-    private static final Set<String> ESTADOS_SIN_EDICION = Set.of(EN_REVISION, "BLOQUEADA");
+    private static final Set<String> ESTADOS_SIN_EDICION = EstadoPublicacion.nombres(EstadoPublicacion.SIN_EDICION);
 
     private static final Logger logger =
             LoggerFactory.getLogger(PublicacionEdicionService.class);
@@ -199,7 +199,7 @@ public class PublicacionEdicionService {
         publicacion.setFechaActualizacion(ahora);
 
         if (!camposEnRevision.isEmpty()) {
-            publicacion.setEstado(EN_REVISION);
+            publicacion.cambiarEstado(EstadoPublicacion.PENDIENTE_REVISION);
             cambios.registrarSolicitud(
                     idPublicacion, idActor, mensajeCambios, camposEnRevision, estadoAnterior, ahora);
         }

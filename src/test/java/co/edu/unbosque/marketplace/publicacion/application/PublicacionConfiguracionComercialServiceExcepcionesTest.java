@@ -65,7 +65,7 @@ class PublicacionConfiguracionComercialServiceExcepcionesTest {
     }
 
     private void publicacionExistente() {
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         lenient().when(publicacion.getIdAlojamiento()).thenReturn(idAlojamiento);
         when(publicacionRepository.findById(idPublicacion)).thenReturn(Optional.of(publicacion));
     }

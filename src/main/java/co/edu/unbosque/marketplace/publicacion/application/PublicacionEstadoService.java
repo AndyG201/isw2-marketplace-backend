@@ -17,6 +17,7 @@ import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.EstadoPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionInfo;
@@ -58,7 +59,7 @@ public class PublicacionEstadoService {
 
         validarNoBloqueada(publicacion);
 
-        if (!"ACTIVA".equals(publicacion.getEstado())) {
+        if (!publicacion.estaEn(EstadoPublicacion.ACTIVA)) {
 
             throw new ConflictoNegocioException(
                     "Solamente puedes pausar publicaciones que se encuentren ACTIVA."
@@ -69,7 +70,7 @@ public class PublicacionEstadoService {
 
         OffsetDateTime ahora = OffsetDateTime.now();
 
-        publicacion.setEstado("PAUSADA");
+        publicacion.cambiarEstado(EstadoPublicacion.PAUSADA);
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);
@@ -97,7 +98,7 @@ public class PublicacionEstadoService {
 
         validarNoBloqueada(publicacion);
 
-        if (!"PAUSADA".equals(publicacion.getEstado())) {
+        if (!publicacion.estaEn(EstadoPublicacion.PAUSADA)) {
 
             throw new ConflictoNegocioException(
                     "Solamente puedes reactivar publicaciones que se encuentren PAUSADA."
@@ -108,7 +109,7 @@ public class PublicacionEstadoService {
 
         OffsetDateTime ahora = OffsetDateTime.now();
 
-        publicacion.setEstado("ACTIVA");
+        publicacion.cambiarEstado(EstadoPublicacion.ACTIVA);
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);
@@ -203,7 +204,7 @@ public class PublicacionEstadoService {
 
     private void validarNoBloqueada(Publicacion publicacion) {
 
-        if ("BLOQUEADA".equals(publicacion.getEstado())) {
+        if (publicacion.estaEn(EstadoPublicacion.BLOQUEADA)) {
 
             throw new ConflictoNegocioException(
                     "La publicación está BLOQUEADA por un Administrador "

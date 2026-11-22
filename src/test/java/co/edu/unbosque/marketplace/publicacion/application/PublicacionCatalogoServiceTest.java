@@ -66,8 +66,8 @@ class PublicacionCatalogoServiceTest {
         idPublicacion2 = UUID.randomUUID();
         idAlojamiento2 = UUID.randomUUID();
 
-        publicacion = mock(Publicacion.class);
-        publicacion2 = mock(Publicacion.class);
+        publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+        publicacion2 = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
 
         alojamientoInfo = new AlojamientoPublicacionInfo(
                 idAlojamiento,

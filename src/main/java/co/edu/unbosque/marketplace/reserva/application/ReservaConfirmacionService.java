@@ -22,12 +22,12 @@ import co.edu.unbosque.marketplace.reserva.application.port.BloqueoClaveIdempote
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.contracts.PeriodosHabilitadosQuery;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 
 @Service
 public class ReservaConfirmacionService {
-    private static final String PENDIENTE_PAGO = "PENDIENTE_PAGO";
     private final ReservaConfirmacionRepository reservas;
     private final RegistroPagos pagos;
     private final NocheReservaRepository noches;
@@ -101,7 +101,7 @@ public class ReservaConfirmacionService {
                 datos.getMontoTotal(), resultado.aprobado(), momento);
         if (resultado.aprobado()) {
             if (reserva.getRetencionHasta() != null && reserva.getRetencionHasta().isAfter(momento)) {
-                reserva.setEstado("CONFIRMADA");
+                reserva.cambiarEstado(EstadoReserva.CONFIRMADA);
                 reserva.setFechaConfirmacion(momento);
                 reserva.setRetencionHasta(null);
                 reservas.save(reserva);
@@ -111,7 +111,7 @@ public class ReservaConfirmacionService {
             // de reembolso en la misma transacción que registra el pago aprobado.
             pagos.programarReembolso(idempotencia, momento);
             noches.liberar(idReserva);
-            reserva.setEstado("EXPIRADA");
+            reserva.cambiarEstado(EstadoReserva.EXPIRADA);
             reserva.setRetencionHasta(null);
             reservas.save(reserva);
             return respuesta(reserva, pago, datos.getMontoTotal(),
@@ -128,10 +128,10 @@ public class ReservaConfirmacionService {
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
         for (UUID id : reservas.buscarRetencionesVencidas(ahora)) {
             reservas.bloquearPorId(id).ifPresent(reserva -> {
-                if (PENDIENTE_PAGO.equals(reserva.getEstado()) && reserva.getRetencionHasta() != null
+                if (reserva.estaEn(EstadoReserva.PENDIENTE_PAGO) && reserva.getRetencionHasta() != null
                         && !reserva.getRetencionHasta().isAfter(ahora)) {
                     noches.liberar(id);
-                    reserva.setEstado("EXPIRADA");
+                    reserva.cambiarEstado(EstadoReserva.EXPIRADA);
                     reserva.setRetencionHasta(null);
                     reservas.save(reserva);
                 }
@@ -156,7 +156,7 @@ public class ReservaConfirmacionService {
             throw new ConflictoNegocioException(
                     "La confirmación inmediata solo aplica a reservas de aceptación inmediata.");
         }
-        if (!PENDIENTE_PAGO.equals(reserva.getEstado())) {
+        if (!reserva.estaEn(EstadoReserva.PENDIENTE_PAGO)) {
             throw new ConflictoNegocioException("La reserva no está pendiente de pago.");
         }
     }

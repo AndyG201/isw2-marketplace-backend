@@ -23,6 +23,7 @@ import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionD
 import co.edu.unbosque.marketplace.reserva.application.port.RefrescoDeReserva;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 
 @Service
@@ -32,8 +33,6 @@ public class ReservaPagoIntentoService {
     private static final String PAGO_PENDIENTE = "PENDIENTE";
     private static final String PAGO_PAGADO = "PAGADO";
     private static final String PAGO_REEMBOLSADO = "REEMBOLSADO";
-    private static final String RESERVA_PENDIENTE_PAGO = "PENDIENTE_PAGO";
-    private static final String RESERVA_CONFIRMADA = "CONFIRMADA";
 
     private final ReservaConfirmacionRepository reservas;
     private final RegistroPagos pagos;
@@ -90,7 +89,7 @@ public class ReservaPagoIntentoService {
                     "La reserva tiene un pago pendiente de conciliación. Reintenta con la misma clave de idempotencia.");
         }
 
-        if (!RESERVA_PENDIENTE_PAGO.equals(reserva.getEstado())) {
+        if (!reserva.estaEn(EstadoReserva.PENDIENTE_PAGO)) {
             throw new ConflictoNegocioException("La reserva no está pendiente de pago.");
         }
         OffsetDateTime ahora = OffsetDateTime.now(ZoneOffset.UTC);
@@ -161,11 +160,11 @@ public class ReservaPagoIntentoService {
 
         String mensajeFinal = mensaje;
         if (aprobado) {
-            boolean reservaPagable = RESERVA_PENDIENTE_PAGO.equals(reserva.getEstado())
+            boolean reservaPagable = reserva.estaEn(EstadoReserva.PENDIENTE_PAGO)
                     && reserva.getRetencionHasta() != null
                     && reserva.getRetencionHasta().isAfter(ahora);
             if (reservaPagable) {
-                reserva.setEstado(RESERVA_CONFIRMADA);
+                reserva.cambiarEstado(EstadoReserva.CONFIRMADA);
                 reserva.setFechaConfirmacion(ahora);
                 reserva.setRetencionHasta(null);
                 reservas.save(reserva);
@@ -173,9 +172,9 @@ public class ReservaPagoIntentoService {
                 // Webhook/reintento tardío: el pago está capturado, pero la reserva ya no
                 // puede confirmarse. La obligación de reembolso queda persistida aquí.
                 pagos.programarReembolso(claveNormalizada, ahora);
-                if (RESERVA_PENDIENTE_PAGO.equals(reserva.getEstado())) {
+                if (reserva.estaEn(EstadoReserva.PENDIENTE_PAGO)) {
                     noches.liberar(reserva.getIdReserva());
-                    reserva.setEstado("EXPIRADA");
+                    reserva.cambiarEstado(EstadoReserva.EXPIRADA);
                     reserva.setRetencionHasta(null);
                     reservas.save(reserva);
                 }

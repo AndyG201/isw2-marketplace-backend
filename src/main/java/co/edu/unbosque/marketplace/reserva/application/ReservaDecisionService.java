@@ -21,6 +21,7 @@ import co.edu.unbosque.marketplace.reserva.application.port.ReservaRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaRetencionRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudDatos;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaSolicitudRepository;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaDecisionEvent;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
@@ -29,9 +30,6 @@ import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaReposito
 public class ReservaDecisionService {
 
     private static final String MODO_APROBACION = "APROBACION";
-    private static final String PENDIENTE_APROBACION = "PENDIENTE_APROBACION";
-    private static final String PENDIENTE_PAGO = "PENDIENTE_PAGO";
-    private static final String RECHAZADA = "RECHAZADA";
 
     private final ReservaRetencionRepository retenciones;
     private final ReservaSolicitudRepository solicitudes;
@@ -86,7 +84,7 @@ public class ReservaDecisionService {
         }
 
         if (!MODO_APROBACION.equals(reserva.getModoAceptacion())
-                || !PENDIENTE_APROBACION.equals(reserva.getEstado())) {
+                || !reserva.estaEn(EstadoReserva.PENDIENTE_APROBACION)) {
             throw new ConflictoNegocioException(
                     "La solicitud ya fue resuelta o no admite una decisión. Estado actual: "
                             + reserva.getEstado() + ".");
@@ -130,7 +128,7 @@ public class ReservaDecisionService {
         }
 
         OffsetDateTime limitePago = ahora.plusMinutes(minutosRetencionPago);
-        reserva.setEstado(PENDIENTE_PAGO);
+        reserva.cambiarEstado(EstadoReserva.PENDIENTE_PAGO);
         reserva.setRetencionHasta(limitePago);
         reservas.saveAndFlush(reserva);
 
@@ -167,7 +165,7 @@ public class ReservaDecisionService {
             OffsetDateTime ahora) {
 
         noches.liberar(reserva.getIdReserva());
-        reserva.setEstado(RECHAZADA);
+        reserva.cambiarEstado(EstadoReserva.RECHAZADA);
         reserva.setRetencionHasta(null);
         reservas.saveAndFlush(reserva);
 
@@ -176,14 +174,14 @@ public class ReservaDecisionService {
                 reserva.getIdReserva(),
                 ahora,
                 "RECHAZAR_SOLICITUD",
-                RECHAZADA,
+                EstadoReserva.RECHAZADA.name(),
                 "{\"motivo\":\"RECHAZO_DEL_ANFITRION\"}"));
 
         eventos.publishEvent(new ReservaDecisionEvent(
                 reserva.getIdHuesped(),
                 reserva.getIdReserva(),
                 datos.getIdPublicacion(),
-                RECHAZADA,
+                EstadoReserva.RECHAZADA.name(),
                 ahora,
                 null,
                 limiteAprobacion));
@@ -203,7 +201,7 @@ public class ReservaDecisionService {
             OffsetDateTime ahora) {
 
         noches.liberar(reserva.getIdReserva());
-        reserva.setEstado(RECHAZADA);
+        reserva.cambiarEstado(EstadoReserva.RECHAZADA);
         reserva.setRetencionHasta(null);
         reservas.saveAndFlush(reserva);
 
@@ -212,7 +210,7 @@ public class ReservaDecisionService {
                 reserva.getIdReserva(),
                 ahora,
                 "RECHAZO_AUTOMATICO_POR_VENCIMIENTO",
-                RECHAZADA,
+                EstadoReserva.RECHAZADA.name(),
                 "{\"fechaVencimiento\":\"" + limiteAprobacion + "\"}"));
 
         eventos.publishEvent(new ReservaDecisionEvent(

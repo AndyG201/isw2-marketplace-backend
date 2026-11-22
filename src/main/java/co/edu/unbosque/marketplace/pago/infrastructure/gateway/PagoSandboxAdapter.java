@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.Base64;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,7 +26,9 @@ import co.edu.unbosque.marketplace.pago.contracts.PagoSandboxGateway;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoPagoSandbox;
 import co.edu.unbosque.marketplace.pago.contracts.ResultadoReembolsoSandbox;
 
+/** Pasarela real (modo de pruebas de Stripe). Se reemplaza por {@link PagoSimuladoGateway} con el perfil pago-simulado. */
 @Component
+@Profile("!pago-simulado")
 public class PagoSandboxAdapter implements PagoSandboxGateway {
     private static final URI PAYMENT_INTENTS_URI = URI.create("https://api.stripe.com/v1/payment_intents");
     private static final URI REFUNDS_URI = URI.create("https://api.stripe.com/v1/refunds");

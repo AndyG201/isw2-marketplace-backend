@@ -19,12 +19,12 @@ import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionDetall
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionPublicaResponse;
 import co.edu.unbosque.marketplace.publicacion.application.dto.ServicioAdicionalPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 
 @Service
 public class PublicacionDetallePublicoService {
 
-    private static final String ESTADO_ACTIVA = "ACTIVA";
 
     private final PublicacionRepository publicacionRepository;
     private final AlojamientoPublicacionQuery alojamientoQuery;
@@ -53,7 +53,7 @@ public class PublicacionDetallePublicoService {
     public PublicacionPublicaResponse consultar(UUID idPublicacion) {
 
         Publicacion publicacion = buscar(idPublicacion)
-                .filter(encontrada -> ESTADO_ACTIVA.equals(encontrada.getEstado()))
+                .filter(encontrada -> encontrada.estaEn(EstadoPublicacion.ACTIVA))
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "La publicación no existe o no está disponible."));
 

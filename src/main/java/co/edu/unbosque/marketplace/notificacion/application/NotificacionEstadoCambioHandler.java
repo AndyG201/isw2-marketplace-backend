@@ -17,15 +17,17 @@ import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoPublicacio
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoReserva;
 import co.edu.unbosque.marketplace.notificacion.application.port.NotificacionRepository;
 import co.edu.unbosque.marketplace.notificacion.domain.Notificacion;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
+import co.edu.unbosque.marketplace.reserva.contracts.EstadoReserva;
 
 @Component
 public class NotificacionEstadoCambioHandler {
 
     private static final String RESERVA = "RESERVA";
     private static final String PUBLICACION = "PUBLICACION";
-    private static final String EN_REVISION = "PENDIENTE_REVISION";
-    private static final String BORRADOR = "BORRADOR";
-    private static final List<String> DECISIONES_RESERVA_NOTIFICADAS = List.of("PENDIENTE_PAGO", "RECHAZADA");
+    private static final String EN_REVISION = EstadoPublicacion.PENDIENTE_REVISION.name();
+    private static final String BORRADOR = EstadoPublicacion.BORRADOR.name();
+    private static final List<String> DECISIONES_RESERVA_NOTIFICADAS = List.of(EstadoReserva.PENDIENTE_PAGO.name(), EstadoReserva.RECHAZADA.name());
 
     private final NotificacionRepository notificaciones;
     private final DestinatariosNotificacion destinatarios;
@@ -134,13 +136,13 @@ public class NotificacionEstadoCambioHandler {
 
     private boolean yaLoNotificaUnListenerExistente(EstadoMarketplaceCambioEvent evento) {
         if (RESERVA.equals(evento.entidad())
-                && "PENDIENTE_APROBACION".equals(evento.estadoAnterior())
+                && EstadoReserva.PENDIENTE_APROBACION.name().equals(evento.estadoAnterior())
                 && DECISIONES_RESERVA_NOTIFICADAS.contains(evento.estadoNuevo())) {
             return true;
         }
         return PUBLICACION.equals(evento.entidad())
-                && "BLOQUEADA".equals(evento.estadoAnterior())
-                && "PAUSADA".equals(evento.estadoNuevo());
+                && EstadoPublicacion.BLOQUEADA.name().equals(evento.estadoAnterior())
+                && EstadoPublicacion.PAUSADA.name().equals(evento.estadoNuevo());
     }
 
     private boolean esEventoValido(EstadoMarketplaceCambioEvent evento) {

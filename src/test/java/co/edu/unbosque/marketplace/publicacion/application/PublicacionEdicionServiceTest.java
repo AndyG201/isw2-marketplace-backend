@@ -139,7 +139,7 @@ class PublicacionEdicionServiceTest {
 
     private Publicacion crearPublicacion() {
 
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
 
         when(publicacion.getIdPublicacion()).thenReturn(idPublicacion);
         when(publicacion.getIdAlojamiento()).thenReturn(idAlojamiento);

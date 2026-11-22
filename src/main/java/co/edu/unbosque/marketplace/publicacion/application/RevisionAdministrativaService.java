@@ -17,6 +17,7 @@ import co.edu.unbosque.marketplace.auditoria.contracts.AuditoriaEventoCommand;
 import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.DecisionPublicacionResponse;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.RevisionPublicacion;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
@@ -28,7 +29,6 @@ import co.edu.unbosque.marketplace.usuario.contracts.UsuarioPublicacionQuery;
 @Service
 public class RevisionAdministrativaService {
 
-    private static final String PAUSADA = "PAUSADA";
 
     private final PublicacionRepository publicacionRepository;
     private final AlojamientoPublicacionQuery alojamientoQuery;
@@ -89,8 +89,8 @@ public class RevisionAdministrativaService {
         OffsetDateTime ahora = OffsetDateTime.now();
 
         String estadoFinal = cambios.resolver(publicacion.getIdPublicacion(), ahora)
-                .filter(PAUSADA::equals)
-                .orElse("ACTIVA");
+                .filter(EstadoPublicacion.PAUSADA.name()::equals)
+                .orElse(EstadoPublicacion.ACTIVA.name());
 
         publicacion.setEstado(estadoFinal);
         publicacion.setFechaActualizacion(ahora);
@@ -114,7 +114,7 @@ public class RevisionAdministrativaService {
                 estadoAnterior,
                 publicacion.getEstado(),
                 null,
-                PAUSADA.equals(estadoFinal)
+                EstadoPublicacion.PAUSADA.name().equals(estadoFinal)
                         ? "Los cambios fueron aprobados y la publicación sigue pausada, como la dejó el anfitrión."
                         : "La publicación ha sido aprobada y activada correctamente.",
                 ahora
@@ -151,7 +151,7 @@ public class RevisionAdministrativaService {
 
         cambios.resolver(publicacion.getIdPublicacion(), ahora);
 
-        publicacion.setEstado("BORRADOR");
+        publicacion.cambiarEstado(EstadoPublicacion.BORRADOR);
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);
@@ -164,7 +164,7 @@ public class RevisionAdministrativaService {
                 motivoFinal,
                 ahora
         );
-        registrarEventoRevision(idAdministrador, publicacion, estadoAnterior, "BORRADOR", "RECHAZAR_PUBLICACION", ahora);
+        registrarEventoRevision(idAdministrador, publicacion, estadoAnterior, EstadoPublicacion.BORRADOR.name(), "RECHAZAR_PUBLICACION", ahora);
 
         return new DecisionPublicacionResponse(
                 revision.getIdRevision(),
@@ -215,7 +215,7 @@ public class RevisionAdministrativaService {
 
     private void validarEstadoRevision(Publicacion publicacion) {
 
-        if (!"PENDIENTE_REVISION".equals(publicacion.getEstado())) {
+        if (!publicacion.estaEn(EstadoPublicacion.PENDIENTE_REVISION)) {
 
             throw new ConflictoNegocioException(
                     "No se puede aprobar o rechazar la publicación "

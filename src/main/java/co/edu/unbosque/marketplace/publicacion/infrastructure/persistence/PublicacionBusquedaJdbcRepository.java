@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PaginaPublicacionesResponse;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionResumenResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionBusquedaRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionBusquedaCriteria;
 
 @Repository

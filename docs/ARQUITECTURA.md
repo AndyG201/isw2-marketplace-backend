@@ -56,6 +56,19 @@ Las dependencias van hacia adentro: `api → application → domain`, y la infra
   el puerto `AlmacenTemporal`, implementado con Redis en `usuario/infrastructure/redis`.
 - Releer una reserva tras la llamada a Stripe pasa por el puerto `RefrescoDeReserva`, implementado con JPA en `reserva/infrastructure/persistence`.
 
+### Estados y transiciones
+
+- `EstadoReserva` (`reserva/contracts`) y `EstadoPublicacion` (`publicacion/contracts`) son los únicos lugares donde se definen los estados y
+  qué transiciones están permitidas. El nombre de cada constante es el texto guardado en la base de datos; la columna sigue siendo
+  texto y una prueba de integración compara los enums con las restricciones `chk_reserva_estado` y `chk_publicacion_estado`.
+- Las entidades `Reserva` y `Publicacion` cambian de estado con `cambiarEstado(...)`, que consulta la tabla y lanza
+  `ConflictoNegocioException` (409) si la transición no existe. Los servicios consultan con `estaEn(...)`, no con textos.
+- Los conjuntos de negocio (por ejemplo `EstadoReserva.CANCELABLES` o `QUE_OCUPAN_NOCHES`) también viven en el enum; el SQL escrito a mano
+  los arma con `EstadoReserva.enSql(...)`. Los textos que quedan dentro de anotaciones `@Query` (constantes de compilación) los revisa
+  `EstadosCoincidenConLaBaseDeDatosIntegracionTest`.
+- `reserva` lee el estado de la publicación como texto (`"ACTIVA"`) en dos comparaciones: importar `EstadoPublicacion` crearía un
+  ciclo entre módulos (`publicacion` ya depende de `reserva`), que Spring Modulith no permite.
+
 ## 4. Errores y códigos HTTP
 
 Los servicios lanzan excepciones de `compartido.domain` y `ErroresApiHandler` las convierte en `{"mensaje": "..."}`:
@@ -84,6 +97,15 @@ Los servicios lanzan excepciones de `compartido.domain` y `ErroresApiHandler` la
 - Búsqueda por ciudad sin tildes: la columna generada `alojamiento.ciudad_normalizada` tiene un índice de trigramas (`pg_trgm`, migración V11);
   con 100 000 alojamientos la consulta pasó de 111 ms (recorrido completo) a 4 ms (uso del índice).
 
+### Pasarela de pago simulada y versiones en memoria
+
+- `PagoSandboxGateway` tiene dos implementaciones: Stripe (`PagoSandboxAdapter`, perfil por defecto) y `PagoSimuladoGateway`, que vive en
+  memoria y se activa con el perfil `pago-simulado` (por ejemplo `SPRING_PROFILES_ACTIVE=worker,pago-simulado`). Es idempotente por
+  clave, aprueba los pagos y rechaza los de monto con `.13` de decimales para poder probar el rechazo. No usa red ni claves.
+- `CacheBusquedaPublicaciones`, `ColaTrabajos` y `AlmacenTemporal` tienen versiones en memoria en `src/test` (paquete `doble`). Una prueba de
+  contrato por puerto se ejecuta contra la versión en memoria y contra la real con Redis, para que no se parezcan solo en apariencia.
+  Son dobles de prueba: no se despliegan.
+
 ## 6. Concesiones conocidas
 
 Estas dependencias técnicas siguen dentro de las capas y están aceptadas por ahora:
@@ -92,6 +114,7 @@ Estas dependencias técnicas siguen dentro de las capas y están aceptadas por a
 - Las entidades del dominio llevan anotaciones JPA (29 clases) y `Usuario` implementa `UserDetails` de Spring Security.
 - Algunos servicios usan Jackson (`ObjectMapper`) para serializar el detalle de auditoría, y los puertos de dos repositorios
   usan los tipos de valor `Sort`/`Pageable` de Spring Data.
+- `JwtUtil` (infraestructura de `usuario`) usa Redis directamente para invalidar sesiones.
 - Los adaptadores de infraestructura de Backblaze, Cloudinary, JWT y cifrado lanzan `IllegalStateException` para fallas
   internas (siempre 500); la regla 6 no los cubre.
 
@@ -99,7 +122,7 @@ Estas dependencias técnicas siguen dentro de las capas y están aceptadas por a
 
 - `./mvnw clean verify` ejecuta las pruebas y genera el informe JaCoCo en `target/site/jacoco/jacoco.xml`.
   Las pruebas de integración necesitan PostgreSQL 18 y Redis 7 (la CI los levanta como servicios).
-- Estado medido tras la última integración: **1754 pruebas**, cobertura total de **85,3 % de líneas** y **73,2 % de ramas**.
+- Estado medido tras la última integración: **1844 pruebas**, cobertura total de **85,6 % de líneas** y **73,8 % de ramas**.
   Los módulos con menor cobertura de líneas son `servicio` (24 %), `reporte` (47 %) y `config` (62 %).
 - Pruebas de carga: `BusquedaConcurrenciaIntegracionTest` (en la suite) lanza búsquedas simultáneas contra la aplicación completa, y
   `pruebas-carga/busqueda.js` (k6, se ejecuta a mano contra un servidor) mide tiempos con umbrales; ver `pruebas-carga/README.md`.

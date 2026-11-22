@@ -33,7 +33,7 @@ class PublicacionServiciosAdicionalesSeleccionExcepcionesTest {
     private final UUID idPublicacion = UUID.randomUUID();
 
     private void publicacionActiva() {
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(publicacion.getEstado()).thenReturn("ACTIVA");
         when(publicacionRepository.findById(idPublicacion)).thenReturn(Optional.of(publicacion));
     }
@@ -52,7 +52,7 @@ class PublicacionServiciosAdicionalesSeleccionExcepcionesTest {
 
     @Test
     void rechazaPublicacionNoActiva() {
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(publicacion.getEstado()).thenReturn("PAUSADA");
         when(publicacionRepository.findById(idPublicacion)).thenReturn(Optional.of(publicacion));
 

@@ -20,6 +20,7 @@ import co.edu.unbosque.marketplace.auditoria.contracts.RegistrarEventoAuditoria;
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
 import co.edu.unbosque.marketplace.publicacion.application.dto.ModeracionPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.dto.PublicacionAdministrativaResponse;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.contracts.PublicacionDesbloqueadaEvent;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.RevisionPublicacion;
@@ -29,8 +30,6 @@ import co.edu.unbosque.marketplace.publicacion.application.port.RevisionPublicac
 @Service
 public class ModeracionPublicacionService {
 
-    private static final String BLOQUEADA = "BLOQUEADA";
-    private static final String PAUSADA = "PAUSADA";
 
     private final PublicacionRepository publicacionRepository;
     private final RevisionPublicacionRepository revisionRepository;
@@ -90,7 +89,7 @@ public class ModeracionPublicacionService {
 
         Publicacion publicacion = obtenerPublicacion(idPublicacion);
 
-        if (BLOQUEADA.equals(publicacion.getEstado())) {
+        if (publicacion.estaEn(EstadoPublicacion.BLOQUEADA)) {
             throw new ConflictoNegocioException(
                     "La publicación ya se encuentra BLOQUEADA."
             );
@@ -100,7 +99,7 @@ public class ModeracionPublicacionService {
 
         OffsetDateTime ahora = OffsetDateTime.now();
 
-        publicacion.setEstado(BLOQUEADA);
+        publicacion.cambiarEstado(EstadoPublicacion.BLOQUEADA);
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);
@@ -109,19 +108,19 @@ public class ModeracionPublicacionService {
                 idAdministrador,
                 idPublicacion,
                 "BLOQUEAR_PUBLICACION",
-                BLOQUEADA,
+                EstadoPublicacion.BLOQUEADA.name(),
                 motivoFinal,
                 ahora
         );
 
-        registrarEventoModeracion(idAdministrador, idPublicacion, estadoAnterior, BLOQUEADA, "BLOQUEAR_PUBLICACION", ahora);
+        registrarEventoModeracion(idAdministrador, idPublicacion, estadoAnterior, EstadoPublicacion.BLOQUEADA.name(), "BLOQUEAR_PUBLICACION", ahora);
 
         return new ModeracionPublicacionResponse(
                 revision.getIdRevision(),
                 idPublicacion,
                 revision.getAccion(),
                 estadoAnterior,
-                BLOQUEADA,
+                EstadoPublicacion.BLOQUEADA.name(),
                 motivoFinal,
                 "La publicación ha sido bloqueada correctamente.",
                 ahora
@@ -142,7 +141,7 @@ public class ModeracionPublicacionService {
 
         Publicacion publicacion = obtenerPublicacion(idPublicacion);
 
-        if (!BLOQUEADA.equals(publicacion.getEstado())) {
+        if (!publicacion.estaEn(EstadoPublicacion.BLOQUEADA)) {
             throw new ConflictoNegocioException(
                     "Solamente puedes desbloquear publicaciones BLOQUEADAS."
             );
@@ -160,7 +159,7 @@ public class ModeracionPublicacionService {
 
         OffsetDateTime ahora = OffsetDateTime.now();
 
-        publicacion.setEstado(PAUSADA);
+        publicacion.cambiarEstado(EstadoPublicacion.PAUSADA);
         publicacion.setFechaActualizacion(ahora);
 
         publicacionRepository.save(publicacion);
@@ -174,7 +173,7 @@ public class ModeracionPublicacionService {
                 ahora
         );
 
-        registrarEventoModeracion(idAdministrador, idPublicacion, estadoAnterior, PAUSADA, "DESBLOQUEAR_PUBLICACION", ahora);
+        registrarEventoModeracion(idAdministrador, idPublicacion, estadoAnterior, EstadoPublicacion.PAUSADA.name(), "DESBLOQUEAR_PUBLICACION", ahora);
 
         // Notificar al módulo de notificaciones.
 
@@ -193,7 +192,7 @@ public class ModeracionPublicacionService {
                 idPublicacion,
                 revision.getAccion(),
                 estadoAnterior,
-                PAUSADA,
+                EstadoPublicacion.PAUSADA.name(),
                 motivoFinal,
                 "La publicación ha sido desbloqueada y permanece PAUSADA.",
                 ahora

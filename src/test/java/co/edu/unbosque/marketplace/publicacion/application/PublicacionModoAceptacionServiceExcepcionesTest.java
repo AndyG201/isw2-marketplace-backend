@@ -42,7 +42,7 @@ class PublicacionModoAceptacionServiceExcepcionesTest {
     private final UUID idAlojamiento = UUID.randomUUID();
 
     private Publicacion publicacion(String modo) {
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         lenient().when(publicacion.getIdAlojamiento()).thenReturn(idAlojamiento);
         lenient().when(publicacion.getModoAceptacion()).thenReturn(modo);
         when(publicacionRepository.findById(idPublicacion)).thenReturn(Optional.of(publicacion));

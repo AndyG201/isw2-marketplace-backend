@@ -37,7 +37,7 @@ class PublicacionPoliticaCancelacionServiceExcepcionesTest {
     private final UUID idPolitica = UUID.randomUUID();
 
     private Publicacion publicacionExistente() {
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(publicacion.getIdAlojamiento()).thenReturn(idAlojamiento);
         when(publicacionRepository.findById(idPublicacion)).thenReturn(Optional.of(publicacion));
         return publicacion;

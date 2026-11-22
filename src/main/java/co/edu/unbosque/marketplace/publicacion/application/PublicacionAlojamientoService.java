@@ -28,6 +28,7 @@ import co.edu.unbosque.marketplace.publicacion.application.port.AlmacenamientoIm
 import co.edu.unbosque.marketplace.publicacion.application.port.ImagenPublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionServicioRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.ImagenPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.PublicacionServicio;
@@ -169,7 +170,7 @@ public class PublicacionAlojamientoService {
                         : solicitud.getTarifaLimpieza());
         publicacion.setModoAceptacion(
                 solicitud.getModoAceptacion().trim());
-        publicacion.setEstado("BORRADOR");
+        publicacion.setEstado(EstadoPublicacion.BORRADOR.name());
         publicacion.setFechaCreacion(ahora);
         publicacion.setFechaActualizacion(ahora);
 

@@ -18,6 +18,7 @@ import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoExceptio
 import co.edu.unbosque.marketplace.publicacion.application.dto.SeleccionServiciosAdicionalesResponse;
 import co.edu.unbosque.marketplace.publicacion.application.dto.ServicioAdicionalPublicacionResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalInfo;
 import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalQuery;
@@ -25,7 +26,6 @@ import co.edu.unbosque.marketplace.servicio.contracts.ServicioAdicionalQuery;
 @Service
 public class PublicacionServiciosAdicionalesSeleccionService {
 
-    private static final String ESTADO_ACTIVA = "ACTIVA";
 
     private final PublicacionRepository publicacionRepository;
     private final ServicioAdicionalQuery servicioAdicionalQuery;
@@ -132,7 +132,7 @@ public class PublicacionServiciosAdicionalesSeleccionService {
                         "La publicación no existe."
                 ));
 
-        if (!ESTADO_ACTIVA.equals(publicacion.getEstado())) {
+        if (!publicacion.estaEn(EstadoPublicacion.ACTIVA)) {
             throw new RecursoNoEncontradoException(
                     "La publicación no está disponible en el marketplace."
             );

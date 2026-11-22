@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplace.alojamiento.contracts.AlojamientoPublicacionQuery;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 
@@ -17,7 +18,6 @@ import co.edu.unbosque.marketplace.cotizacion.contracts.PublicacionCotizacionQue
 public class PublicacionCotizacionQueryService
         implements PublicacionCotizacionQuery {
 
-    private static final String ESTADO_ACTIVA = "ACTIVA";
 
     private final PublicacionRepository publicacionRepository;
     private final AlojamientoPublicacionQuery alojamientoQuery;
@@ -40,7 +40,7 @@ public class PublicacionCotizacionQueryService
 
         return publicacionRepository.findById(idPublicacion)
                 .filter(publicacion ->
-                        ESTADO_ACTIVA.equals(publicacion.getEstado()))
+                        publicacion.estaEn(EstadoPublicacion.ACTIVA))
                 .flatMap(this::convertir);
     }
 

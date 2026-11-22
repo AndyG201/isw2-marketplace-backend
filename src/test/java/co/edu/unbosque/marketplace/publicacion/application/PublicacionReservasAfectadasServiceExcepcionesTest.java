@@ -49,7 +49,7 @@ class PublicacionReservasAfectadasServiceExcepcionesTest {
 
     @Test
     void rechazaPublicacionQueNoEstaBloqueada() {
-        Publicacion publicacion = mock(Publicacion.class);
+        Publicacion publicacion = mock(Publicacion.class, org.mockito.Mockito.CALLS_REAL_METHODS);
         when(publicacion.getEstado()).thenReturn("ACTIVA");
         when(publicacionRepository.findById(idPublicacion)).thenReturn(Optional.of(publicacion));
 

@@ -20,6 +20,7 @@ import co.edu.unbosque.marketplace.publicacion.application.dto.ReservaAfectadaRe
 import co.edu.unbosque.marketplace.publicacion.application.dto.ReservasAfectadasResponse;
 import co.edu.unbosque.marketplace.publicacion.application.port.PublicacionRepository;
 import co.edu.unbosque.marketplace.publicacion.application.port.RevisionPublicacionRepository;
+import co.edu.unbosque.marketplace.publicacion.contracts.EstadoPublicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.Publicacion;
 import co.edu.unbosque.marketplace.publicacion.domain.RevisionPublicacion;
 import co.edu.unbosque.marketplace.reserva.contracts.ReservaAfectadaInfo;
@@ -30,7 +31,6 @@ import co.edu.unbosque.marketplace.usuario.contracts.UsuarioReservaQuery;
 @Service
 public class PublicacionReservasAfectadasService {
 
-    private static final String BLOQUEADA = "BLOQUEADA";
 
     private final PublicacionRepository publicacionRepository;
     private final RevisionPublicacionRepository revisionRepository;
@@ -69,7 +69,7 @@ public class PublicacionReservasAfectadasService {
                                 "La publicación no existe."
                         ));
 
-        if (!BLOQUEADA.equals(publicacion.getEstado())) {
+        if (!publicacion.estaEn(EstadoPublicacion.BLOQUEADA)) {
             throw new ConflictoNegocioException(
                     "Solamente puedes consultar reservas afectadas "
                     + "de publicaciones BLOQUEADAS."
