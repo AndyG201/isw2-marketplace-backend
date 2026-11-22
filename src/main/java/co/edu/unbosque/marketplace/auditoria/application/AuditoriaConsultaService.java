@@ -1,8 +1,13 @@
 package co.edu.unbosque.marketplace.auditoria.application;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessException;
@@ -15,6 +20,7 @@ import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoriaIndice;
 import co.edu.unbosque.marketplace.auditoria.domain.FiltrosAuditoria;
 import co.edu.unbosque.marketplace.auditoria.application.port.AuditoriaConsultaRepository;
+import co.edu.unbosque.marketplace.auditoria.application.port.CacheEventosAuditoria;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.ServicioNoDisponibleException;
@@ -24,15 +30,21 @@ public class AuditoriaConsultaService {
 
     private static final int TAMANO_MAXIMO = 100;
 
+    /** Cuántos eventos se descargan a la vez del almacén al armar una página. */
+    private static final int DESCARGAS_SIMULTANEAS = 8;
+
     private final AuditoriaConsultaRepository repository;
     private final ObjectProvider<AlmacenamientoInmutableAuditoria> backblazeProvider;
+    private final CacheEventosAuditoria cache;
 
     public AuditoriaConsultaService(
             AuditoriaConsultaRepository repository,
-            ObjectProvider<AlmacenamientoInmutableAuditoria> backblazeProvider) {
+            ObjectProvider<AlmacenamientoInmutableAuditoria> backblazeProvider,
+            CacheEventosAuditoria cache) {
 
         this.repository = repository;
         this.backblazeProvider = backblazeProvider;
+        this.cache = cache;
     }
 
     public PaginaAuditoriaResponse consultar(
@@ -75,13 +87,7 @@ public class AuditoriaConsultaService {
                 AlmacenamientoInmutableAuditoria almacenamiento =
                         obtenerAlmacenamiento();
 
-                eventos = indices.stream()
-                        .map(indice -> almacenamiento.obtenerEvento(
-                                indice.claveObjeto(),
-                                indice.versionObjeto(),
-                                indice.sha256(),
-                                indice.idEvento()
-                        ))
+                eventos = obtenerEventos(indices, almacenamiento).stream()
                         .map(this::convertir)
                         .toList();
             }
@@ -126,14 +132,7 @@ public class AuditoriaConsultaService {
             AlmacenamientoInmutableAuditoria almacenamiento =
                     obtenerAlmacenamiento();
 
-            EventoAuditoria evento = almacenamiento.obtenerEvento(
-                    indice.claveObjeto(),
-                    indice.versionObjeto(),
-                    indice.sha256(),
-                    indice.idEvento()
-            );
-
-            return convertir(evento);
+            return convertir(recuperar(almacenamiento, indice));
 
         } catch (DataAccessException | IllegalStateException error) {
 
@@ -142,6 +141,73 @@ public class AuditoriaConsultaService {
                     error
             );
         }
+    }
+
+    /**
+     * Recupera los eventos de la página descargándolos a la vez (cada descarga es una llamada de red al almacén) y
+     * respetando el orden del índice. Si alguna falla, se cancela el resto y se propaga el mismo error de antes.
+     */
+    private List<EventoAuditoria> obtenerEventos(
+            List<EventoAuditoriaIndice> indices,
+            AlmacenamientoInmutableAuditoria almacenamiento) {
+
+        if (indices.size() == 1) {
+            return List.of(recuperar(almacenamiento, indices.get(0)));
+        }
+
+        try (ExecutorService pool = Executors.newFixedThreadPool(
+                Math.min(DESCARGAS_SIMULTANEAS, indices.size()))) {
+            List<Future<EventoAuditoria>> tareas = indices.stream()
+                    .map(indice -> pool.submit(() -> recuperar(almacenamiento, indice)))
+                    .toList();
+
+            List<EventoAuditoria> eventos = new ArrayList<>(tareas.size());
+            try {
+                for (Future<EventoAuditoria> tarea : tareas) {
+                    eventos.add(esperar(tarea));
+                }
+            } catch (RuntimeException error) {
+                pool.shutdownNow();
+                throw error;
+            }
+            return eventos;
+        }
+    }
+
+    private EventoAuditoria esperar(Future<EventoAuditoria> tarea) {
+        try {
+            return tarea.get();
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            throw new ServicioNoDisponibleException(
+                    "La consulta de auditoría fue interrumpida.", error);
+        } catch (ExecutionException error) {
+            Throwable causa = error.getCause();
+            if (causa instanceof RuntimeException excepcion) {
+                throw excepcion;
+            }
+            if (causa instanceof Error grave) {
+                throw grave;
+            }
+            throw new ServicioNoDisponibleException(
+                    "No fue posible recuperar el evento de auditoría.", causa);
+        }
+    }
+
+    /** Lee el evento de la caché y, si no está, lo descarga del almacén (verificando su huella) y lo guarda. */
+    private EventoAuditoria recuperar(
+            AlmacenamientoInmutableAuditoria almacenamiento,
+            EventoAuditoriaIndice indice) {
+
+        return cache.leer(indice.idEvento(), indice.sha256()).orElseGet(() -> {
+            EventoAuditoria evento = almacenamiento.obtenerEvento(
+                    indice.claveObjeto(),
+                    indice.versionObjeto(),
+                    indice.sha256(),
+                    indice.idEvento());
+            cache.guardar(indice.sha256(), evento);
+            return evento;
+        });
     }
 
     private AlmacenamientoInmutableAuditoria obtenerAlmacenamiento() {

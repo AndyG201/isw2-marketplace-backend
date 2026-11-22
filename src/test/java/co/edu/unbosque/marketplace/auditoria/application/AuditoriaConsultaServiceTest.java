@@ -19,6 +19,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessResourceFailureException;
 
 import co.edu.unbosque.marketplace.auditoria.application.dto.EventoAuditoriaResponse;
+import co.edu.unbosque.marketplace.auditoria.application.port.CacheEventosAuditoria;
 import co.edu.unbosque.marketplace.auditoria.application.dto.PaginaAuditoriaResponse;
 import co.edu.unbosque.marketplace.auditoria.domain.AlmacenamientoInmutableAuditoria;
 import co.edu.unbosque.marketplace.auditoria.domain.EventoAuditoria;
@@ -39,6 +40,9 @@ class AuditoriaConsultaServiceTest {
 
     @Mock
     private AlmacenamientoInmutableAuditoria backblaze;
+
+    @Mock
+    private CacheEventosAuditoria cache;
 
     @InjectMocks
     private AuditoriaConsultaService service;
