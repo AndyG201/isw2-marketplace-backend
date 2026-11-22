@@ -13,21 +13,16 @@ import org.springframework.util.AntPathMatcher;
 @Configuration
 public class ResenaPublicSecurityConfiguration {
 
-    private static final String RUTA_RESEÑAS = "/publicaciones/*/resenas";
-    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
-    private static final RequestMatcher CONSULTA_PUBLICA = request ->
-            HttpMethod.GET.matches(request.getMethod())
-                    && PATH_MATCHER.match(RUTA_RESEÑAS, request.getServletPath());
+	private static final String RUTA_RESEÑAS = "/publicaciones/*/resenas";
+	private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+	private static final RequestMatcher CONSULTA_PUBLICA = request -> HttpMethod.GET.matches(request.getMethod())
+			&& PATH_MATCHER.match(RUTA_RESEÑAS, request.getServletPath());
 
-    @Bean
-    @Order(2)
-    SecurityFilterChain resenasPublicasSecurityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .securityMatcher(CONSULTA_PUBLICA)
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> { })
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(autorizacion -> autorizacion.anyRequest().permitAll())
-                .build();
-    }
+	@Bean
+	@Order(2)
+	SecurityFilterChain resenasPublicasSecurityFilterChain(HttpSecurity http) throws Exception {
+		return http.securityMatcher(CONSULTA_PUBLICA).cors(cors -> {
+		}).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authorizeHttpRequests(auth -> auth.anyRequest().permitAll()).build();
+	}
 }
