@@ -1,0 +1,26 @@
+# Lista de entradas admitidas. Excluye target, .git, ZIP, cargas y reportes.
+**
+!pom.xml
+!mvnw
+!.mvn/
+!.mvn/wrapper/
+!.mvn/wrapper/maven-wrapper.properties
+!src/
+!src/main/
+!src/main/**
+!deploy/
+!deploy/api/
+!deploy/api/entrypoint.sh
+
+# Configuracion local y material privado nunca entran al contexto de construccion.
+**/application*.properties
+**/application*.yaml
+**/application*.yml
+!src/main/resources/application.yaml
+!src/main/resources/application-docker.yaml
+!src/main/resources/application-observability.properties
+**/.env*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.jks
