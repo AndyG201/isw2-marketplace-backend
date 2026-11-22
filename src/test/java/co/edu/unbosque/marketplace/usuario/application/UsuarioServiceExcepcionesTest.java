@@ -7,18 +7,18 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
+import co.edu.unbosque.marketplace.usuario.application.port.AlmacenTemporal;
 import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
@@ -55,8 +55,7 @@ class UsuarioServiceExcepcionesTest {
     @Mock private JwtUtil jwtUtil;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private UbicacionRegistroQuery ubicacionRegistroQuery;
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private StringRedisTemplate redisTemplate;
+    @Mock private AlmacenTemporal almacenTemporal;
     @InjectMocks private UsuarioService service;
 
     private Usuario usuario(EstadoUsuario estado, boolean correoVerificado) {
@@ -96,8 +95,8 @@ class UsuarioServiceExcepcionesTest {
     @Test
     void confirmarCambioCorreoRechazaUnCorreoQueYaPerteneceAOtraCuenta() {
         when(usuarioRepository.findById(ID)).thenReturn(Optional.of(usuario(EstadoUsuario.ACTIVA, true)));
-        when(redisTemplate.opsForValue().get(PREFIJO + ":correo")).thenReturn("otro@ejemplo.com");
-        when(redisTemplate.opsForValue().get(PREFIJO + ":codigo")).thenReturn(HASH_CODIGO);
+        when(almacenTemporal.obtener(PREFIJO + ":correo")).thenReturn("otro@ejemplo.com");
+        when(almacenTemporal.obtener(PREFIJO + ":codigo")).thenReturn(HASH_CODIGO);
         when(usuarioRepository.existsByCorreoIgnoreCaseAndIdUsuarioNot("otro@ejemplo.com", ID)).thenReturn(true);
 
         assertThrows(ConflictoNegocioException.class, () -> service.confirmarCambioCorreo(ID, "123456"));

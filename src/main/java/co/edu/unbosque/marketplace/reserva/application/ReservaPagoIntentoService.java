@@ -6,8 +6,6 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.persistence.EntityManager;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +20,7 @@ import co.edu.unbosque.marketplace.pago.contracts.RegistroPagos;
 import co.edu.unbosque.marketplace.reserva.application.dto.PagoSimuladoResponse;
 import co.edu.unbosque.marketplace.reserva.application.port.BloqueoClaveIdempotencia;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionDatos;
+import co.edu.unbosque.marketplace.reserva.application.port.RefrescoDeReserva;
 import co.edu.unbosque.marketplace.reserva.application.port.ReservaConfirmacionRepository;
 import co.edu.unbosque.marketplace.reserva.application.port.NocheReservaRepository;
 import co.edu.unbosque.marketplace.reserva.domain.Reserva;
@@ -40,19 +39,19 @@ public class ReservaPagoIntentoService {
     private final RegistroPagos pagos;
     private final BloqueoClaveIdempotencia bloqueo;
     private final NocheReservaRepository noches;
-    private final EntityManager entityManager;
+    private final RefrescoDeReserva refresco;
 
     public ReservaPagoIntentoService(
             ReservaConfirmacionRepository reservas,
             RegistroPagos pagos,
             BloqueoClaveIdempotencia bloqueo,
             NocheReservaRepository noches,
-            EntityManager entityManager) {
+            RefrescoDeReserva refresco) {
         this.reservas = reservas;
         this.pagos = pagos;
         this.bloqueo = bloqueo;
         this.noches = noches;
-        this.entityManager = entityManager;
+        this.refresco = refresco;
     }
 
     @Transactional
@@ -148,7 +147,7 @@ public class ReservaPagoIntentoService {
         // La reserva se cargó en preparar(), antes de llamar a Stripe, y la petición reutiliza esa copia
         // en memoria. Mientras Stripe respondía, la retención pudo vencer y otra reserva pudo tomar las
         // noches, así que se vuelve a leer de la base de datos para decidir con su estado real.
-        entityManager.refresh(reserva);
+        refresco.refrescar(reserva);
 
         if (PAGO_PAGADO.equals(registrado.estado())) {
             return respuesta(reserva, registrado, "El pago ya había sido aprobado.");

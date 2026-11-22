@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplace.usuario.application;
 
+import java.time.Duration;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -8,9 +9,8 @@ import java.util.HexFormat;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import co.edu.unbosque.marketplace.usuario.application.port.AlmacenTemporal;
 import co.edu.unbosque.marketplace.compartido.domain.AccesoNoPermitidoException;
 import co.edu.unbosque.marketplace.compartido.domain.ConflictoNegocioException;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
@@ -48,7 +48,7 @@ public class UsuarioService {
 	private final ProteccionDocumento proteccionDocumento;
 	private final ProteccionContrasena proteccionContrasena;
 	private final VerificacionCorreoService verificacionCorreoService;
-	private final StringRedisTemplate redisTemplate;
+	private final AlmacenTemporal almacenTemporal;
 	private final ServicioCorreo servicioCorreo;
 	private final ApplicationEventPublisher eventPublisher;
     private final UbicacionRegistroQuery ubicacionRegistroQuery;
@@ -66,7 +66,7 @@ public class UsuarioService {
 	        ProteccionDocumento proteccionDocumento,
 	        ProteccionContrasena proteccionContrasena,
 	        VerificacionCorreoService verificacionCorreoService,
-	        StringRedisTemplate redisTemplate,
+	        AlmacenTemporal almacenTemporal,
 	        ServicioCorreo servicioCorreo,
 	        ApplicationEventPublisher eventPublisher,
             UbicacionRegistroQuery ubicacionRegistroQuery) {
@@ -77,17 +77,17 @@ public class UsuarioService {
 	    this.proteccionDocumento = proteccionDocumento;
 	    this.proteccionContrasena = proteccionContrasena;
 	    this.verificacionCorreoService = verificacionCorreoService;
-	    this.redisTemplate = redisTemplate;
+	    this.almacenTemporal = almacenTemporal;
 	    this.servicioCorreo = servicioCorreo;
 	    this.eventPublisher = eventPublisher;
         this.ubicacionRegistroQuery = ubicacionRegistroQuery;
 	}
     public UsuarioService(JwtUtil jwtUtil, UsuarioRepository usuarioRepository, RolRepository rolRepository,
             ProteccionDocumento proteccionDocumento, ProteccionContrasena proteccionContrasena,
-            VerificacionCorreoService verificacionCorreoService, StringRedisTemplate redisTemplate,
+            VerificacionCorreoService verificacionCorreoService, AlmacenTemporal almacenTemporal,
             ServicioCorreo servicioCorreo, ApplicationEventPublisher eventPublisher) {
         this(jwtUtil, usuarioRepository, rolRepository, proteccionDocumento, proteccionContrasena,
-                verificacionCorreoService, redisTemplate, servicioCorreo, eventPublisher, null);
+                verificacionCorreoService, almacenTemporal, servicioCorreo, eventPublisher, null);
     }
 
 	@Transactional
@@ -227,14 +227,14 @@ public class UsuarioService {
 
 		String clave = "recuperacion:contrasena:" + correoUsuario.toLowerCase(Locale.ROOT);
 
-		redisTemplate.opsForValue().set(clave, calcularHashCodigo(codigo), 5, TimeUnit.MINUTES);
+		almacenTemporal.guardar(clave, calcularHashCodigo(codigo), Duration.ofMinutes(5));
 
 		try {
 			servicioCorreo.enviarCodigoRecuperacion(correoUsuario, codigo);
 			return true;
 
 		} catch (Exception e) {
-			redisTemplate.delete(clave);
+			almacenTemporal.eliminar(clave);
 			throw e;
 		}
 	}
@@ -265,7 +265,7 @@ public class UsuarioService {
 
 		String claveIntentos = "recuperacion:contrasena:intentos:" + correoNormalizado;
 
-		String hashGuardado = redisTemplate.opsForValue().get(claveCodigo);
+		String hashGuardado = almacenTemporal.obtener(claveCodigo);
 
 		if (hashGuardado == null) {
 			return false;
@@ -277,15 +277,15 @@ public class UsuarioService {
 			return true;
 		}
 
-		Long intentos = redisTemplate.opsForValue().increment(claveIntentos);
+		Long intentos = almacenTemporal.incrementar(claveIntentos);
 
 		if (intentos != null && intentos == 1) {
-			redisTemplate.expire(claveIntentos, 5, TimeUnit.MINUTES);
+			almacenTemporal.asignarVigencia(claveIntentos, Duration.ofMinutes(5));
 		}
 
 		if (intentos != null && intentos >= 5) {
-			redisTemplate.delete(claveCodigo);
-			redisTemplate.delete(claveIntentos);
+			almacenTemporal.eliminar(claveCodigo);
+			almacenTemporal.eliminar(claveIntentos);
 		}
 
 		return false;
@@ -317,9 +317,9 @@ public class UsuarioService {
 
 		String correoNormalizado = usuario.getCorreo().toLowerCase(Locale.ROOT);
 
-		redisTemplate.delete("recuperacion:contrasena:" + correoNormalizado);
+		almacenTemporal.eliminar("recuperacion:contrasena:" + correoNormalizado);
 
-		redisTemplate.delete("recuperacion:contrasena:intentos:" + correoNormalizado);
+		almacenTemporal.eliminar("recuperacion:contrasena:intentos:" + correoNormalizado);
 
 		return true;
 	}
@@ -385,12 +385,11 @@ public class UsuarioService {
 
 			String prefijo = "perfil:cambio-correo:" + idUsuario;
 
-			redisTemplate.opsForValue().set(prefijo + ":correo", correoNuevo, VIGENCIA_CAMBIO_CORREO, TimeUnit.MINUTES);
+			almacenTemporal.guardar(prefijo + ":correo", correoNuevo, Duration.ofMinutes(VIGENCIA_CAMBIO_CORREO));
 
-			redisTemplate.opsForValue().set(prefijo + ":codigo", calcularHashCodigo(codigo), VIGENCIA_CAMBIO_CORREO,
-					TimeUnit.MINUTES);
+			almacenTemporal.guardar(prefijo + ":codigo", calcularHashCodigo(codigo), Duration.ofMinutes(VIGENCIA_CAMBIO_CORREO));
 
-			redisTemplate.opsForValue().set(prefijo + ":intentos", "0", VIGENCIA_CAMBIO_CORREO, TimeUnit.MINUTES);
+			almacenTemporal.guardar(prefijo + ":intentos", "0", Duration.ofMinutes(VIGENCIA_CAMBIO_CORREO));
 
 			try {
 
@@ -439,9 +438,9 @@ public class UsuarioService {
 
 		String prefijo = "perfil:cambio-correo:" + idUsuario;
 
-		String correoNuevo = redisTemplate.opsForValue().get(prefijo + ":correo");
+		String correoNuevo = almacenTemporal.obtener(prefijo + ":correo");
 
-		String hashGuardado = redisTemplate.opsForValue().get(prefijo + ":codigo");
+		String hashGuardado = almacenTemporal.obtener(prefijo + ":codigo");
 
 		if (correoNuevo == null || hashGuardado == null) {
 
@@ -454,7 +453,7 @@ public class UsuarioService {
 
 		if (!hashGuardado.equals(hashIngresado)) {
 
-			Long intentos = redisTemplate.opsForValue().increment(prefijo + ":intentos");
+			Long intentos = almacenTemporal.incrementar(prefijo + ":intentos");
 
 			if (intentos != null && intentos >= MAX_INTENTOS_CAMBIO_CORREO) {
 
@@ -487,9 +486,9 @@ public class UsuarioService {
 
 		String prefijo = "perfil:cambio-correo:" + idUsuario;
 
-		redisTemplate.delete(prefijo + ":correo");
-		redisTemplate.delete(prefijo + ":codigo");
-		redisTemplate.delete(prefijo + ":intentos");
+		almacenTemporal.eliminar(prefijo + ":correo");
+		almacenTemporal.eliminar(prefijo + ":codigo");
+		almacenTemporal.eliminar(prefijo + ":intentos");
 	}
 
 	public void actualizarContrasena(UUID idUsuario, ActualizarContrasenaRequest solicitud) {

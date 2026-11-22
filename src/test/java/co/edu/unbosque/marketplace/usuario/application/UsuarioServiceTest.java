@@ -1,9 +1,10 @@
 package co.edu.unbosque.marketplace.usuario.application;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
+import co.edu.unbosque.marketplace.usuario.application.port.AlmacenTemporal;
 import co.edu.unbosque.marketplace.compartido.domain.SesionRequeridaException;
 import co.edu.unbosque.marketplace.compartido.domain.RecursoNoEncontradoException;
 import co.edu.unbosque.marketplace.compartido.domain.DatosInvalidosException;
@@ -26,7 +27,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -54,8 +54,7 @@ class UsuarioServiceTest {
     @Mock private JwtUtil jwtUtil;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private UbicacionRegistroQuery ubicacionRegistroQuery;
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private StringRedisTemplate redisTemplate;
+    @Mock private AlmacenTemporal almacenTemporal;
     @InjectMocks private UsuarioService service;
 
     private Usuario usuario() {
@@ -135,32 +134,43 @@ class UsuarioServiceTest {
         var codigo = ArgumentCaptor.forClass(String.class);
         verify(servicioCorreo).enviarCodigoRecuperacion(eq(CORREO), codigo.capture());
         assertTrue(codigo.getValue().matches("\\d{6}"));
-        verify(redisTemplate.opsForValue()).set(
-                eq(CLAVE_CODIGO), matches("[0-9a-f]{64}"), eq(5L), eq(TimeUnit.MINUTES));
+        verify(almacenTemporal).guardar(eq(CLAVE_CODIGO), matches("[0-9a-f]{64}"), eq(Duration.ofMinutes(5L)));
     }
 
     @Test
     void validarCodigoCorrecto() {
-        when(redisTemplate.opsForValue().get(CLAVE_CODIGO)).thenReturn(HASH_CODIGO);
+        when(almacenTemporal.obtener(CLAVE_CODIGO)).thenReturn(HASH_CODIGO);
         assertTrue(service.validarCodigoRecuperacion("  ANA@EJEMPLO.COM  ", "123456"));
+    }
+
+    @Test
+    void primerCodigoIncorrectoIniciaLaVentanaDeIntentos() {
+        String intentos = "recuperacion:contrasena:intentos:" + CORREO;
+        when(almacenTemporal.obtener(CLAVE_CODIGO)).thenReturn(HASH_CODIGO);
+        when(almacenTemporal.incrementar(intentos)).thenReturn(1L);
+
+        assertFalse(service.validarCodigoRecuperacion(CORREO, "000000"));
+
+        verify(almacenTemporal).asignarVigencia(intentos, Duration.ofMinutes(5));
+        verify(almacenTemporal, never()).eliminar(anyString());
     }
 
     @Test
     void quintoCodigoIncorrectoEliminaRecuperacion() {
         String intentos = "recuperacion:contrasena:intentos:" + CORREO;
-        when(redisTemplate.opsForValue().get(CLAVE_CODIGO)).thenReturn(HASH_CODIGO);
-        when(redisTemplate.opsForValue().increment(intentos)).thenReturn(5L);
+        when(almacenTemporal.obtener(CLAVE_CODIGO)).thenReturn(HASH_CODIGO);
+        when(almacenTemporal.incrementar(intentos)).thenReturn(5L);
 
         assertFalse(service.validarCodigoRecuperacion(CORREO, "000000"));
 
-        verify(redisTemplate).delete(CLAVE_CODIGO);
-        verify(redisTemplate).delete(intentos);
+        verify(almacenTemporal).eliminar(CLAVE_CODIGO);
+        verify(almacenTemporal).eliminar(intentos);
     }
 
     @Test
     void restablecerContrasenaGuardaHashYEliminaCodigo() {
         Usuario u = usuario();
-        when(redisTemplate.opsForValue().get(CLAVE_CODIGO)).thenReturn(HASH_CODIGO);
+        when(almacenTemporal.obtener(CLAVE_CODIGO)).thenReturn(HASH_CODIGO);
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO)).thenReturn(Optional.of(u));
         when(proteccionContrasena.generarHash("Nueva456")).thenReturn("hash-nuevo");
 
@@ -169,8 +179,8 @@ class UsuarioServiceTest {
         assertEquals("hash-nuevo", u.getContrasenaHash());
         assertNotNull(u.getFechaActualizacion());
         verify(usuarioRepository).save(u);
-        verify(redisTemplate).delete(CLAVE_CODIGO);
-        verify(redisTemplate).delete("recuperacion:contrasena:intentos:" + CORREO);
+        verify(almacenTemporal).eliminar(CLAVE_CODIGO);
+        verify(almacenTemporal).eliminar("recuperacion:contrasena:intentos:" + CORREO);
     }
 
     @Test
@@ -249,7 +259,7 @@ class UsuarioServiceTest {
         assertEquals("Carlos", u.getNombre());
         assertEquals("Lopez", u.getApellido());
         verify(usuarioRepository).save(u);
-        verifyNoInteractions(servicioCorreo, redisTemplate);
+        verifyNoInteractions(servicioCorreo, almacenTemporal);
     }
 
     @Test
@@ -257,17 +267,17 @@ class UsuarioServiceTest {
         Usuario u = usuario();
         u.setCorreoVerificado(false);
         encontrar(u);
-        when(redisTemplate.opsForValue().get(PREFIJO + ":correo")).thenReturn("nuevo@ejemplo.com");
-        when(redisTemplate.opsForValue().get(PREFIJO + ":codigo")).thenReturn(HASH_CODIGO);
+        when(almacenTemporal.obtener(PREFIJO + ":correo")).thenReturn("nuevo@ejemplo.com");
+        when(almacenTemporal.obtener(PREFIJO + ":codigo")).thenReturn(HASH_CODIGO);
 
         service.confirmarCambioCorreo(ID, "123456");
 
         assertEquals("nuevo@ejemplo.com", u.getCorreo());
         assertTrue(u.isCorreoVerificado());
         verify(usuarioRepository).save(u);
-        verify(redisTemplate).delete(PREFIJO + ":correo");
-        verify(redisTemplate).delete(PREFIJO + ":codigo");
-        verify(redisTemplate).delete(PREFIJO + ":intentos");
+        verify(almacenTemporal).eliminar(PREFIJO + ":correo");
+        verify(almacenTemporal).eliminar(PREFIJO + ":codigo");
+        verify(almacenTemporal).eliminar(PREFIJO + ":intentos");
     }
 
     @Test
@@ -380,7 +390,7 @@ class UsuarioServiceTest {
     void generarCodigoRetornaFalseSiNoExisteUsuario() {
         when(usuarioRepository.findByCorreoIgnoreCase(CORREO)).thenReturn(Optional.empty());
         assertFalse(service.generarCodigoRecuperacion(CORREO));
-        verifyNoInteractions(redisTemplate, servicioCorreo);
+        verifyNoInteractions(almacenTemporal, servicioCorreo);
     }
 
     @Test
@@ -392,19 +402,19 @@ class UsuarioServiceTest {
         assertSame(fallo, assertThrows(RuntimeException.class,
                 () -> service.generarCodigoRecuperacion(CORREO)));
 
-        verify(redisTemplate).delete(CLAVE_CODIGO);
+        verify(almacenTemporal).eliminar(CLAVE_CODIGO);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"", "12345", "1234567", "abcdef"})
     void validarCodigoRechazaFormatoInvalido(String codigo) {
         assertFalse(service.validarCodigoRecuperacion(CORREO, codigo));
-        verifyNoInteractions(redisTemplate);
+        verifyNoInteractions(almacenTemporal);
     }
 
     @Test
     void restablecerNoModificaUsuarioCuandoCodigoHaExpirado() {
-        when(redisTemplate.opsForValue().get(CLAVE_CODIGO)).thenReturn(null);
+        when(almacenTemporal.obtener(CLAVE_CODIGO)).thenReturn(null);
 
         assertFalse(service.restablecerContrasena(CORREO, "123456", "Nueva456"));
 
@@ -451,11 +461,9 @@ class UsuarioServiceTest {
         var codigo = ArgumentCaptor.forClass(String.class);
         verify(servicioCorreo).enviarCodigoVerificacion(eq("nuevo@ejemplo.com"), codigo.capture());
         assertTrue(codigo.getValue().matches("\\d{6}"));
-        verify(redisTemplate.opsForValue()).set(
-                PREFIJO + ":correo", "nuevo@ejemplo.com", 5L, TimeUnit.MINUTES);
-        verify(redisTemplate.opsForValue()).set(
-                eq(PREFIJO + ":codigo"), matches("[0-9a-f]{64}"), eq(5L), eq(TimeUnit.MINUTES));
-        verify(redisTemplate.opsForValue()).set(PREFIJO + ":intentos", "0", 5L, TimeUnit.MINUTES);
+        verify(almacenTemporal).guardar(PREFIJO + ":correo", "nuevo@ejemplo.com", Duration.ofMinutes(5L));
+        verify(almacenTemporal).guardar(eq(PREFIJO + ":codigo"), matches("[0-9a-f]{64}"), eq(Duration.ofMinutes(5L)));
+        verify(almacenTemporal).guardar(PREFIJO + ":intentos", "0", Duration.ofMinutes(5L));
         verify(usuarioRepository).save(u);
     }
 
@@ -468,13 +476,13 @@ class UsuarioServiceTest {
                 () -> service.actualizarPerfil(ID, perfilConNuevoCorreo()));
         assertEquals("El correo electrónico ya está asociado a otra cuenta.", error.getMessage());
         verify(usuarioRepository, never()).save(any(Usuario.class));
-        verifyNoInteractions(redisTemplate, servicioCorreo);
+        verifyNoInteractions(almacenTemporal, servicioCorreo);
     }
 
     private void verificarLimpiezaCambioCorreo() {
-        verify(redisTemplate).delete(PREFIJO + ":correo");
-        verify(redisTemplate).delete(PREFIJO + ":codigo");
-        verify(redisTemplate).delete(PREFIJO + ":intentos");
+        verify(almacenTemporal).eliminar(PREFIJO + ":correo");
+        verify(almacenTemporal).eliminar(PREFIJO + ":codigo");
+        verify(almacenTemporal).eliminar(PREFIJO + ":intentos");
     }
 
     @Test
@@ -506,9 +514,9 @@ class UsuarioServiceTest {
     @ValueSource(longs = {1, 5})
     void confirmarCambioControlaCodigosIncorrectos(long intentos) {
         encontrar(usuario());
-        when(redisTemplate.opsForValue().get(PREFIJO + ":correo")).thenReturn("nuevo@ejemplo.com");
-        when(redisTemplate.opsForValue().get(PREFIJO + ":codigo")).thenReturn(HASH_CODIGO);
-        when(redisTemplate.opsForValue().increment(PREFIJO + ":intentos")).thenReturn(intentos);
+        when(almacenTemporal.obtener(PREFIJO + ":correo")).thenReturn("nuevo@ejemplo.com");
+        when(almacenTemporal.obtener(PREFIJO + ":codigo")).thenReturn(HASH_CODIGO);
+        when(almacenTemporal.incrementar(PREFIJO + ":intentos")).thenReturn(intentos);
 
         if (intentos == 5) {
             var error = assertThrows(ConflictoNegocioException.class,
@@ -520,7 +528,7 @@ class UsuarioServiceTest {
             var error = assertThrows(DatosInvalidosException.class,
                     () -> service.confirmarCambioCorreo(ID, "000000"));
             assertEquals("El código de verificación es incorrecto.", error.getMessage());
-            verify(redisTemplate, never()).delete(anyString());
+            verify(almacenTemporal, never()).eliminar(anyString());
         }
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
