@@ -1,4 +1,4 @@
-# A3: despliegue local solo del backend. No incluye frontend ni autoheal/backups (A4/A5).
+# A4: backend, worker y auto-recuperacion selectiva. A5 (backups) sigue pendiente.
 # Usar: docker compose --env-file .env.docker -p marketplace-a3 up -d --build
 name: marketplace-a3
 
@@ -69,6 +69,9 @@ services:
 
   api:
     <<: *backend
+    labels:
+      com.isw2.autoheal: "true"
+      com.isw2.autoheal.project: "marketplace-a3"
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/marketplace
@@ -80,8 +83,9 @@ services:
     ports:
       - "127.0.0.1:8082:8080"
     healthcheck:
-      # Readiness incluye PostgreSQL/Redis, ademas de la aplicacion.
-      test: ["CMD-SHELL", "curl --fail --silent --show-error --connect-timeout 2 --max-time 4 http://127.0.0.1:8080/actuator/health/readiness >/dev/null || exit 1"]
+      # Solo liveness: no reiniciar la API por una caida temporal de PostgreSQL/Redis.
+      # Readiness sigue consultable en /actuator/health/readiness.
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --connect-timeout 2 --max-time 4 http://127.0.0.1:8080/actuator/health/liveness >/dev/null || exit 1"]
       interval: 30s
       timeout: 5s
       start_period: 180s
@@ -89,6 +93,9 @@ services:
 
   worker:
     <<: *backend
+    labels:
+      com.isw2.autoheal: "true"
+      com.isw2.autoheal.project: "marketplace-a3"
     environment:
       # NO pasar '--worker': el entrypoint de A2 lo bloquea intencionalmente.
       SPRING_PROFILES_ACTIVE: docker,worker
@@ -106,6 +113,33 @@ services:
       timeout: 5s
       start_period: 180s
       retries: 3
+
+  autoheal:
+    # A4: contenedor supervisor local, sin acceso a la red de backend.
+    # ADVERTENCIA: docker.sock equivale a acceso administrativo a Docker Host.
+    # No desplegar este patron en un servidor multiusuario o publico sin
+    # sustituirlo por una solucion con permisos delegados/restringidos.
+    image: docker:29-cli
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        echo "[autoheal] Monitorizando contenedores etiquetados de marketplace-a3"
+        while true; do
+          docker container ls --quiet \
+            --filter "label=com.isw2.autoheal=true" \
+            --filter "label=com.isw2.autoheal.project=marketplace-a3" \
+            --filter "label=com.docker.compose.project=marketplace-a3" \
+            --filter "health=unhealthy" | while IFS= read -r container_id; do
+              [ -n "$$container_id" ] || continue
+              echo "[autoheal] $$(date -u +%Y-%m-%dT%H:%M:%SZ) reiniciando $$container_id"
+              docker container restart --time 45 "$$container_id" || echo "[autoheal] ERROR al reiniciar $$container_id" >&2
+          done
+          sleep 20
+        done
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    init: true
 
 networks:
   backend:
