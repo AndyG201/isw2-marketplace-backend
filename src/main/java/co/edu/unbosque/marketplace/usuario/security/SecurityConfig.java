@@ -64,6 +64,10 @@ public class SecurityConfig {
 
 						.requestMatchers("/error").permitAll()
 
+						// Heartbeat y sondas de salud: lectura publica sin detalles internos.
+						.requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**")
+						.permitAll()
+
 						// Autenticación y verificación de correo.
 
 						.requestMatchers("/autenticacion/**", "/verificacion-correo/**").permitAll()

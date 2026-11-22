@@ -1,0 +1,5 @@
+# A1: carga de la configuracion de salud. Las conexiones y claves locales
+# permanecen en application.properties.
+spring:
+  config:
+    import: optional:classpath:application-observability.properties
